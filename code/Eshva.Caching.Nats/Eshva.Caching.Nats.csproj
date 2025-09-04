@@ -6,4 +6,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="JetBrains.Annotations" Version="2025.2.2" />
+      <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.8" />
+      <PackageReference Include="NATS.Client.ObjectStore" Version="2.6.8" />
+    </ItemGroup>
+
 </Project>
