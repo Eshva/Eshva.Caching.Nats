@@ -16,6 +16,7 @@ public class GetEntrySteps {
   [When("I get {string} cache entry asynchronously")]
   public async Task WhenIGetCacheEntry(string key) {
     try {
+      await Task.Delay(millisecondsDelay: 1000);
       _cachesContext.GottenCacheEntryValue = await _cachesContext.Cache.GetAsync(key);
     }
     catch (Exception exception) {
@@ -36,9 +37,9 @@ public class GetEntrySteps {
   [When("I get from cache some entry with corrupted metadata asynchronously")]
   public async Task WhenIGetSomeCacheEntryAsynchronouslyOnCacheWithClosedConnection() {
     const string key = "some-key";
-    await _cachesContext.CacheBucket.PutAsync(key, "some-value"u8.ToArray());
+    await _cachesContext.Bucket.PutAsync(key, "some-value"u8.ToArray());
     var metadataCorrupter = new ObjectEntryMetadataCorrupter();
-    await metadataCorrupter.CorruptEntryMetadata(_cachesContext.CacheBucket, key);
+    await metadataCorrupter.CorruptEntryMetadata(_cachesContext.Bucket, key);
 
     try {
       await _cachesContext.Cache.GetAsync("some-key");
@@ -51,9 +52,9 @@ public class GetEntrySteps {
   [When("I get from cache some entry with corrupted metadata synchronously")]
   public async Task WhenIGetSomeCacheEntrySynchronouslyOnCacheWithClosedConnection() {
     const string key = "some-key";
-    await _cachesContext.CacheBucket.PutAsync(key, "some-value"u8.ToArray());
+    await _cachesContext.Bucket.PutAsync(key, "some-value"u8.ToArray());
     var metadataCorrupter = new ObjectEntryMetadataCorrupter();
-    await metadataCorrupter.CorruptEntryMetadata(_cachesContext.CacheBucket, key);
+    await metadataCorrupter.CorruptEntryMetadata(_cachesContext.Bucket, key);
 
     try {
       // ReSharper disable once MethodHasAsyncOverload

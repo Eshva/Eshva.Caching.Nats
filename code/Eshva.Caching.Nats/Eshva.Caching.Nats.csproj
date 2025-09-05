@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Eshva.Caching.Nats.Tests.OutOfProcess"/>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Eshva.Common.Testing" Version="1.2.0"/>
     <PackageReference Include="JetBrains.Annotations" Version="2025.2.2"/>
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.8"/>

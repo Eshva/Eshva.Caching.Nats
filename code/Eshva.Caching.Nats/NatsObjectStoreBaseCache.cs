@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Internal;
@@ -10,20 +9,61 @@ using NATS.Client.ObjectStore;
 namespace Eshva.Caching.Nats;
 
 [PublicAPI]
-public sealed partial class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposable {
+public sealed class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposable {
   public NatsObjectStoreBaseCache(
     INatsObjStore cacheBucket,
+    NatsCacheSettings settings,
     ISystemClock clock,
     ILogger<NatsObjectStoreBaseCache>? logger = null) {
     ArgumentNullException.ThrowIfNull(cacheBucket);
+    ArgumentNullException.ThrowIfNull(settings);
     ArgumentNullException.ThrowIfNull(clock);
 
+    var settingErrors = settings.Validate();
+    if (settingErrors.Any()) {
+      throw new ArgumentException(
+        "Settings contain the following errors:" + Environment.NewLine + string.Join(Environment.NewLine, settingErrors));
+    }
+
     _cacheBucket = cacheBucket;
+    _settings = settings;
     _clock = clock;
     _logger = logger ?? new NullLogger<NatsObjectStoreBaseCache>();
+    _lastExpirationScan = clock.UtcNow;
   }
 
-  /// TODO: COPY LATER!
+  /// <summary>
+  /// Get value of a cache key <paramref name="key"/>.
+  /// </summary>
+  /// <remarks>
+  /// <para>
+  /// Read the key <paramref name="key"/> value from the object-store bucket and returns it as a byte array if it's
+  /// found.
+  /// </para>
+  /// <para>
+  /// If it's time purge all expired entries in the cache.
+  /// </para>
+  /// </remarks>
+  /// <param name="key"></param>
+  /// <param name="token"></param>
+  /// <returns>
+  /// <para></para>
+  /// Depending on different circumstances returns:
+  /// <list type="bullet">
+  /// <item>byte array - read key value,</item>
+  /// <item>null - cache key <paramref name="key"/> isn't found.</item>
+  /// </list>
+  /// </returns>
+  /// <exception cref="ArgumentException">
+  /// The key is not specified.
+  /// </exception>
+  /// <exception cref="InvalidOperationException">
+  /// One of:
+  /// <list type="bullet">
+  /// <item>Failed to read cache key value.</item>
+  /// <item>Length of the read value less than length of the cache value.</item>
+  /// </list>
+  /// </exception>
   public byte[]? Get(string key) => GetAsync(key).GetAwaiter().GetResult();
 
   /// <summary>
@@ -70,7 +110,7 @@ public sealed partial class NatsObjectStoreBaseCache : IBufferDistributedCache, 
         leaveOpen: true,
         token);
       _logger.LogDebug(
-        "An object with the key {Key} has been read. Object meta-data: @{ObjectMetadata}",
+        "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
         key,
         objectMetadata);
     }
@@ -78,11 +118,11 @@ public sealed partial class NatsObjectStoreBaseCache : IBufferDistributedCache, 
       return null;
     }
     catch (NatsObjException exception) {
-      throw new InvalidOperationException($"Failed to read cache key {key} value.", exception);
+      throw new InvalidOperationException($"Failed to read cache key '{key}' value.", exception);
     }
 
     if (valueStream.Length == 0) {
-      _logger.LogDebug("No key {Key} has been found in the object-store", key);
+      _logger.LogDebug("No key '{Key}' has been found in the object-store", key);
       return null;
     }
 
@@ -92,7 +132,7 @@ public sealed partial class NatsObjectStoreBaseCache : IBufferDistributedCache, 
 
     if (bytesRead != valueStream.Length) {
       throw new InvalidOperationException(
-        $"Should be read {valueStream.Length} bytes but read {bytesRead} bytes for a cache entry wih ID {key}.");
+        $"Should be read {valueStream.Length} bytes but read {bytesRead} bytes for a cache entry wih ID '{key}'.");
     }
 
     ScanForExpiredItemsIfRequired(token);
@@ -142,18 +182,33 @@ public sealed partial class NatsObjectStoreBaseCache : IBufferDistributedCache, 
   private void ScanForExpiredItemsIfRequired(CancellationToken token) {
     lock (_scanForExpiredItemsLock) {
       var utcNow = _clock.UtcNow;
-      if (utcNow - _lastExpirationScan <= _expiredItemsDeletionInterval) return;
+      var timePassedSinceTheLastPurging = utcNow - _lastExpirationScan;
+      if (timePassedSinceTheLastPurging < _settings.ExpiredEntriesPurgingInterval) {
+        _logger.LogDebug(
+          "Since the last purging expired entries {TimePassed} has passed that is less than {PurgingInterval}. Purging is not required",
+          timePassedSinceTheLastPurging,
+          _settings.ExpiredEntriesPurgingInterval);
+        return;
+      }
 
+      _logger.LogDebug(
+        "Since the last purging expired entries {TimePassed} has passed that is greeter than or equals {PurgingInterval}. Purging is required",
+        timePassedSinceTheLastPurging,
+        _settings.ExpiredEntriesPurgingInterval);
       _lastExpirationScan = utcNow;
       Task.Run(() => DeleteExpiredCachedEntries(token), token);
     }
   }
 
   private async Task DeleteExpiredCachedEntries(CancellationToken token) {
+    _logger.LogDebug("Deleting expired entries started");
     var entries = _cacheBucket.ListAsync(cancellationToken: token);
 
     await foreach (var entry in entries) {
-      if (EntryMetadata(entry.Metadata).ExpiresOn > _clock.UtcNow.Ticks) await _cacheBucket.DeleteAsync(entry.Name, token);
+      if (EntryMetadata(entry.Metadata).ExpiresOnUtc.Ticks >= _clock.UtcNow.Ticks) continue;
+
+      await _cacheBucket.DeleteAsync(entry.Name, token);
+      _logger.LogDebug("Deleted expired entry '{Name}'", entry.Name);
     }
   }
 
@@ -165,27 +220,12 @@ public sealed partial class NatsObjectStoreBaseCache : IBufferDistributedCache, 
   private static void ValidateKey(string key) =>
     ArgumentException.ThrowIfNullOrWhiteSpace(key, "The key is not specified.");
 
-  private void ValidateSettings(NatsCacheSettings settings) {
-    ArgumentNullException.ThrowIfNull(settings);
-    ArgumentException.ThrowIfNullOrWhiteSpace(settings.BucketName, "The cache bucket name is not specified.");
-
-    if (!ValidBucketRegex.IsMatch(settings.BucketName)) {
-      throw new ArgumentException(
-        $"Bucket name '{settings.BucketName}' is not valid."
-        + "Bucket name can only contain alphanumeric characters, dashes, and underscores.");
-    }
-  }
-
-  [GeneratedRegex(@"\A[a-zA-Z0-9_-]+\z", RegexOptions.Compiled)]
-  private static partial Regex ValidBucketNameRegex();
-
   private readonly ILogger<NatsObjectStoreBaseCache> _logger;
+  private readonly NatsCacheSettings _settings;
   private INatsObjStore _cacheBucket;
   private ISystemClock _clock;
-  private TimeSpan _expiredItemsDeletionInterval;
   private DateTimeOffset _lastExpirationScan;
   private Lock _scanForExpiredItemsLock = new();
   private const int DefaultBucketSizeInMebibytes = 100;
   private const string ExpireOnMetadataKey = "ExpireOn";
-  private static readonly Regex ValidBucketRegex = ValidBucketNameRegex();
 }

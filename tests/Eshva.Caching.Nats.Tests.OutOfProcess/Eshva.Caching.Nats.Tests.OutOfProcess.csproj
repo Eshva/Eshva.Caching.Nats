@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Eshva.Common.Testing" Version="1.2.0"/>
+    <PackageReference Include="Meziantou.Extensions.Logging.Xunit" Version="1.0.17"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
     <PackageReference Include="NATS.Client.Core" Version="2.6.8"/>
     <PackageReference Include="NATS.Client.ObjectStore" Version="2.6.8"/>

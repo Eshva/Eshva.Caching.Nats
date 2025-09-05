@@ -1,13 +1,11 @@
-﻿namespace Eshva.Caching.Nats;
+﻿using System.Globalization;
+
+namespace Eshva.Caching.Nats;
 
 /// <summary>
 /// A NATS cache entry meta-data accessor.
 /// </summary>
 internal class CacheEntryMetadata {
-  private const string ExpiresOnValueName = "ExpiresOn";
-  private static readonly long NeverExpires = DateTimeOffset.MaxValue.Ticks;
-  private readonly Dictionary<string, string> _entryMetadata;
-
   /// <summary>
   /// Initialize a new NATS cache entry meta-data accessor instance with entry meta-data dictionary.
   /// </summary>
@@ -15,8 +13,8 @@ internal class CacheEntryMetadata {
   /// <exception cref="ArgumentNullException">
   /// Entry meta-data dictionary is not specified.
   /// </exception>
-  public CacheEntryMetadata(Dictionary<string, string> entryMetadata) {
-    _entryMetadata = entryMetadata ?? throw new ArgumentNullException(nameof(entryMetadata));
+  public CacheEntryMetadata(Dictionary<string, string>? entryMetadata) {
+    _entryMetadata = entryMetadata ?? new Dictionary<string, string>();
   }
 
   /// <summary>
@@ -32,8 +30,17 @@ internal class CacheEntryMetadata {
   /// <item>If the value is set but can not be parsed return that never expires.</item>
   /// </list>
   /// </value>
-  public long ExpiresOn =>
-    _entryMetadata.TryGetValue(ExpiresOnValueName, out var expiresOn)
-      ? int.TryParse(expiresOn, out var ticks) ? ticks : NeverExpires
-      : NeverExpires;
+  public DateTimeOffset ExpiresOnUtc {
+    get =>
+      _entryMetadata.TryGetValue(ExpiresOnValueName, out var expiresOn)
+        ? long.TryParse(expiresOn, CultureInfo.InvariantCulture, out var result) ? new DateTimeOffset(result, TimeSpan.Zero) : NeverExpires
+        : NeverExpires;
+    set => _entryMetadata[ExpiresOnValueName] = value.Ticks.ToString(CultureInfo.InvariantCulture);
+  }
+
+  public static implicit operator Dictionary<string, string>(CacheEntryMetadata metadata) => metadata._entryMetadata;
+
+  private readonly Dictionary<string, string> _entryMetadata;
+  private const string ExpiresOnValueName = "ExpiresOn";
+  private static readonly DateTimeOffset NeverExpires = DateTimeOffset.MaxValue;
 }
