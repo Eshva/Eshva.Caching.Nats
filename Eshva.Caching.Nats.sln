@@ -2,6 +2,10 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eshva.Caching.Nats", "code\Eshva.Caching.Nats\Eshva.Caching.Nats.csproj", "{A7BDFBBA-77C7-46EC-84FD-B9023A5157DE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eshva.Caching.Nats.Tests.OutOfProcess", "tests\Eshva.Caching.Nats.Tests.OutOfProcess\Eshva.Caching.Nats.Tests.OutOfProcess.csproj", "{EC412ACF-EDB4-4C43-9E64-BD39E8466F99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eshva.Caching.Nats.Tests.Tools", "tests\Eshva.Caching.Nats.Tests.Tools\Eshva.Caching.Nats.Tests.Tools.csproj", "{5064F540-A68B-4FA4-B091-09AC7341E405}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +16,13 @@ Global
 		{A7BDFBBA-77C7-46EC-84FD-B9023A5157DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A7BDFBBA-77C7-46EC-84FD-B9023A5157DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A7BDFBBA-77C7-46EC-84FD-B9023A5157DE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC412ACF-EDB4-4C43-9E64-BD39E8466F99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC412ACF-EDB4-4C43-9E64-BD39E8466F99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC412ACF-EDB4-4C43-9E64-BD39E8466F99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC412ACF-EDB4-4C43-9E64-BD39E8466F99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5064F540-A68B-4FA4-B091-09AC7341E405}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5064F540-A68B-4FA4-B091-09AC7341E405}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5064F540-A68B-4FA4-B091-09AC7341E405}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5064F540-A68B-4FA4-B091-09AC7341E405}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

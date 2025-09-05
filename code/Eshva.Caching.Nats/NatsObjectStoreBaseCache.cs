@@ -5,29 +5,22 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using NATS.Client.Core;
-using NATS.Client.JetStream;
 using NATS.Client.ObjectStore;
-using NATS.Net;
 
 namespace Eshva.Caching.Nats;
 
 [PublicAPI]
-public sealed partial class NatsCache : IBufferDistributedCache, IDisposable {
-  public NatsCache(
-    INatsConnection connection,
-    NatsCacheSettings settings,
+public sealed partial class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposable {
+  public NatsObjectStoreBaseCache(
+    INatsObjStore cacheBucket,
     ISystemClock clock,
-    ILogger<NatsCache>? logger = null) {
-    ArgumentNullException.ThrowIfNull(connection);
-    ArgumentNullException.ThrowIfNull(settings);
+    ILogger<NatsObjectStoreBaseCache>? logger = null) {
+    ArgumentNullException.ThrowIfNull(cacheBucket);
     ArgumentNullException.ThrowIfNull(clock);
-    ValidateSettings(settings);
 
-    _objectStore = connection.CreateObjectStoreContext();
-    _settings = settings;
+    _cacheBucket = cacheBucket;
     _clock = clock;
-    _logger = logger ?? new NullLogger<NatsCache>();
+    _logger = logger ?? new NullLogger<NatsObjectStoreBaseCache>();
   }
 
   /// TODO: COPY LATER!
@@ -67,7 +60,6 @@ public sealed partial class NatsCache : IBufferDistributedCache, IDisposable {
   /// </exception>
   public async Task<byte[]?> GetAsync(string key, CancellationToken token = default) {
     ValidateKey(key);
-    await EnsureCacheBucketOpen();
 
     var valueStream = new MemoryStream();
 
@@ -75,12 +67,15 @@ public sealed partial class NatsCache : IBufferDistributedCache, IDisposable {
       var objectMetadata = await _cacheBucket.GetAsync(
         key,
         valueStream,
-        leaveOpen: false,
+        leaveOpen: true,
         token);
       _logger.LogDebug(
         "An object with the key {Key} has been read. Object meta-data: @{ObjectMetadata}",
         key,
         objectMetadata);
+    }
+    catch (NatsObjNotFoundException) {
+      return null;
     }
     catch (NatsObjException exception) {
       throw new InvalidOperationException($"Failed to read cache key {key} value.", exception);
@@ -181,59 +176,11 @@ public sealed partial class NatsCache : IBufferDistributedCache, IDisposable {
     }
   }
 
-  private async Task EnsureCacheBucketOpen() {
-    // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-    if (_cacheBucket is not null) return;
-
-    var shouldCreateBucket = false;
-    var bucketName = _settings.BucketName;
-    try {
-      _cacheBucket = await _objectStore.GetObjectStoreAsync(bucketName);
-    }
-    catch (NatsJSApiException exception) when (exception.Error.Code == 404) {
-      if (_settings.ShouldCreateBucket) {
-        shouldCreateBucket = true;
-        _logger.LogInformation("The cache bucket {BucketName} doesn't exists. Try to create it", bucketName);
-      }
-      else {
-        _logger.LogError(
-          exception,
-          "The cache bucket {BucketName} doesn't exists and creation is forbidden",
-          bucketName);
-      }
-    }
-    catch (NatsJSApiException exception) {
-      _logger.LogError(exception, "Unable to get the cache bucket {BucketName}", bucketName);
-      throw new InvalidOperationException($"Unable to get bucket {bucketName}", exception);
-    }
-    catch (NatsJSException exception) {
-      _logger.LogError(exception, "Unable to get the cache bucket {BucketName}", bucketName);
-      throw new InvalidOperationException($"Unable to get bucket {bucketName}", exception);
-    }
-
-    if (shouldCreateBucket) {
-      var bucketConfiguration = new NatsObjConfig(bucketName) {
-        Description = "Distributed object cache.",
-        Storage = NatsObjStorageType.File,
-        MaxBytes = _settings.BucketSizeInMebibytes * 1024 * 1024
-      };
-      try {
-        _cacheBucket = await _objectStore.CreateObjectStoreAsync(bucketConfiguration);
-        _logger.LogInformation("The cache bucket {BucketName} has been created", bucketName);
-      }
-      catch (Exception exception) {
-        _logger.LogError(exception, "Unable to create the cache bucket {BucketName}", bucketName);
-      }
-    }
-  }
-
   [GeneratedRegex(@"\A[a-zA-Z0-9_-]+\z", RegexOptions.Compiled)]
   private static partial Regex ValidBucketNameRegex();
 
-  private readonly ILogger<NatsCache> _logger;
-  private readonly INatsObjContext _objectStore;
-  private readonly NatsCacheSettings _settings;
-  private INatsObjStore _cacheBucket = null!;
+  private readonly ILogger<NatsObjectStoreBaseCache> _logger;
+  private INatsObjStore _cacheBucket;
   private ISystemClock _clock;
   private TimeSpan _expiredItemsDeletionInterval;
   private DateTimeOffset _lastExpirationScan;
