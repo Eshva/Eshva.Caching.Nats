@@ -203,7 +203,6 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
   private static void ValidateKey(string key) => ArgumentException.ThrowIfNullOrWhiteSpace(key, "The key is not specified.");
 
   private readonly INatsObjStore _cacheBucket;
-  private readonly ICacheEntryExpirationStrategy _cacheEntryExpirationStrategy;
   private readonly ICacheEntryExpirationStrategy _expirationStrategy;
   private readonly ICacheExpiredEntriesPurger _expiredEntriesPurger;
   private readonly ILogger<NatsObjectStoreBasedCache> _logger;
