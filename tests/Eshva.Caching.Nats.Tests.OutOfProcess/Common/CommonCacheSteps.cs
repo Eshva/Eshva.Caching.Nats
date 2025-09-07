@@ -23,10 +23,19 @@ public class CommonCacheSteps {
 
     var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
     objectMetadata.Metadata = new CacheEntryMetadata(objectMetadata.Metadata!) {
-      ExpiresOnUtc = DateTimeOffset.UtcNow.AddMinutes(expiresInMinutes)
+      ExpiresAtUtc = _cachesContext.Clock.UtcNow.AddMinutes(expiresInMinutes),
+      SlidingExpiration = TimeSpan.FromMinutes(expiresInMinutes)
     };
     await _cachesContext.Bucket.UpdateMetaAsync(key, objectMetadata);
   }
+
+  [Given("passed a bit more than purging expired entries interval")]
+  public void GivenPassedABitMoreThanPurgingExpiredEntriesInterval() =>
+    _cachesContext.Clock.AdjustTime(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: 1)));
+
+  [Given("passed a bit less than purging expired entries interval")]
+  public void GivenPassedABitLessThanPurgingExpiredEntriesInterval() =>
+    _cachesContext.Clock.AdjustTime(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: -1)));
 
   [Then("I should get value {string} as the requested entry")]
   public void ThenIShouldGetValueAsTheRequestedEntry(string value) =>
@@ -36,12 +45,12 @@ public class CommonCacheSteps {
   public void ThenIShouldGetANullValueAsTheRequestedEntry() => _cachesContext.GottenCacheEntryValue.Should().BeNull();
 
   [Given("{double} minutes passed")]
-  public void GivenMinutesPassed(double minutes) =>
-    _cachesContext.Clock.AdjustTime(DateTimeOffset.UtcNow.AddMinutes(minutes));
+  public void GivenMinutesPassed(double minutes) => _cachesContext.Clock.AdjustTime(TimeSpan.FromMinutes(minutes));
 
   [Then("{string} entry is not present in the object-store bucket")]
   public async Task ThenEntryIsNotPresentInTheObjectStoreBucket(string key) {
     try {
+      await Task.Delay(millisecondsDelay: 100); // Timeout required to finish cache entries removing.
       await _cachesContext.Bucket.GetInfoAsync(key);
     }
     catch (NatsObjNotFoundException) {
@@ -49,17 +58,14 @@ public class CommonCacheSteps {
       return;
     }
 
-    Assert.Fail();
+    Assert.Fail($"'{key}' entry is still present in the cache");
   }
 
-  [Given("passed a bit more than purging expired entries interval")]
-  public void GivenPassedABitMoreThanPurgingExpiredEntriesInterval() =>
-    _cachesContext.Clock.AdjustTime(
-      DateTimeOffset.UtcNow.Add(_cachesContext.Settings.ExpiredEntriesPurgingInterval).AddSeconds(seconds: 1));
-
-  [Given("passed a bit less than purging expired entries interval")]
-  public void GivenPassedABitLessThanPurgingExpiredEntriesInterval() => _cachesContext.Clock.AdjustTime(
-    DateTimeOffset.UtcNow.Add(_cachesContext.Settings.ExpiredEntriesPurgingInterval).AddSeconds(seconds: -1));
+  [Then("{string} entry is present in the object-store bucket")]
+  public async Task ThenEntryIsPresentInTheObjectStoreBucket(string key) {
+    var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
+    objectMetadata.Should().NotBeNull();
+  }
 
   private readonly CachesContext _cachesContext;
 }

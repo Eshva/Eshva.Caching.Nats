@@ -6,7 +6,7 @@ namespace Eshva.Caching.Nats;
 /// Connection settings to Object Store on a NATS-server.
 /// </summary>
 [PublicAPI]
-public sealed record NatsCacheSettings {
+public sealed record NatsObjectStoreBasedCacheSettings {
   /// <summary>
   /// Interval of purging expired entries in the cache.
   /// </summary>
@@ -23,6 +23,11 @@ public sealed record NatsCacheSettings {
   public TimeSpan ExpiredEntriesPurgingInterval { get; set; } = DefaultExpiredEntriesPurgingInterval;
 
   /// <summary>
+  /// Default sliding expiration time of cache entries.
+  /// </summary>
+  public TimeSpan DefaultSlidingExpirationTime { get; set; } = DefaultSlidingExpirationInterval;
+
+  /// <summary>
   /// Validate settings.
   /// </summary>
   /// <returns>
@@ -36,9 +41,17 @@ public sealed record NatsCacheSettings {
         + $"than minimal allowed value {MinimalExpiredEntriesPurgingInterval}.");
     }
 
+    if (DefaultSlidingExpirationTime < MinimalSlidingExpirationInterval) {
+      result.Add(
+        $"Default sliding expiration time of cache entries {DefaultSlidingExpirationTime} is less "
+        + $"than minimal allowed value {MinimalSlidingExpirationInterval}.");
+    }
+
     return result;
   }
 
+  public static readonly TimeSpan DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 10);
+  public static readonly TimeSpan MinimalSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 1);
   public static readonly TimeSpan DefaultExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes: 10);
   public static readonly TimeSpan MinimalExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes: 1);
 }

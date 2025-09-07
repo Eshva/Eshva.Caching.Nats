@@ -30,17 +30,66 @@ internal class CacheEntryMetadata {
   /// <item>If the value is set but can not be parsed return that never expires.</item>
   /// </list>
   /// </value>
-  public DateTimeOffset ExpiresOnUtc {
+  public DateTimeOffset ExpiresAtUtc {
     get =>
-      _entryMetadata.TryGetValue(ExpiresOnValueName, out var expiresOn)
-        ? long.TryParse(expiresOn, CultureInfo.InvariantCulture, out var result) ? new DateTimeOffset(result, TimeSpan.Zero) : NeverExpires
+      _entryMetadata.TryGetValue(nameof(ExpiresAtUtc), out var expiresAtUtc)
+        ? long.TryParse(expiresAtUtc, CultureInfo.InvariantCulture, out var result)
+          ? new DateTimeOffset(result, TimeSpan.Zero)
+          : NeverExpires
         : NeverExpires;
-    set => _entryMetadata[ExpiresOnValueName] = value.Ticks.ToString(CultureInfo.InvariantCulture);
+    set => _entryMetadata[nameof(ExpiresAtUtc)] = value.Ticks.ToString(CultureInfo.InvariantCulture);
+  }
+
+  public DateTimeOffset? AbsoluteExpirationUtc {
+    get {
+      if (!_entryMetadata.TryGetValue(nameof(AbsoluteExpirationUtc), out var absoluteExpiration)) return null;
+      if (DateTimeOffset.TryParseExact(
+            absoluteExpiration,
+            "O",
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.AdjustToUniversal,
+            out var result)) {
+        return result;
+      }
+
+      return null;
+    }
+    set {
+      switch (value) {
+        case null:
+          _entryMetadata.Remove(nameof(AbsoluteExpirationUtc));
+          return;
+        default: _entryMetadata[nameof(AbsoluteExpirationUtc)] = value.Value.ToString("O"); break;
+      }
+    }
+  }
+
+  public TimeSpan? SlidingExpiration {
+    get {
+      if (!_entryMetadata.TryGetValue(nameof(SlidingExpiration), out var slidingExpiration)) return null;
+      if (TimeSpan.TryParseExact(
+            slidingExpiration,
+            "G",
+            CultureInfo.InvariantCulture,
+            TimeSpanStyles.None,
+            out var result)) {
+        return result;
+      }
+
+      return null;
+    }
+    set {
+      switch (value) {
+        case null:
+          _entryMetadata.Remove(nameof(SlidingExpiration));
+          return;
+        default: _entryMetadata[nameof(SlidingExpiration)] = value.Value.ToString("G"); break;
+      }
+    }
   }
 
   public static implicit operator Dictionary<string, string>(CacheEntryMetadata metadata) => metadata._entryMetadata;
 
   private readonly Dictionary<string, string> _entryMetadata;
-  private const string ExpiresOnValueName = "ExpiresOn";
   private static readonly DateTimeOffset NeverExpires = DateTimeOffset.MaxValue;
 }

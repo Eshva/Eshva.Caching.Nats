@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Deployments;
 using Reqnroll;
@@ -20,7 +21,7 @@ public sealed class Hooks {
 
   [BeforeScenario]
   public async Task CreateCaches(ScenarioContext scenarioContext, ITestOutputHelper logger) {
-    var bucketName = scenarioContext.ScenarioInfo.Title.Replace(oldChar: ' ', newChar: '-');
+    var bucketName = Regex.Replace(scenarioContext.ScenarioInfo.Title, "[^a-zA-Z0-9]", "-");
     var objectStore = await _testDeployment.ObjectStoreContext.CreateObjectStoreAsync(bucketName);
     var cachesContext = new CachesContext(objectStore, logger);
     scenarioContext.ScenarioContainer.RegisterInstanceAs(cachesContext);

@@ -6,11 +6,13 @@ namespace Eshva.Caching.Nats.Tests.Tools;
 /// System clock that time could be adjusted. A mock of clock.
 /// </summary>
 public sealed class GovernedSystemClock : ISystemClock {
-  public DateTimeOffset UtcNow => _adjustedTime?.UtcDateTime ?? DateTimeOffset.UtcNow;
+  public GovernedSystemClock(DateTimeOffset utcNow) {
+    _utcNow = utcNow;
+  }
 
-  public void AdjustTime(DateTimeOffset utcNow) => _adjustedTime = utcNow;
+  public DateTimeOffset UtcNow => _utcNow;
 
-  public void Reset() => _adjustedTime = null;
+  public void AdjustTime(TimeSpan adjustment) => _utcNow = _utcNow.Add(adjustment);
 
-  private DateTimeOffset? _adjustedTime;
+  private DateTimeOffset _utcNow;
 }

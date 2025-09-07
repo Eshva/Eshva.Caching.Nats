@@ -30,5 +30,5 @@ internal sealed class NatsServerDeployment : IDeployment {
   private readonly ushort _hostNetworkClientPort;
   private readonly ushort _hostNetworkHttpManagementPort;
   private readonly string _suffix;
-  private NatsContainer _container;
+  private NatsContainer _container = null!;
 }

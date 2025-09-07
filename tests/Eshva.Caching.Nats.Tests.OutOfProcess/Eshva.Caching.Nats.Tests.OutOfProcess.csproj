@@ -13,8 +13,8 @@
     <PackageReference Include="NATS.Client.ObjectStore" Version="2.6.8"/>
     <PackageReference Include="Reqnroll.xUnit" Version="3.0.0"/>
     <PackageReference Include="Testcontainers.Nats" Version="4.7.0"/>
-    <PackageReference Include="xunit" Version="2.6.6"/>
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.6">
+    <PackageReference Include="xunit" Version="2.9.3"/>
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

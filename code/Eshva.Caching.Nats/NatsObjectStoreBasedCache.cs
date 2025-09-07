@@ -1,35 +1,41 @@
 ﻿using System.Buffers;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NATS.Client.ObjectStore;
+using NATS.Client.ObjectStore.Models;
 
 namespace Eshva.Caching.Nats;
 
+/// <summary>
+/// NATS object-store based distributed cache.
+/// </summary>
 [PublicAPI]
-public sealed class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposable {
-  public NatsObjectStoreBaseCache(
+public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDisposable {
+  /// <summary>
+  /// Initializes a new instance of a NATS object-store based distributed cache.
+  /// </summary>
+  /// <param name="cacheBucket">NATS object-store cache bucket.</param>
+  /// <param name="expirationStrategy">Cache entry expiration strategy.</param>
+  /// <param name="expiredEntriesPurger">Expired entries purger.</param>
+  /// <param name="logger">Logger.</param>
+  /// <exception cref="ArgumentNullException">
+  /// One of required arguments isn't specified.
+  /// </exception>
+  public NatsObjectStoreBasedCache(
     INatsObjStore cacheBucket,
-    NatsCacheSettings settings,
-    ISystemClock clock,
-    ILogger<NatsObjectStoreBaseCache>? logger = null) {
+    ICacheEntryExpirationStrategy expirationStrategy,
+    ICacheExpiredEntriesPurger expiredEntriesPurger,
+    ILogger<NatsObjectStoreBasedCache>? logger = null) {
     ArgumentNullException.ThrowIfNull(cacheBucket);
-    ArgumentNullException.ThrowIfNull(settings);
-    ArgumentNullException.ThrowIfNull(clock);
-
-    var settingErrors = settings.Validate();
-    if (settingErrors.Any()) {
-      throw new ArgumentException(
-        "Settings contain the following errors:" + Environment.NewLine + string.Join(Environment.NewLine, settingErrors));
-    }
+    ArgumentNullException.ThrowIfNull(expirationStrategy);
+    ArgumentNullException.ThrowIfNull(expiredEntriesPurger);
 
     _cacheBucket = cacheBucket;
-    _settings = settings;
-    _clock = clock;
-    _logger = logger ?? new NullLogger<NatsObjectStoreBaseCache>();
-    _lastExpirationScan = clock.UtcNow;
+    _expirationStrategy = expirationStrategy;
+    _expiredEntriesPurger = expiredEntriesPurger;
+    _logger = logger ?? new NullLogger<NatsObjectStoreBasedCache>();
   }
 
   /// <summary>
@@ -45,7 +51,6 @@ public sealed class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposa
   /// </para>
   /// </remarks>
   /// <param name="key"></param>
-  /// <param name="token"></param>
   /// <returns>
   /// <para></para>
   /// Depending on different circumstances returns:
@@ -100,6 +105,7 @@ public sealed class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposa
   /// </exception>
   public async Task<byte[]?> GetAsync(string key, CancellationToken token = default) {
     ValidateKey(key);
+    _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
 
     var valueStream = new MemoryStream();
 
@@ -113,6 +119,8 @@ public sealed class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposa
         "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
         key,
         objectMetadata);
+
+      await RefreshExpiresAt(objectMetadata, token);
     }
     catch (NatsObjNotFoundException) {
       return null;
@@ -135,7 +143,6 @@ public sealed class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposa
         $"Should be read {valueStream.Length} bytes but read {bytesRead} bytes for a cache entry wih ID '{key}'.");
     }
 
-    ScanForExpiredItemsIfRequired(token);
     return buffer;
   }
 
@@ -179,53 +186,25 @@ public sealed class NatsObjectStoreBaseCache : IBufferDistributedCache, IDisposa
 
   public void Dispose() { }
 
-  private void ScanForExpiredItemsIfRequired(CancellationToken token) {
-    lock (_scanForExpiredItemsLock) {
-      var utcNow = _clock.UtcNow;
-      var timePassedSinceTheLastPurging = utcNow - _lastExpirationScan;
-      if (timePassedSinceTheLastPurging < _settings.ExpiredEntriesPurgingInterval) {
-        _logger.LogDebug(
-          "Since the last purging expired entries {TimePassed} has passed that is less than {PurgingInterval}. Purging is not required",
-          timePassedSinceTheLastPurging,
-          _settings.ExpiredEntriesPurgingInterval);
-        return;
-      }
-
-      _logger.LogDebug(
-        "Since the last purging expired entries {TimePassed} has passed that is greeter than or equals {PurgingInterval}. Purging is required",
-        timePassedSinceTheLastPurging,
-        _settings.ExpiredEntriesPurgingInterval);
-      _lastExpirationScan = utcNow;
-      Task.Run(() => DeleteExpiredCachedEntries(token), token);
-    }
+  private async Task RefreshExpiresAt(ObjectMetadata objectMetadata, CancellationToken token) {
+    var entryMetadata = EntryMetadata(objectMetadata);
+    entryMetadata.ExpiresAtUtc = _expirationStrategy.CalculateExpiration(
+      entryMetadata.AbsoluteExpirationUtc,
+      entryMetadata.SlidingExpiration);
+    await _cacheBucket.UpdateMetaAsync(objectMetadata.Name, objectMetadata, token);
   }
 
-  private async Task DeleteExpiredCachedEntries(CancellationToken token) {
-    _logger.LogDebug("Deleting expired entries started");
-    var entries = _cacheBucket.ListAsync(cancellationToken: token);
-
-    await foreach (var entry in entries) {
-      if (EntryMetadata(entry.Metadata).ExpiresOnUtc.Ticks >= _clock.UtcNow.Ticks) continue;
-
-      await _cacheBucket.DeleteAsync(entry.Name, token);
-      _logger.LogDebug("Deleted expired entry '{Name}'", entry.Name);
-    }
+  private static CacheEntryMetadata EntryMetadata(ObjectMetadata objectMetadata) {
+    // NOTE: Intentionally violates CQS because ObjectMetadata.Metadata could be null but it's not acceptable in the calling code.
+    objectMetadata.Metadata ??= new Dictionary<string, string>();
+    return new CacheEntryMetadata(objectMetadata.Metadata);
   }
 
-  private static CacheEntryMetadata EntryMetadata(Dictionary<string, string>? entryMetadata) =>
-    new(entryMetadata ?? new Dictionary<string, string>());
+  private static void ValidateKey(string key) => ArgumentException.ThrowIfNullOrWhiteSpace(key, "The key is not specified.");
 
-  private string GetCurrentTimeAsString() => _clock.UtcNow.Ticks.ToString();
-
-  private static void ValidateKey(string key) =>
-    ArgumentException.ThrowIfNullOrWhiteSpace(key, "The key is not specified.");
-
-  private readonly ILogger<NatsObjectStoreBaseCache> _logger;
-  private readonly NatsCacheSettings _settings;
-  private INatsObjStore _cacheBucket;
-  private ISystemClock _clock;
-  private DateTimeOffset _lastExpirationScan;
-  private Lock _scanForExpiredItemsLock = new();
-  private const int DefaultBucketSizeInMebibytes = 100;
-  private const string ExpireOnMetadataKey = "ExpireOn";
+  private readonly INatsObjStore _cacheBucket;
+  private readonly ICacheEntryExpirationStrategy _cacheEntryExpirationStrategy;
+  private readonly ICacheEntryExpirationStrategy _expirationStrategy;
+  private readonly ICacheExpiredEntriesPurger _expiredEntriesPurger;
+  private readonly ILogger<NatsObjectStoreBasedCache> _logger;
 }

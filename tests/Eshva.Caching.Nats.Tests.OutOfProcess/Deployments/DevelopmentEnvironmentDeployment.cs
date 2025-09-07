@@ -14,9 +14,9 @@ internal sealed class DevelopmentEnvironmentDeployment : IDeployment {
     _natsServerDeployment = new NatsServerDeployment(_suffix, hostNetworkClientPort, hostNetworkHttpManagementPort);
   }
 
-  public INatsConnection NatsConnection { get; private set; }
+  public INatsConnection NatsConnection { get; private set; } = null!;
 
-  public INatsObjContext ObjectStoreContext { get; private set; }
+  public INatsObjContext ObjectStoreContext { get; private set; } = null!;
 
   public async Task Build() => await _natsServerDeployment.Build();
 
