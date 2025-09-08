@@ -154,8 +154,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
     string key,
     byte[] value,
     DistributedCacheEntryOptions options,
-    CancellationToken token = new()) =>
-    throw new NotImplementedException();
+    CancellationToken token = new()) { }
 
   /// TODO: COPY LATER!
   public void Refresh(string key) => throw new NotImplementedException();

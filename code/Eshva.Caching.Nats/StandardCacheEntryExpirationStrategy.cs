@@ -12,24 +12,22 @@ namespace Eshva.Caching.Nats;
 [PublicAPI]
 public class StandardCacheEntryExpirationStrategy : ICacheEntryExpirationStrategy {
   /// <summary>
-  /// Initializes new instance of standard cache entry expiration strategy with default sliding expiration time
-  /// <paramref name="defaultSlidingExpirationTime"/> and system clock <paramref name="clock"/>.
+  /// Initializes new instance of standard cache entry expiration strategy with system clock <paramref name="clock"/>.
   /// </summary>
   /// <remarks>
-  /// If <paramref name="clock"/> isn't specified the computer system clock will be used. If
-  /// <paramref name="defaultSlidingExpirationTime"/> isn't specified <see cref="DefaultSlidingExpirationInterval"/> is used
-  /// as its value.
+  /// If <paramref name="clock"/> isn't specified the computer system clock will be used.
   /// </remarks>
-  /// <param name="defaultSlidingExpirationTime">Default sliding expiration time of cache entries.</param>
+  /// <param name="expirationStrategySettings">Expiration strategy settings.</param>
   /// <param name="clock">System clock.</param>
   public StandardCacheEntryExpirationStrategy(
-    TimeSpan? defaultSlidingExpirationTime = null,
+    ExpirationStrategySettings expirationStrategySettings,
     ISystemClock? clock = null) {
-    DefaultSlidingExpirationTime = defaultSlidingExpirationTime ?? DefaultSlidingExpirationInterval;
+    ArgumentNullException.ThrowIfNull(expirationStrategySettings);
+    DefaultSlidingExpirationInterval = expirationStrategySettings.DefaultSlidingExpirationInterval;
     _clock = clock ?? new SystemClock();
   }
 
-  public TimeSpan DefaultSlidingExpirationTime { get; }
+  public TimeSpan DefaultSlidingExpirationInterval { get; }
 
   /// <inheritdoc/>
   /// <remarks>
@@ -49,18 +47,17 @@ public class StandardCacheEntryExpirationStrategy : ICacheEntryExpirationStrateg
   /// If both <paramref name="absoluteExpirationUtc"/> and <paramref name="slidingExpiration"/> given and absolute
   /// expiration happens earlier than sliding returns <paramref name="absoluteExpirationUtc"/>.
   /// </item>
-  /// <item>If both arguments not provided returns current UTC-time plus <see cref="DefaultSlidingExpirationTime"/> value.</item>
+  /// <item>If both arguments not provided returns current UTC-time plus <see cref="DefaultSlidingExpirationInterval"/> value.</item>
   /// <item>Otherwise returns current UTC-time plus <paramref name="slidingExpiration"/> value.</item>
   /// </list>
   /// </remarks>
   public DateTimeOffset CalculateExpiration(DateTimeOffset? absoluteExpirationUtc, TimeSpan? slidingExpiration) {
     if (absoluteExpirationUtc.HasValue && !slidingExpiration.HasValue) return absoluteExpirationUtc.Value;
     if (!absoluteExpirationUtc.HasValue && slidingExpiration.HasValue) return _clock.UtcNow.Add(slidingExpiration.Value);
-    if (!absoluteExpirationUtc.HasValue || !slidingExpiration.HasValue) return _clock.UtcNow.Add(DefaultSlidingExpirationTime);
+    if (!absoluteExpirationUtc.HasValue || !slidingExpiration.HasValue) return _clock.UtcNow.Add(DefaultSlidingExpirationInterval);
     var slidingExpirationUtc = _clock.UtcNow.Add(slidingExpiration.Value);
     return absoluteExpirationUtc.Value <= slidingExpirationUtc ? absoluteExpirationUtc.Value : slidingExpirationUtc;
   }
 
   private readonly ISystemClock _clock;
-  public static readonly TimeSpan DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 10);
 }

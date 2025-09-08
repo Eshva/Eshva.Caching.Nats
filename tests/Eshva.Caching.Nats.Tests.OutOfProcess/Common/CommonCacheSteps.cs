@@ -67,5 +67,16 @@ public class CommonCacheSteps {
     objectMetadata.Should().NotBeNull();
   }
 
+  [Given("expired entries purging interval {int} minutes")]
+  public void GivenExpiredEntriesPurgingIntervalMinutes(int minutes) =>
+    _cachesContext.ExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes);
+
+  [Given("default sliding expiration interval {int} minutes")]
+  public void GivenDefaultSlidingExpirationIntervalMinutes(int minutes) =>
+    _cachesContext.DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes);
+
   private readonly CachesContext _cachesContext;
+
+  [Given("object-store based cache")]
+  public void GivenObjectStoreBasedCache() => _cachesContext.CreateAndAssignCacheServices();
 }

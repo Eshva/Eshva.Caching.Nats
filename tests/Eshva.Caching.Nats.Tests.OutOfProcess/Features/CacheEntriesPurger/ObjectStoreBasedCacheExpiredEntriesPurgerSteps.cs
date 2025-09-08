@@ -1,5 +1,6 @@
 ﻿using System;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
+using Meziantou.Extensions.Logging.Xunit;
 using Reqnroll;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.CacheEntriesPurger;
@@ -15,10 +16,16 @@ public class ObjectStoreBasedCacheExpiredEntriesPurgerSteps {
     var purgingInterval = TimeSpan.FromMinutes(minutes);
     _sut = new ObjectStoreBasedCacheExpiredEntriesPurger(
       _cachesContext.Bucket,
-      _cachesContext.ExpirationStrategy,
-      purgingInterval,
+      new StandardCacheEntryExpirationStrategy(
+        new ExpirationStrategySettings {
+          DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 1)
+        },
+        _cachesContext.Clock),
+      new PurgerSettings {
+        ExpiredEntriesPurgingInterval = purgingInterval
+      },
       _cachesContext.Clock,
-      _cachesContext.Logger);
+      XUnitLogger.CreateLogger<ObjectStoreBasedCacheExpiredEntriesPurger>(_cachesContext.XUnitLogger));
   }
 
   [When("I request scan for expired entries if required")]

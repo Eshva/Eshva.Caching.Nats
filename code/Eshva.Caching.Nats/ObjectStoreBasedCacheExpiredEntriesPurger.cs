@@ -14,27 +14,25 @@ public sealed class ObjectStoreBasedCacheExpiredEntriesPurger : StandardExpiredC
   /// </summary>
   /// <param name="cacheBucket">NATS object-store cache bucket.</param>
   /// <param name="cacheEntryExpirationStrategy">Cache entry expiration strategy.</param>
-  /// <param name="expiredEntriesPurgingInterval">Purging interval.</param>
+  /// <param name="purgerSettings">Purger settings.</param>
   /// <param name="clock">System clock.</param>
   /// <param name="logger">Logger.</param>
   /// <exception cref="ArgumentOutOfRangeException">
-  /// <paramref name="expiredEntriesPurgingInterval"/> value is less than <see cref="MinimalExpiredEntriesPurgingInterval"/>.
+  /// <paramref name="purgerSettings"/>.ExpiredEntriesPurgingInterval value is less than 1 minute.
   /// </exception>
   public ObjectStoreBasedCacheExpiredEntriesPurger(
     INatsObjStore cacheBucket,
     ICacheEntryExpirationStrategy cacheEntryExpirationStrategy,
-    TimeSpan? expiredEntriesPurgingInterval = null,
+    PurgerSettings purgerSettings,
     ISystemClock? clock = null,
-    ILogger<ObjectStoreBasedCacheExpiredEntriesPurger>? logger = null) : base(expiredEntriesPurgingInterval, clock, logger) {
+    ILogger<ObjectStoreBasedCacheExpiredEntriesPurger>? logger = null) : base(
+    purgerSettings,
+    TimeSpan.FromMinutes(minutes: 1),
+    clock,
+    logger) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
     _cacheEntryExpirationStrategy = cacheEntryExpirationStrategy ?? throw new ArgumentNullException(nameof(cacheEntryExpirationStrategy));
   }
-
-  /// <inheritdoc/>
-  protected override TimeSpan DefaultExpiredEntriesPurgingInterval => TimeSpan.FromMinutes(minutes: 10);
-
-  /// <inheritdoc/>
-  protected override TimeSpan MinimalExpiredEntriesPurgingInterval => TimeSpan.FromMinutes(minutes: 1);
 
   /// <inheritdoc/>
   protected override async Task DeleteExpiredCacheEntries(CancellationToken token) {

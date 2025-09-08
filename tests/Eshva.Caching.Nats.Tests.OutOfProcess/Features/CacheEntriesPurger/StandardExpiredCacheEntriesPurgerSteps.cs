@@ -19,10 +19,6 @@ public class StandardExpiredCacheEntriesPurgerSteps {
   public void GivenMinimalExpiredEntriesPurgingIntervalIsMinutes(int minutes) =>
     _minimalExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes);
 
-  [Given("default expired entries purging interval is {int} minutes")]
-  public void GivenDefaultExpiredEntriesPurgingIntervalIsMinutes(int minutes) =>
-    _defaultExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes);
-
   [When("I construct standard purger with purging interval of (.*) minutes and clock set at today (.*)")]
   public void WhenIConstructStandardPurgerWithPurgingIntervalOfIntMinutesAndClockSetAtToday(
     int purgingIntervalMinutes,
@@ -30,33 +26,27 @@ public class StandardExpiredCacheEntriesPurgerSteps {
     var purgingInterval = TimeSpan.FromMinutes(purgingIntervalMinutes);
     _cachesContext.Clock.AdjustTime(currentTime);
     try {
-      _sut = new TestPurger(
-        _defaultExpiredEntriesPurgingInterval,
-        _minimalExpiredEntriesPurgingInterval,
-        purgingInterval,
-        _cachesContext.Clock);
+      _sut = new TestPurger(purgingInterval, _minimalExpiredEntriesPurgingInterval, _cachesContext.Clock);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
     }
   }
 
-  [When("I construct standard purger without purging interval")]
-  public void WhenIConstructStandardPurgerWithoutPurgingInterval() {
+  [When("I construct standard purger with purging interval of (.*) minutes")]
+  public void WhenIConstructStandardPurgerWithPurgingIntervalOf(int purgingIntervalMinutes) {
+    var purgingInterval = TimeSpan.FromMinutes(purgingIntervalMinutes);
     try {
-      _sut = new TestPurger(
-        _defaultExpiredEntriesPurgingInterval,
-        _minimalExpiredEntriesPurgingInterval,
-        clock: _cachesContext.Clock);
+      _sut = new TestPurger(purgingInterval, _minimalExpiredEntriesPurgingInterval, _cachesContext.Clock);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
     }
   }
 
-  [Then("purging interval should be set to default purging interval")]
-  public async Task ThenPurgingIntervalShouldBeSetToDefaultPurgingInterval() {
-    _cachesContext.Clock.AdjustTime(_defaultExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: 1)));
+  [Then("purging should start after {int} minutes")]
+  public async Task ThenPurgingShouldStartAfterMinutes(int minutes) {
+    _cachesContext.Clock.AdjustTime(TimeSpan.FromMinutes(minutes));
     _sut.ScanForExpiredEntriesIfRequired();
     for (var turn = 0; turn < 10; turn++) {
       if (_sut.IsPurgeStarted) return;
@@ -68,26 +58,22 @@ public class StandardExpiredCacheEntriesPurgerSteps {
 
   private readonly CachesContext _cachesContext;
   private readonly ErrorHandlingContext _errorHandlingContext;
+  private TimeSpan _minimalExpiredEntriesPurgingInterval;
   private TestPurger _sut = null!;
-  private static TimeSpan _defaultExpiredEntriesPurgingInterval;
-  private static TimeSpan _minimalExpiredEntriesPurgingInterval;
 
   private sealed class TestPurger : StandardExpiredCacheEntriesPurger {
     public TestPurger(
-      TimeSpan defaultExpiredEntriesPurgingInterval,
+      TimeSpan expiredEntriesPurgingInterval,
       TimeSpan minimalExpiredEntriesPurgingInterval,
-      TimeSpan? expiredEntriesPurgingInterval = null,
-      ISystemClock? clock = null)
-      : base(expiredEntriesPurgingInterval, clock) {
-      _defaultExpiredEntriesPurgingInterval = defaultExpiredEntriesPurgingInterval;
-      _minimalExpiredEntriesPurgingInterval = minimalExpiredEntriesPurgingInterval;
-    }
+      ISystemClock clock)
+      : base(
+        new PurgerSettings {
+          ExpiredEntriesPurgingInterval = expiredEntriesPurgingInterval
+        },
+        minimalExpiredEntriesPurgingInterval,
+        clock) { }
 
     public bool IsPurgeStarted { get; private set; }
-
-    protected override TimeSpan DefaultExpiredEntriesPurgingInterval => _defaultExpiredEntriesPurgingInterval;
-
-    protected override TimeSpan MinimalExpiredEntriesPurgingInterval => _minimalExpiredEntriesPurgingInterval;
 
     protected override Task DeleteExpiredCacheEntries(CancellationToken token) {
       IsPurgeStarted = true;
