@@ -302,15 +302,9 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
     ValidateKey(key);
     await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
 
-    var valueStream = new MemoryStream();
     try {
-      var objectMetadata = await _cacheBucket.GetAsync(
-        key,
-        valueStream,
-        leaveOpen: true,
-        token);
-      valueStream.Seek(offset: 0, SeekOrigin.Begin);
-      destination.Write(valueStream.ToArray());
+      destination.Write(await _cacheBucket.GetBytesAsync(key, token));
+      var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, token);
 
       _logger.LogDebug(
         "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
