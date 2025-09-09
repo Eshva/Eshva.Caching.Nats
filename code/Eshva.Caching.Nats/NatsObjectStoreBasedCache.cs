@@ -216,14 +216,44 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
       await RefreshExpiresAt(objectMetadata, token);
     }
     catch (NatsObjException exception) {
-      throw new InvalidOperationException($"An entry with the key '{key}' could not be found in the cache.", exception);
+      throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.", exception);
     }
   }
 
-  /// TODO: COPY LATER!
-  public void Remove(string key) => throw new NotImplementedException();
+  /// <summary>
+  /// Remove a cache entry.
+  /// </summary>
+  /// <remarks>
+  /// If cache entry doesn't exist or removed no exception will be thrown.
+  /// </remarks>
+  /// <param name="key">The key of removing cache entry.</param>
+  /// <exception cref="InvalidOperationException">
+  /// Cache entry metadata are corrupted.
+  /// </exception>
+  public void Remove(string key) => RemoveAsync(key).GetAwaiter().GetResult();
 
-  public async Task RemoveAsync(string key, CancellationToken token = new()) => throw new NotImplementedException();
+  /// <summary>
+  /// Remove a cache entry.
+  /// </summary>
+  /// <remarks>
+  /// If cache entry doesn't exist or removed no exception will be thrown.
+  /// </remarks>
+  /// <param name="key">The key of removing cache entry.</param>
+  /// <param name="token">Cancellation token.</param>
+  /// <exception cref="InvalidOperationException">
+  /// Cache entry metadata are corrupted.
+  /// </exception>
+  public async Task RemoveAsync(string key, CancellationToken token = new()) {
+    ValidateKey(key);
+    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
+
+    try {
+      await _cacheBucket.DeleteAsync(key, token);
+    }
+    catch (NatsObjException exception) {
+      throw new InvalidOperationException($"An occurred on removing entry with key '{key}'.", exception);
+    }
+  }
 
   /// TODO: COPY LATER!
   public bool TryGet(string key, IBufferWriter<byte> destination) => throw new NotImplementedException();

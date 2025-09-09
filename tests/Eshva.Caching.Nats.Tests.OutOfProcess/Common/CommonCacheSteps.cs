@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using Eshva.Caching.Nats.Tests.Tools;
 using FluentAssertions;
 using NATS.Client.ObjectStore;
 using Reqnroll;
@@ -91,6 +92,12 @@ public class CommonCacheSteps {
 
   [Given("object with key {string} removed from object-store bucket")]
   public async Task GivenEntryWithKeyStringRemovedFromCache(string key) => await _cachesContext.Bucket.DeleteAsync(key);
+
+  [Given("metadata of cache entry with key {string} corrupted")]
+  public async Task GivenMetadataOfCacheEntryWithKeyStringCorrupted(string key) {
+    var metadataCorrupter = new ObjectEntryMetadataCorrupter();
+    await metadataCorrupter.CorruptEntryMetadata(_cachesContext.Bucket, key);
+  }
 
   private readonly CachesContext _cachesContext;
 }

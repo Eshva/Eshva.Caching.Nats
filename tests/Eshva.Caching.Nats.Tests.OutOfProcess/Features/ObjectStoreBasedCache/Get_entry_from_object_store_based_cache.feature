@@ -25,7 +25,8 @@
     Then invalid operation exception should be reported
 
   Scenario: 05. Get cache entry with corrupted metadata synchronously should get error
-    When I get from cache some entry with corrupted metadata synchronously
+    Given metadata of cache entry with key 'will be gotten' corrupted
+    When I get 'will be gotten' cache entry asynchronously
     Then invalid operation exception should be reported
 
   Scenario: 06. Get cache entry operation triggers purging expired entries if its interval has passed
