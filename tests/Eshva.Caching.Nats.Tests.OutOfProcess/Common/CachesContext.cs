@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 
-public class CachesContext : IDisposable {
+public class CachesContext {
   public CachesContext(INatsObjStore objectStore, ITestOutputHelper xUnitLogger) {
     _xUnitLogger = xUnitLogger;
     Bucket = objectStore;
@@ -62,8 +62,6 @@ public class CachesContext : IDisposable {
       expiredEntriesPurger,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
   }
-
-  public void Dispose() => Cache.Dispose();
 
   private readonly ITestOutputHelper _xUnitLogger;
 }

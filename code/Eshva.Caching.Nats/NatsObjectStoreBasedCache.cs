@@ -12,7 +12,7 @@ namespace Eshva.Caching.Nats;
 /// NATS object-store based distributed cache.
 /// </summary>
 [PublicAPI]
-public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDisposable {
+public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <summary>
   /// Initializes a new instance of a NATS object-store based distributed cache.
   /// </summary>
@@ -331,8 +331,6 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
     ReadOnlySequence<byte> value,
     DistributedCacheEntryOptions options,
     CancellationToken token = new()) { }
-
-  public void Dispose() { }
 
   private Dictionary<string, string> FillCacheEntryMetadata(DistributedCacheEntryOptions options) {
     var absoluteExpirationUtc = _expirationStrategy.CalculateAbsoluteExpiration(
