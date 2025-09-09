@@ -44,15 +44,14 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
   /// <remarks>
   /// <para>
   /// Read the key <paramref name="key"/> value from the object-store bucket and returns it as a byte array if it's
-  /// found.
+  /// found. If entry has a sliding expiration its expiration time could be refreshed (depends on the purger used).
   /// </para>
   /// <para>
   /// If it's time purge all expired entries in the cache.
   /// </para>
   /// </remarks>
-  /// <param name="key"></param>
+  /// <param name="key">Cache entry key.</param>
   /// <returns>
-  /// <para></para>
   /// Depending on different circumstances returns:
   /// <list type="bullet">
   /// <item>byte array - read key value,</item>
@@ -77,16 +76,15 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
   /// <remarks>
   /// <para>
   /// Read the key <paramref name="key"/> value from the object-store bucket and returns it as a byte array if it's
-  /// found.
+  /// found. If entry has a sliding expiration its expiration time could be refreshed (depends on the purger used).
   /// </para>
   /// <para>
   /// If it's time purge all expired entries in the cache.
   /// </para>
   /// </remarks>
-  /// <param name="key"></param>
-  /// <param name="token"></param>
+  /// <param name="key">Cache entry key.</param>
+  /// <param name="token">Cancellation token.</param>
   /// <returns>
-  /// <para></para>
   /// Depending on different circumstances returns:
   /// <list type="bullet">
   /// <item>byte array - read key value,</item>
@@ -105,7 +103,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
   /// </exception>
   public async Task<byte[]?> GetAsync(string key, CancellationToken token = default) {
     ValidateKey(key);
-    _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
+    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
 
     var valueStream = new MemoryStream();
 
@@ -156,10 +154,41 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
     DistributedCacheEntryOptions options,
     CancellationToken token = new()) { }
 
-  /// TODO: COPY LATER!
-  public void Refresh(string key) => throw new NotImplementedException();
+  /// <summary>
+  /// Refresh expiration time of the cache entry with <paramref name="key"/>.
+  /// </summary>
+  /// <param name="key">The key of refreshing cache entry.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  /// <exception cref="InvalidOperationException">
+  /// Cache entry with <paramref name="key"/> not found.
+  /// </exception>
+  public void Refresh(string key) => RefreshAsync(key).GetAwaiter().GetResult();
 
-  public async Task RefreshAsync(string key, CancellationToken token = new()) => throw new NotImplementedException();
+  /// <summary>
+  /// Refresh expiration time of the cache entry with <paramref name="key"/>.
+  /// </summary>
+  /// <param name="key">The key of refreshing cache entry.</param>
+  /// <param name="token">Cancellation token.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  /// <exception cref="InvalidOperationException">
+  /// Cache entry with <paramref name="key"/> not found.
+  /// </exception>
+  public async Task RefreshAsync(string key, CancellationToken token = new()) {
+    ValidateKey(key);
+    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
+
+    try {
+      var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, token);
+      await RefreshExpiresAt(objectMetadata, token);
+    }
+    catch (NatsObjException exception) {
+      throw new InvalidOperationException($"An entry with the key '{key}' could not be found in the cache.", exception);
+    }
+  }
 
   /// TODO: COPY LATER!
   public void Remove(string key) => throw new NotImplementedException();

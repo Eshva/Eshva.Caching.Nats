@@ -4,13 +4,13 @@ using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using Eshva.Caching.Nats.Tests.Tools;
 using Reqnroll;
 
-namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.GetEntry;
+namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.ObjectStoreBasedCache;
 
 [Binding]
 public class GetEntrySteps {
   public GetEntrySteps(CachesContext cachesContext, ErrorHandlingContext errorHandlingContext) {
-    _errorHandlingContext = errorHandlingContext;
     _cachesContext = cachesContext;
+    _errorHandlingContext = errorHandlingContext;
   }
 
   [When("I get {string} cache entry asynchronously")]

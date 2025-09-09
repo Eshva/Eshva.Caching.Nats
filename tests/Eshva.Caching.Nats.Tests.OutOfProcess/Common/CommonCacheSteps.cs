@@ -26,6 +26,8 @@ public class CommonCacheSteps {
       ExpiresAtUtc = _cachesContext.Clock.UtcNow.AddMinutes(expiresInMinutes),
       SlidingExpiration = TimeSpan.FromMinutes(expiresInMinutes)
     };
+    _cachesContext.XUnitLogger.WriteLine(
+      $"Put entry '{key}' that expires at {new CacheEntryMetadata(objectMetadata.Metadata!).ExpiresAtUtc}");
     await _cachesContext.Bucket.UpdateMetaAsync(key, objectMetadata);
   }
 
@@ -50,7 +52,6 @@ public class CommonCacheSteps {
   [Then("{string} entry is not present in the object-store bucket")]
   public async Task ThenEntryIsNotPresentInTheObjectStoreBucket(string key) {
     try {
-      await Task.Delay(millisecondsDelay: 100); // Timeout required to finish cache entries removing.
       await _cachesContext.Bucket.GetInfoAsync(key);
     }
     catch (NatsObjNotFoundException) {
@@ -75,8 +76,21 @@ public class CommonCacheSteps {
   public void GivenDefaultSlidingExpirationIntervalMinutes(int minutes) =>
     _cachesContext.DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes);
 
-  private readonly CachesContext _cachesContext;
+  [Given("object-store based cache with synchronous purge")]
+  public void GivenObjectStoreBasedCacheWithSynchronousPurge() => _cachesContext.CreateAndAssignCacheServices();
 
-  [Given("object-store based cache")]
-  public void GivenObjectStoreBasedCache() => _cachesContext.CreateAndAssignCacheServices();
+  [Given("clock set at today (.*)")]
+  public void GivenClockSetAtToday(TimeSpan timeOfDay) => _cachesContext.Clock.SetTimeOfDay(timeOfDay);
+
+  [Then("'(.*)' entry should be expired today at (.*)")]
+  public async Task ThenEntryShouldBeExpiredTodayAt(string key, TimeSpan timeOfDay) {
+    var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
+    var metadata = new CacheEntryMetadata(objectMetadata.Metadata);
+    metadata.ExpiresAtUtc.Should().Be(_cachesContext.Today.Add(timeOfDay));
+  }
+
+  [Given("object with key {string} removed from object-store bucket")]
+  public async Task GivenEntryWithKeyStringRemovedFromCache(string key) => await _cachesContext.Bucket.DeleteAsync(key);
+
+  private readonly CachesContext _cachesContext;
 }

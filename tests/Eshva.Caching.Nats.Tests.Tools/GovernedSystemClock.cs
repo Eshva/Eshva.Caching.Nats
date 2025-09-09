@@ -14,5 +14,7 @@ public sealed class GovernedSystemClock : ISystemClock {
 
   public void AdjustTime(TimeSpan adjustment) => _utcNow = _utcNow.Add(adjustment);
 
+  public void SetTimeOfDay(TimeSpan timeOfDay) => _utcNow = _utcNow.Subtract(_utcNow.TimeOfDay).Add(timeOfDay);
+
   private DateTimeOffset _utcNow;
 }
