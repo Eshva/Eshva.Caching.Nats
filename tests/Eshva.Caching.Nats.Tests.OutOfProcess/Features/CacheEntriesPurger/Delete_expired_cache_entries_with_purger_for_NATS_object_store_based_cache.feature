@@ -3,7 +3,7 @@
   Background:
     Given entry with key 'expires in 3 minutes' and value 'expires in 3 minutes value' which expires in 3 minutes put into cache
     And entry with key 'expires in 1 minute' and value 'expires in 1 minute value' which expires in 1 minutes put into cache
-    And purger for NATS object-store based cache with purging interval 2 minutes
+    And purger for NATS object-store based cache with purging interval 2 minutes with synchronous purge
 
   Scenario: 01. Purger should remove expired entries from object-store if passed more time than purging interval
     Given time passed by 2 minutes

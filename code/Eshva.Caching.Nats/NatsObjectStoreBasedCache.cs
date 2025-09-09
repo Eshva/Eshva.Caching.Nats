@@ -144,15 +144,45 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
     return buffer;
   }
 
-  /// TODO: COPY LATER!
-  public void Set(string key, byte[] value, DistributedCacheEntryOptions options) =>
-    throw new NotImplementedException();
+  /// <summary>
+  /// Set a cache entry value.
+  /// </summary>
+  /// <param name="key">The key of cache entry.</param>
+  /// <param name="value">The value of cache entry.</param>
+  /// <param name="options">Expiration options.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  public void Set(string key, byte[] value, DistributedCacheEntryOptions options) => SetAsync(key, value, options).GetAwaiter().GetResult();
 
+  /// <summary>
+  /// Set a cache entry value.
+  /// </summary>
+  /// <param name="key">The key of cache entry.</param>
+  /// <param name="value">The value of cache entry.</param>
+  /// <param name="options">Expiration options.</param>
+  /// <param name="token">Cancellation token.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
   public async Task SetAsync(
     string key,
     byte[] value,
     DistributedCacheEntryOptions options,
-    CancellationToken token = new()) { }
+    CancellationToken token = new()) {
+    ValidateKey(key);
+    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
+
+    try {
+      var objectMetadata = await _cacheBucket.PutAsync(key, value, token);
+      objectMetadata.Metadata = FillCacheEntryMetadata(options);
+      await _cacheBucket.UpdateMetaAsync(key, objectMetadata, token);
+      _logger.LogDebug("An entry with '{Key}' put into cache", key);
+    }
+    catch (NatsObjException exception) {
+      throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.", exception);
+    }
+  }
 
   /// <summary>
   /// Refresh expiration time of the cache entry with <paramref name="key"/>.
@@ -209,23 +239,28 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
     string key,
     ReadOnlySequence<byte> value,
     DistributedCacheEntryOptions options,
-    CancellationToken token = new()) =>
-    throw new NotImplementedException();
+    CancellationToken token = new()) { }
 
   public void Dispose() { }
 
+  private Dictionary<string, string> FillCacheEntryMetadata(DistributedCacheEntryOptions options) {
+    var absoluteExpirationUtc = _expirationStrategy.CalculateAbsoluteExpiration(
+      options.AbsoluteExpiration,
+      options.AbsoluteExpirationRelativeToNow);
+    return new CacheEntryMetadata {
+      SlidingExpiration = options.SlidingExpiration,
+      AbsoluteExpirationUtc = absoluteExpirationUtc,
+      ExpiresAtUtc = _expirationStrategy.CalculateExpiration(absoluteExpirationUtc, options.SlidingExpiration)
+    };
+  }
+
   private async Task RefreshExpiresAt(ObjectMetadata objectMetadata, CancellationToken token) {
-    var entryMetadata = EntryMetadata(objectMetadata);
+    objectMetadata.Metadata ??= new Dictionary<string, string>();
+    var entryMetadata = new CacheEntryMetadata(objectMetadata.Metadata);
     entryMetadata.ExpiresAtUtc = _expirationStrategy.CalculateExpiration(
       entryMetadata.AbsoluteExpirationUtc,
       entryMetadata.SlidingExpiration);
     await _cacheBucket.UpdateMetaAsync(objectMetadata.Name, objectMetadata, token);
-  }
-
-  private static CacheEntryMetadata EntryMetadata(ObjectMetadata objectMetadata) {
-    // NOTE: Intentionally violates CQS because ObjectMetadata.Metadata could be null but it's not acceptable in the calling code.
-    objectMetadata.Metadata ??= new Dictionary<string, string>();
-    return new CacheEntryMetadata(objectMetadata.Metadata);
   }
 
   private static void ValidateKey(string key) => ArgumentException.ThrowIfNullOrWhiteSpace(key, "The key is not specified.");

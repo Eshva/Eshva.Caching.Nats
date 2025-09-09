@@ -13,7 +13,7 @@ internal class CacheEntryMetadata {
   /// <exception cref="ArgumentNullException">
   /// Entry meta-data dictionary is not specified.
   /// </exception>
-  public CacheEntryMetadata(Dictionary<string, string>? entryMetadata) {
+  public CacheEntryMetadata(Dictionary<string, string>? entryMetadata = null) {
     _entryMetadata = entryMetadata ?? new Dictionary<string, string>();
   }
 
