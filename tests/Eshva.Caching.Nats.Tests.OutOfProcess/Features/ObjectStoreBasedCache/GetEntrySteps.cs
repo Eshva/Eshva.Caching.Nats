@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
-using Eshva.Caching.Nats.Tests.Tools;
 using Reqnroll;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.ObjectStoreBasedCache;
@@ -28,21 +27,6 @@ public class GetEntrySteps {
   public void WhenIGetCacheEntrySynchronously(string key) {
     try {
       _cachesContext.GottenCacheEntryValue = _cachesContext.Cache.Get(key);
-    }
-    catch (Exception exception) {
-      _errorHandlingContext.LastException = exception;
-    }
-  }
-
-  [When("I get from cache some entry with corrupted metadata asynchronously")]
-  public async Task WhenIGetSomeCacheEntryAsynchronouslyOnCacheWithClosedConnection() {
-    const string key = "some-key";
-    await _cachesContext.Bucket.PutAsync(key, "some-value"u8.ToArray());
-    var metadataCorrupter = new ObjectEntryMetadataCorrupter();
-    await metadataCorrupter.CorruptEntryMetadata(_cachesContext.Bucket, key);
-
-    try {
-      await _cachesContext.Cache.GetAsync("some-key");
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;

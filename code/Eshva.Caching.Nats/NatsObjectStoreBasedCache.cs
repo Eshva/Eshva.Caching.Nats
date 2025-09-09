@@ -227,6 +227,9 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
   /// If cache entry doesn't exist or removed no exception will be thrown.
   /// </remarks>
   /// <param name="key">The key of removing cache entry.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
   /// <exception cref="InvalidOperationException">
   /// Cache entry metadata are corrupted.
   /// </exception>
@@ -240,6 +243,9 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
   /// </remarks>
   /// <param name="key">The key of removing cache entry.</param>
   /// <param name="token">Cancellation token.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
   /// <exception cref="InvalidOperationException">
   /// Cache entry metadata are corrupted.
   /// </exception>
@@ -255,12 +261,73 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache, IDispos
     }
   }
 
-  /// TODO: COPY LATER!
-  public bool TryGet(string key, IBufferWriter<byte> destination) => throw new NotImplementedException();
+  /// <summary>
+  /// Try to get a cache entry.
+  /// </summary>
+  /// <param name="key">Cache entry key.</param>
+  /// <param name="destination">Buffer writer to write cache entry value into.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  /// <returns>
+  /// <c>true</c> - value successfully read, <c>false</c> - entry not found in the cache.
+  /// </returns>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  /// <exception cref="InvalidOperationException">
+  /// Failed to read cache key value.
+  /// </exception>
+  public bool TryGet(string key, IBufferWriter<byte> destination) => TryGetAsync(key, destination).GetAwaiter().GetResult();
 
-  public async ValueTask<bool>
-    TryGetAsync(string key, IBufferWriter<byte> destination, CancellationToken token = new()) =>
-    throw new NotImplementedException();
+  /// <summary>
+  /// Try to get a cache entry.
+  /// </summary>
+  /// <param name="key">Cache entry key.</param>
+  /// <param name="destination">Buffer writer to write cache entry value into.</param>
+  /// <param name="token">Cancellation token.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  /// <returns>
+  /// <c>true</c> - value successfully read, <c>false</c> - entry not found in the cache.
+  /// </returns>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  /// <exception cref="InvalidOperationException">
+  /// Failed to read cache key value.
+  /// </exception>
+  public async ValueTask<bool> TryGetAsync(string key, IBufferWriter<byte> destination, CancellationToken token = new()) {
+    ValidateKey(key);
+    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
+
+    var valueStream = new MemoryStream();
+    try {
+      var objectMetadata = await _cacheBucket.GetAsync(
+        key,
+        valueStream,
+        leaveOpen: true,
+        token);
+      valueStream.Seek(offset: 0, SeekOrigin.Begin);
+      destination.Write(valueStream.ToArray());
+
+      _logger.LogDebug(
+        "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
+        key,
+        objectMetadata);
+
+      await RefreshExpiresAt(objectMetadata, token);
+
+      return true;
+    }
+    catch (NatsObjNotFoundException) {
+      return false;
+    }
+    catch (NatsObjException exception) {
+      throw new InvalidOperationException($"Failed to read cache key '{key}' value.", exception);
+    }
+  }
 
   public void Set(string key, ReadOnlySequence<byte> value, DistributedCacheEntryOptions options) =>
     throw new NotImplementedException();
