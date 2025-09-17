@@ -13,7 +13,7 @@ internal class CacheEntryMetadata {
   /// <exception cref="ArgumentNullException">
   /// Entry meta-data dictionary is not specified.
   /// </exception>
-  public CacheEntryMetadata(Dictionary<string, string>? entryMetadata) {
+  public CacheEntryMetadata(Dictionary<string, string>? entryMetadata = null) {
     _entryMetadata = entryMetadata ?? new Dictionary<string, string>();
   }
 
@@ -59,7 +59,7 @@ internal class CacheEntryMetadata {
         case null:
           _entryMetadata.Remove(nameof(AbsoluteExpirationUtc));
           return;
-        default: _entryMetadata[nameof(AbsoluteExpirationUtc)] = value.Value.ToString("O"); break;
+        default: _entryMetadata[nameof(AbsoluteExpirationUtc)] = value.Value.ToString("O", CultureInfo.InvariantCulture); break;
       }
     }
   }
@@ -71,7 +71,6 @@ internal class CacheEntryMetadata {
             slidingExpiration,
             "G",
             CultureInfo.InvariantCulture,
-            TimeSpanStyles.None,
             out var result)) {
         return result;
       }
@@ -83,7 +82,7 @@ internal class CacheEntryMetadata {
         case null:
           _entryMetadata.Remove(nameof(SlidingExpiration));
           return;
-        default: _entryMetadata[nameof(SlidingExpiration)] = value.Value.ToString("G"); break;
+        default: _entryMetadata[nameof(SlidingExpiration)] = value.Value.ToString("G", CultureInfo.InvariantCulture); break;
       }
     }
   }

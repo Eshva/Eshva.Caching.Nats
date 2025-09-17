@@ -37,14 +37,26 @@ public sealed class ObjectStoreBasedCacheExpiredEntriesPurger : StandardExpiredC
   /// <inheritdoc/>
   protected override async Task DeleteExpiredCacheEntries(CancellationToken token) {
     Logger.LogDebug("Deleting expired entries started");
+    NotifyPurgeStarted();
     var entries = _cacheBucket.ListAsync(cancellationToken: token);
 
+    uint totalCount = 0;
+    uint purgedCount = 0;
     await foreach (var entry in entries) {
+      totalCount++;
+      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAt}", entry.Name, EntryMetadata(entry).ExpiresAtUtc);
       if (!_cacheEntryExpirationStrategy.IsCacheEntryExpired(EntryMetadata(entry).ExpiresAtUtc)) continue;
 
+      purgedCount++;
       await _cacheBucket.DeleteAsync(entry.Name, token);
       Logger.LogDebug("Deleted expired entry '{Key}'", entry.Name);
     }
+
+    Logger.LogDebug(
+      "Deleting expired entries completed: total {TotalCount} entries, purged {PurgedCount} entries",
+      totalCount,
+      purgedCount);
+    NotifyPurgeCompleted(totalCount, purgedCount);
   }
 
   private static CacheEntryMetadata EntryMetadata(ObjectMetadata objectMetadata) => objectMetadata.Metadata is not null

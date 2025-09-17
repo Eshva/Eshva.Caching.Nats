@@ -14,7 +14,7 @@ namespace Eshva.Caching.Nats;
 /// greater than configured purging interval.
 /// </para>
 /// </remarks>
-public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPurger {
+public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPurger, IPurgingNotifier, IPurgingSynchronicityController {
   /// <summary>
   /// Initializes a new instance of a standard expired cache entries purger.
   /// </summary>
@@ -51,7 +51,10 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   }
 
   /// <inheritdoc/>
-  public void ScanForExpiredEntriesIfRequired(CancellationToken token = default) {
+  public bool ShouldPurgeSynchronously { get; set; }
+
+  /// <inheritdoc/>
+  public async Task ScanForExpiredEntriesIfRequired(CancellationToken token = default) {
     lock (_scanForExpiredItemsLock) {
       var utcNow = _clock.UtcNow;
       var timePassedSinceTheLastPurging = utcNow - _lastExpirationScan;
@@ -64,11 +67,17 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
       }
 
       Logger.LogDebug(
-        "Since the last purging expired entries {TimePassed} has passed that is greeter than or equals {PurgingInterval}. Purging is required",
+        "Since the last purging expired entries {TimePassed} has passed that is greeter than or equals to {PurgingInterval}. Purging is required",
         timePassedSinceTheLastPurging,
         _expiredEntriesPurgingInterval);
       _lastExpirationScan = utcNow;
-      Task.Run(() => DeleteExpiredCacheEntries(token), token);
+    }
+
+    if (ShouldPurgeSynchronously) {
+      await Task.Run(() => DeleteExpiredCacheEntries(token), token);
+    }
+    else {
+      _ = Task.Run(() => DeleteExpiredCacheEntries(token), token);
     }
   }
 
@@ -80,9 +89,28 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   /// <summary>
   /// Purger logic.
   /// </summary>
-  /// <param name="token"></param>
-  /// <returns></returns>
+  /// <param name="token">Cancellation token.</param>
+  /// <returns>Purge operation statistics.</returns>
   protected abstract Task DeleteExpiredCacheEntries(CancellationToken token);
+
+  /// <summary>
+  /// Notify purge operation started.
+  /// </summary>
+  protected void NotifyPurgeStarted() => PurgeStarted?.Invoke(this, EventArgs.Empty);
+
+  /// <summary>
+  /// Notify purge operation completed.
+  /// </summary>
+  /// <param name="totalCount">Total cache entries scanned.</param>
+  /// <param name="purgedCount">Cache entries purged.</param>
+  protected void NotifyPurgeCompleted(uint totalCount, uint purgedCount) =>
+    PurgeCompleted?.Invoke(this, new PurgeStatistics(totalCount, purgedCount));
+
+  /// <inheritdoc/>
+  public event EventHandler? PurgeStarted;
+
+  /// <inheritdoc/>
+  public event EventHandler<PurgeStatistics>? PurgeCompleted;
 
   private readonly ISystemClock _clock;
   private readonly TimeSpan _expiredEntriesPurgingInterval;

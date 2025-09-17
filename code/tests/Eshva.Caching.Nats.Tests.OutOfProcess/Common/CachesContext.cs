@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 
-public class CachesContext : IDisposable {
+public class CachesContext {
   public CachesContext(INatsObjStore objectStore, ITestOutputHelper xUnitLogger) {
     _xUnitLogger = xUnitLogger;
     Bucket = objectStore;
@@ -26,10 +26,6 @@ public class CachesContext : IDisposable {
 
   public DateTimeOffset Today { get; }
 
-  public ICacheEntryExpirationStrategy ExpirationStrategy { get; set; } = null!;
-
-  public ICacheExpiredEntriesPurger ExpiredEntriesPurger { get; set; } = null!;
-
   public TimeSpan ExpiredEntriesPurgingInterval { get; set; }
 
   public TimeSpan DefaultSlidingExpirationInterval { get; set; }
@@ -43,27 +39,29 @@ public class CachesContext : IDisposable {
   public byte[]? GottenCacheEntryValue { get; set; }
 
   public void CreateAndAssignCacheServices() {
-    ExpirationStrategy = new StandardCacheEntryExpirationStrategy(
+    var expirationStrategy = new StandardCacheEntryExpirationStrategy(
       new ExpirationStrategySettings {
         DefaultSlidingExpirationInterval = DefaultSlidingExpirationInterval
       },
       Clock);
-    ExpiredEntriesPurger = new ObjectStoreBasedCacheExpiredEntriesPurger(
+
+    var expiredEntriesPurger = new ObjectStoreBasedCacheExpiredEntriesPurger(
       Bucket,
-      ExpirationStrategy,
+      expirationStrategy,
       new PurgerSettings {
         ExpiredEntriesPurgingInterval = ExpiredEntriesPurgingInterval
       },
       Clock,
-      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheExpiredEntriesPurger>(_xUnitLogger));
+      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheExpiredEntriesPurger>(_xUnitLogger)) {
+      ShouldPurgeSynchronously = true
+    };
+
     Cache = new NatsObjectStoreBasedCache(
       Bucket,
-      ExpirationStrategy,
-      ExpiredEntriesPurger,
+      expirationStrategy,
+      expiredEntriesPurger,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
   }
-
-  public void Dispose() => Cache.Dispose();
 
   private readonly ITestOutputHelper _xUnitLogger;
 }

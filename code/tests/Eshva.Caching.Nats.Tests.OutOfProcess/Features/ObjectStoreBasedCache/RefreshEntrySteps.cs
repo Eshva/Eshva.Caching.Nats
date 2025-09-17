@@ -6,27 +6,28 @@ using Reqnroll;
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.ObjectStoreBasedCache;
 
 [Binding]
-public class GetEntrySteps {
-  public GetEntrySteps(CachesContext cachesContext, ErrorHandlingContext errorHandlingContext) {
+public class RefreshEntrySteps {
+  public RefreshEntrySteps(CachesContext cachesContext, ErrorHandlingContext errorHandlingContext) {
     _cachesContext = cachesContext;
     _errorHandlingContext = errorHandlingContext;
   }
 
-  [When("I get {string} cache entry asynchronously")]
-  public async Task WhenIGetCacheEntry(string key) {
+  [When("I refresh {string} cache entry asynchronously")]
+  public async Task WhenIRefreshCacheEntryAsynchronously(string key) {
     try {
-      await Task.Delay(millisecondsDelay: 1000);
-      _cachesContext.GottenCacheEntryValue = await _cachesContext.Cache.GetAsync(key);
+      await _cachesContext.Cache.RefreshAsync(key);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
     }
   }
 
-  [When("I get {string} cache entry synchronously")]
-  public void WhenIGetCacheEntrySynchronously(string key) {
+  [When("I refresh {string} cache entry synchronously")]
+  public async Task WhenIRefreshCacheEntrySynchronously(string key) {
     try {
-      _cachesContext.GottenCacheEntryValue = _cachesContext.Cache.Get(key);
+      // ReSharper disable once MethodHasAsyncOverload
+      _cachesContext.Cache.Refresh(key);
+      await Task.Delay(millisecondsDelay: 1000);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;

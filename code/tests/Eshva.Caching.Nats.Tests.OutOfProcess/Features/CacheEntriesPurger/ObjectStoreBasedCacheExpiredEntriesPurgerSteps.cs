@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using Meziantou.Extensions.Logging.Xunit;
 using Reqnroll;
@@ -11,7 +12,7 @@ public class ObjectStoreBasedCacheExpiredEntriesPurgerSteps {
     _cachesContext = cachesContext;
   }
 
-  [Given("purger for NATS object-store based cache with purging interval {int} minutes")]
+  [Given("purger for NATS object-store based cache with purging interval {int} minutes with synchronous purge")]
   public void GivenPurgerForNatsObjectStoreBasedCacheWithPurgingIntervalMinutes(int minutes) {
     var purgingInterval = TimeSpan.FromMinutes(minutes);
     _sut = new ObjectStoreBasedCacheExpiredEntriesPurger(
@@ -25,11 +26,13 @@ public class ObjectStoreBasedCacheExpiredEntriesPurgerSteps {
         ExpiredEntriesPurgingInterval = purgingInterval
       },
       _cachesContext.Clock,
-      XUnitLogger.CreateLogger<ObjectStoreBasedCacheExpiredEntriesPurger>(_cachesContext.XUnitLogger));
+      XUnitLogger.CreateLogger<ObjectStoreBasedCacheExpiredEntriesPurger>(_cachesContext.XUnitLogger)) {
+      ShouldPurgeSynchronously = true
+    };
   }
 
   [When("I request scan for expired entries if required")]
-  public void WhenIRequestScanForExpiredEntriesIfRequired() => _sut.ScanForExpiredEntriesIfRequired();
+  public async Task WhenIRequestScanForExpiredEntriesIfRequired() => await _sut.ScanForExpiredEntriesIfRequired();
 
   private readonly CachesContext _cachesContext;
   private ObjectStoreBasedCacheExpiredEntriesPurger _sut = null!;

@@ -37,6 +37,17 @@ public class StandardCacheEntryExpirationStrategy : ICacheEntryExpirationStrateg
 
   /// <inheritdoc/>
   /// <remarks>
+  /// If given absolute expiration returns it. If given relative expiration returns adjust the current moment by relative
+  /// expiration. If both are <c>null</c> return <c>null</c>.
+  /// </remarks>
+  public DateTimeOffset? CalculateAbsoluteExpiration(DateTimeOffset? absoluteExpiration, TimeSpan? relativeExpiration) {
+    if (absoluteExpiration.HasValue) return absoluteExpiration.Value;
+    if (relativeExpiration.HasValue) return _clock.UtcNow.Add(relativeExpiration.Value);
+    return null;
+  }
+
+  /// <inheritdoc/>
+  /// <remarks>
   /// <list type="bullet">
   /// <item>If only <paramref name="absoluteExpirationUtc"/> given returns <paramref name="absoluteExpirationUtc"/> value.</item>
   /// <item>
@@ -47,7 +58,10 @@ public class StandardCacheEntryExpirationStrategy : ICacheEntryExpirationStrateg
   /// If both <paramref name="absoluteExpirationUtc"/> and <paramref name="slidingExpiration"/> given and absolute
   /// expiration happens earlier than sliding returns <paramref name="absoluteExpirationUtc"/>.
   /// </item>
-  /// <item>If both arguments not provided returns current UTC-time plus <see cref="DefaultSlidingExpirationInterval"/> value.</item>
+  /// <item>
+  /// If both arguments not provided returns current UTC-time plus <see cref="DefaultSlidingExpirationInterval"/>
+  /// value.
+  /// </item>
   /// <item>Otherwise returns current UTC-time plus <paramref name="slidingExpiration"/> value.</item>
   /// </list>
   /// </remarks>

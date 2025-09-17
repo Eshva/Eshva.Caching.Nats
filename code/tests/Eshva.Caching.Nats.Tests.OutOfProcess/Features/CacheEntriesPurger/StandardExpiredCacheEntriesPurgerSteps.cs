@@ -47,7 +47,7 @@ public class StandardExpiredCacheEntriesPurgerSteps {
   [Then("purging should start after {int} minutes")]
   public async Task ThenPurgingShouldStartAfterMinutes(int minutes) {
     _cachesContext.Clock.AdjustTime(TimeSpan.FromMinutes(minutes));
-    _sut.ScanForExpiredEntriesIfRequired();
+    await _sut.ScanForExpiredEntriesIfRequired();
     for (var turn = 0; turn < 10; turn++) {
       if (_sut.IsPurgeStarted) return;
       await Task.Delay(millisecondsDelay: 10);
