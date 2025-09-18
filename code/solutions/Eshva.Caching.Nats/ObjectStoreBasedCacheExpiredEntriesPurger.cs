@@ -1,5 +1,4 @@
 ﻿using Eshva.Caching.Abstractions;
-using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using NATS.Client.ObjectStore;
 using NATS.Client.ObjectStore.Models;
@@ -16,7 +15,7 @@ public sealed class ObjectStoreBasedCacheExpiredEntriesPurger : StandardExpiredC
   /// <param name="cacheBucket">NATS object-store cache bucket.</param>
   /// <param name="cacheEntryExpirationStrategy">Cache entry expiration strategy.</param>
   /// <param name="purgerSettings">Purger settings.</param>
-  /// <param name="clock">System clock.</param>
+  /// <param name="timeProvider">Time provider.</param>
   /// <param name="logger">Logger.</param>
   /// <exception cref="ArgumentOutOfRangeException">
   /// <paramref name="purgerSettings"/>.ExpiredEntriesPurgingInterval value is less than 1 minute.
@@ -25,11 +24,11 @@ public sealed class ObjectStoreBasedCacheExpiredEntriesPurger : StandardExpiredC
     INatsObjStore cacheBucket,
     ICacheEntryExpirationStrategy cacheEntryExpirationStrategy,
     PurgerSettings purgerSettings,
-    ISystemClock? clock = null,
+    TimeProvider timeProvider,
     ILogger<ObjectStoreBasedCacheExpiredEntriesPurger>? logger = null) : base(
     purgerSettings,
     TimeSpan.FromMinutes(minutes: 1),
-    clock,
+    timeProvider,
     logger) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
     _cacheEntryExpirationStrategy = cacheEntryExpirationStrategy ?? throw new ArgumentNullException(nameof(cacheEntryExpirationStrategy));

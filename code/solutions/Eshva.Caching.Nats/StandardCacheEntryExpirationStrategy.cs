@@ -1,6 +1,5 @@
 ﻿using Eshva.Caching.Abstractions;
 using JetBrains.Annotations;
-using Microsoft.Extensions.Internal;
 
 namespace Eshva.Caching.Nats;
 
@@ -13,19 +12,17 @@ namespace Eshva.Caching.Nats;
 [PublicAPI]
 public class StandardCacheEntryExpirationStrategy : ICacheEntryExpirationStrategy {
   /// <summary>
-  /// Initializes new instance of standard cache entry expiration strategy with system clock <paramref name="clock"/>.
+  /// Initializes new instance of standard cache entry expiration strategy with system clock <paramref name="timeProvider"/>.
   /// </summary>
-  /// <remarks>
-  /// If <paramref name="clock"/> isn't specified the computer system clock will be used.
-  /// </remarks>
   /// <param name="expirationStrategySettings">Expiration strategy settings.</param>
-  /// <param name="clock">System clock.</param>
+  /// <param name="timeProvider">Time provider.</param>
   public StandardCacheEntryExpirationStrategy(
     ExpirationStrategySettings expirationStrategySettings,
-    ISystemClock? clock = null) {
+    TimeProvider timeProvider) {
     ArgumentNullException.ThrowIfNull(expirationStrategySettings);
+    ArgumentNullException.ThrowIfNull(timeProvider);
     DefaultSlidingExpirationInterval = expirationStrategySettings.DefaultSlidingExpirationInterval;
-    _clock = clock ?? new SystemClock();
+    _timeProvider = timeProvider;
   }
 
   public TimeSpan DefaultSlidingExpirationInterval { get; }
@@ -34,7 +31,7 @@ public class StandardCacheEntryExpirationStrategy : ICacheEntryExpirationStrateg
   /// <remarks>
   /// Entry is expired if its expiration moment equals or greater than the current date/time.
   /// </remarks>
-  public bool IsCacheEntryExpired(DateTimeOffset expiresAtUtc) => expiresAtUtc <= _clock.UtcNow;
+  public bool IsCacheEntryExpired(DateTimeOffset expiresAtUtc) => expiresAtUtc <= _timeProvider.GetUtcNow();
 
   /// <inheritdoc/>
   /// <remarks>
@@ -43,7 +40,7 @@ public class StandardCacheEntryExpirationStrategy : ICacheEntryExpirationStrateg
   /// </remarks>
   public DateTimeOffset? CalculateAbsoluteExpiration(DateTimeOffset? absoluteExpiration, TimeSpan? relativeExpiration) {
     if (absoluteExpiration.HasValue) return absoluteExpiration.Value;
-    if (relativeExpiration.HasValue) return _clock.UtcNow.Add(relativeExpiration.Value);
+    if (relativeExpiration.HasValue) return _timeProvider.GetUtcNow().Add(relativeExpiration.Value);
     return null;
   }
 
@@ -67,12 +64,21 @@ public class StandardCacheEntryExpirationStrategy : ICacheEntryExpirationStrateg
   /// </list>
   /// </remarks>
   public DateTimeOffset CalculateExpiration(DateTimeOffset? absoluteExpirationUtc, TimeSpan? slidingExpiration) {
-    if (absoluteExpirationUtc.HasValue && !slidingExpiration.HasValue) return absoluteExpirationUtc.Value;
-    if (!absoluteExpirationUtc.HasValue && slidingExpiration.HasValue) return _clock.UtcNow.Add(slidingExpiration.Value);
-    if (!absoluteExpirationUtc.HasValue || !slidingExpiration.HasValue) return _clock.UtcNow.Add(DefaultSlidingExpirationInterval);
-    var slidingExpirationUtc = _clock.UtcNow.Add(slidingExpiration.Value);
+    if (absoluteExpirationUtc.HasValue && !slidingExpiration.HasValue) {
+      return absoluteExpirationUtc.Value;
+    }
+
+    if (!absoluteExpirationUtc.HasValue && slidingExpiration.HasValue) {
+      return _timeProvider.GetUtcNow().Add(slidingExpiration.Value);
+    }
+
+    if (!absoluteExpirationUtc.HasValue || !slidingExpiration.HasValue) {
+      return _timeProvider.GetUtcNow().Add(DefaultSlidingExpirationInterval);
+    }
+
+    var slidingExpirationUtc = _timeProvider.GetUtcNow().Add(slidingExpiration.Value);
     return absoluteExpirationUtc.Value <= slidingExpirationUtc ? absoluteExpirationUtc.Value : slidingExpirationUtc;
   }
 
-  private readonly ISystemClock _clock;
+  private readonly TimeProvider _timeProvider;
 }

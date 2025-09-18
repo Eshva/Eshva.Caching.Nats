@@ -1,5 +1,5 @@
 ﻿using Eshva.Caching.Abstractions;
-using Eshva.Caching.Nats.Tests.Tools;
+using Microsoft.Extensions.Time.Testing;
 using NATS.Client.ObjectStore;
 using Xunit.Abstractions;
 
@@ -18,7 +18,7 @@ public class CachesContext {
       minute: 0,
       second: 0,
       TimeSpan.Zero);
-    Clock = new GovernedSystemClock(Today);
+    TimeProvider = new FakeTimeProvider(Today);
     XUnitLogger = xUnitLogger;
   }
 
@@ -30,7 +30,7 @@ public class CachesContext {
 
   public TimeSpan DefaultSlidingExpirationInterval { get; set; }
 
-  public GovernedSystemClock Clock { get; }
+  public FakeTimeProvider TimeProvider { get; }
 
   public INatsObjStore Bucket { get; }
 
@@ -43,7 +43,7 @@ public class CachesContext {
       new ExpirationStrategySettings {
         DefaultSlidingExpirationInterval = DefaultSlidingExpirationInterval
       },
-      Clock);
+      TimeProvider);
 
     var expiredEntriesPurger = new ObjectStoreBasedCacheExpiredEntriesPurger(
       Bucket,
@@ -51,7 +51,7 @@ public class CachesContext {
       new PurgerSettings {
         ExpiredEntriesPurgingInterval = ExpiredEntriesPurgingInterval
       },
-      Clock,
+      TimeProvider,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheExpiredEntriesPurger>(_xUnitLogger)) {
       ShouldPurgeSynchronously = true
     };

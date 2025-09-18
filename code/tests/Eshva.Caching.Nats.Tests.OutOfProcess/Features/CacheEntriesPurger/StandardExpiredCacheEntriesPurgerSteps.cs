@@ -1,6 +1,5 @@
 ﻿using Eshva.Caching.Abstractions;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
-using Microsoft.Extensions.Internal;
 using Reqnroll;
 using Xunit;
 
@@ -22,9 +21,9 @@ public class StandardExpiredCacheEntriesPurgerSteps {
     int purgingIntervalMinutes,
     TimeSpan currentTime) {
     var purgingInterval = TimeSpan.FromMinutes(purgingIntervalMinutes);
-    _cachesContext.Clock.AdjustTime(currentTime);
+    _cachesContext.TimeProvider.AdjustTime(_cachesContext.Today + currentTime);
     try {
-      _sut = new TestPurger(purgingInterval, _minimalExpiredEntriesPurgingInterval, _cachesContext.Clock);
+      _sut = new TestPurger(purgingInterval, _minimalExpiredEntriesPurgingInterval, _cachesContext.TimeProvider);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -35,7 +34,7 @@ public class StandardExpiredCacheEntriesPurgerSteps {
   public void WhenIConstructStandardPurgerWithPurgingIntervalOf(int purgingIntervalMinutes) {
     var purgingInterval = TimeSpan.FromMinutes(purgingIntervalMinutes);
     try {
-      _sut = new TestPurger(purgingInterval, _minimalExpiredEntriesPurgingInterval, _cachesContext.Clock);
+      _sut = new TestPurger(purgingInterval, _minimalExpiredEntriesPurgingInterval, _cachesContext.TimeProvider);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -44,7 +43,7 @@ public class StandardExpiredCacheEntriesPurgerSteps {
 
   [Then("purging should start after {int} minutes")]
   public async Task ThenPurgingShouldStartAfterMinutes(int minutes) {
-    _cachesContext.Clock.AdjustTime(TimeSpan.FromMinutes(minutes));
+    _cachesContext.TimeProvider.Advance(TimeSpan.FromMinutes(minutes));
     await _sut.ScanForExpiredEntriesIfRequired();
     for (var turn = 0; turn < 10; turn++) {
       if (_sut.IsPurgeStarted) return;
@@ -63,13 +62,13 @@ public class StandardExpiredCacheEntriesPurgerSteps {
     public TestPurger(
       TimeSpan expiredEntriesPurgingInterval,
       TimeSpan minimalExpiredEntriesPurgingInterval,
-      ISystemClock clock)
+      TimeProvider timeProvider)
       : base(
         new PurgerSettings {
           ExpiredEntriesPurgingInterval = expiredEntriesPurgingInterval
         },
         minimalExpiredEntriesPurgingInterval,
-        clock) { }
+        timeProvider) { }
 
     public bool IsPurgeStarted { get; private set; }
 

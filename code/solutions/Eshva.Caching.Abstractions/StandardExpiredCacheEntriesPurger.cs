@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
@@ -19,13 +18,14 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   /// Initializes a new instance of a standard expired cache entries purger.
   /// </summary>
   /// <remarks>
-  /// If <paramref name="clock"/> is not specified <see cref="Microsoft.Extensions.Internal.SystemClock"/> will be used. If
+  /// If <paramref name="timeProvider"/> is not specified <see cref="Microsoft.Extensions.Internal.SystemClock"/> will be
+  /// used. If
   /// <paramref name="logger"/> isn't
   /// specified a null logger will be used.
   /// </remarks>
   /// <param name="purgerSettings">Purger settings.</param>
   /// <param name="minimalExpiredEntriesPurgingInterval">Minimal purging interval allowed.</param>
-  /// <param name="clock">System clock.</param>
+  /// <param name="timeProvider">Time provider.</param>
   /// <param name="logger">Logger.</param>
   /// <exception cref="ArgumentOutOfRangeException">
   /// <paramref name="purgerSettings"/>.ExpiredEntriesPurgingInterval is less than
@@ -35,9 +35,10 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   protected StandardExpiredCacheEntriesPurger(
     PurgerSettings purgerSettings,
     TimeSpan minimalExpiredEntriesPurgingInterval,
-    ISystemClock? clock = null,
+    TimeProvider timeProvider,
     ILogger? logger = null) {
     ArgumentNullException.ThrowIfNull(purgerSettings);
+    ArgumentNullException.ThrowIfNull(timeProvider);
     if (purgerSettings.ExpiredEntriesPurgingInterval < minimalExpiredEntriesPurgingInterval) {
       throw new ArgumentOutOfRangeException(
         nameof(purgerSettings),
@@ -46,9 +47,9 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
     }
 
     _expiredEntriesPurgingInterval = purgerSettings.ExpiredEntriesPurgingInterval;
-    _clock = clock ?? new SystemClock();
+    _timeProvider = timeProvider;
     Logger = logger ?? new NullLogger<StandardExpiredCacheEntriesPurger>();
-    _lastExpirationScan = _clock.UtcNow;
+    _lastExpirationScan = _timeProvider.GetUtcNow();
   }
 
   /// <inheritdoc/>
@@ -57,7 +58,7 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   /// <inheritdoc/>
   public async Task ScanForExpiredEntriesIfRequired(CancellationToken token = default) {
     lock (_scanForExpiredItemsLock) {
-      var utcNow = _clock.UtcNow;
+      var utcNow = _timeProvider.GetUtcNow();
       var timePassedSinceTheLastPurging = utcNow - _lastExpirationScan;
       if (timePassedSinceTheLastPurging < _expiredEntriesPurgingInterval) {
         Logger.LogDebug(
@@ -113,8 +114,8 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   /// <inheritdoc/>
   public event EventHandler<PurgeStatistics>? PurgeCompleted;
 
-  private readonly ISystemClock _clock;
   private readonly TimeSpan _expiredEntriesPurgingInterval;
   private readonly Lock _scanForExpiredItemsLock = new();
+  private readonly TimeProvider _timeProvider;
   private DateTimeOffset _lastExpirationScan;
 }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using Eshva.Caching.Nats.Tests.Tools;
 using FluentAssertions;
 using NATS.Client.ObjectStore;
@@ -24,7 +22,7 @@ public class CommonCacheSteps {
 
     var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
     objectMetadata.Metadata = new CacheEntryMetadata(objectMetadata.Metadata!) {
-      ExpiresAtUtc = _cachesContext.Clock.UtcNow.AddMinutes(expiresInMinutes),
+      ExpiresAtUtc = _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes),
       SlidingExpiration = TimeSpan.FromMinutes(expiresInMinutes)
     };
     _cachesContext.XUnitLogger.WriteLine(
@@ -34,11 +32,11 @@ public class CommonCacheSteps {
 
   [Given("passed a bit more than purging expired entries interval")]
   public void GivenPassedABitMoreThanPurgingExpiredEntriesInterval() =>
-    _cachesContext.Clock.AdjustTime(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: 1)));
+    _cachesContext.TimeProvider.Advance(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: 1)));
 
   [Given("passed a bit less than purging expired entries interval")]
   public void GivenPassedABitLessThanPurgingExpiredEntriesInterval() =>
-    _cachesContext.Clock.AdjustTime(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: -1)));
+    _cachesContext.TimeProvider.Advance(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: -1)));
 
   [Then("I should get value {string} as the requested entry")]
   public void ThenIShouldGetValueAsTheRequestedEntry(string value) =>
@@ -48,7 +46,7 @@ public class CommonCacheSteps {
   public void ThenIShouldGetANullValueAsTheRequestedEntry() => _cachesContext.GottenCacheEntryValue.Should().BeNull();
 
   [Given("{double} minutes passed")]
-  public void GivenMinutesPassed(double minutes) => _cachesContext.Clock.AdjustTime(TimeSpan.FromMinutes(minutes));
+  public void GivenMinutesPassed(double minutes) => _cachesContext.TimeProvider.Advance(TimeSpan.FromMinutes(minutes));
 
   [Then("{string} entry is not present in the object-store bucket")]
   public async Task ThenEntryIsNotPresentInTheObjectStoreBucket(string key) {
@@ -81,7 +79,8 @@ public class CommonCacheSteps {
   public void GivenObjectStoreBasedCacheWithSynchronousPurge() => _cachesContext.CreateAndAssignCacheServices();
 
   [Given("clock set at today (.*)")]
-  public void GivenClockSetAtToday(TimeSpan timeOfDay) => _cachesContext.Clock.SetTimeOfDay(timeOfDay);
+  public void GivenClockSetAtToday(TimeSpan timeOfDay) =>
+    _cachesContext.TimeProvider.AdjustTime(_cachesContext.Today + timeOfDay);
 
   [Then("'(.*)' entry should be expired today at (.*)")]
   public async Task ThenEntryShouldBeExpiredTodayAt(string key, TimeSpan timeOfDay) {

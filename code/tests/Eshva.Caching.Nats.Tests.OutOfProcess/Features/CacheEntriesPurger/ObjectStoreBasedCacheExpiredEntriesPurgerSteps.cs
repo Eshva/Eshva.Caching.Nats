@@ -20,11 +20,11 @@ public class ObjectStoreBasedCacheExpiredEntriesPurgerSteps {
         new ExpirationStrategySettings {
           DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 1)
         },
-        _cachesContext.Clock),
+        _cachesContext.TimeProvider),
       new PurgerSettings {
         ExpiredEntriesPurgingInterval = purgingInterval
       },
-      _cachesContext.Clock,
+      _cachesContext.TimeProvider,
       XUnitLogger.CreateLogger<ObjectStoreBasedCacheExpiredEntriesPurger>(_cachesContext.XUnitLogger)) {
       ShouldPurgeSynchronously = true
     };

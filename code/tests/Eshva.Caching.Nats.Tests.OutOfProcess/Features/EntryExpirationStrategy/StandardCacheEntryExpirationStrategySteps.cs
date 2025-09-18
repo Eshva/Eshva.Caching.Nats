@@ -15,12 +15,12 @@ public class StandardCacheEntryExpirationStrategySteps {
   public void GivenStandardCacheEntryExpirationStrategyWithClockSetAtTodayAndDefaultSlidingExpirationTimeMinutes(
     TimeSpan currentTime,
     double defaultSlidingExpirationTime) {
-    _cachesContext.Clock.AdjustTime(currentTime);
+    _cachesContext.TimeProvider.AdjustTime(_cachesContext.Today + currentTime);
     _sut = new StandardCacheEntryExpirationStrategy(
       new ExpirationStrategySettings {
         DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(defaultSlidingExpirationTime)
       },
-      _cachesContext.Clock);
+      _cachesContext.TimeProvider);
   }
 
   [Given("cache entry that expires today at (.*)")]
@@ -51,7 +51,8 @@ public class StandardCacheEntryExpirationStrategySteps {
   public void ThenItShouldBeTodayAt(TimeSpan expirationTime) => _calculatedExpiration.Should().Be(_cachesContext.Today.Add(expirationTime));
 
   [Given("time passed by {double} minutes")]
-  public void GivenTimePassedByMinutes(double minutes) => _cachesContext.Clock.AdjustTime(TimeSpan.FromMinutes(minutes));
+  public void GivenTimePassedByMinutes(double minutes) =>
+    _cachesContext.TimeProvider.Advance(TimeSpan.FromMinutes(minutes));
 
   private readonly CachesContext _cachesContext;
   private DateTimeOffset? _absoluteExpiration;
