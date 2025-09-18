@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="code/solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj" />
+  <Project Path="code/tests/Eshva.Caching.Nats.Tests.OutOfProcess/Eshva.Caching.Nats.Tests.OutOfProcess.csproj" />
+  <Project Path="code/tests/Eshva.Caching.Nats.Tests.Tools/Eshva.Caching.Nats.Tests.Tools.csproj" />
+</Solution>
