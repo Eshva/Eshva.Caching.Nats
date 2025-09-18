@@ -6,23 +6,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Eshva.Common.Testing" Version="1.2.0"/>
-    <PackageReference Include="Meziantou.Extensions.Logging.Xunit" Version="1.0.17"/>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
-    <PackageReference Include="NATS.Client.Core" Version="2.6.8"/>
-    <PackageReference Include="NATS.Client.ObjectStore" Version="2.6.8"/>
-    <PackageReference Include="Reqnroll.xUnit" Version="3.0.0"/>
-    <PackageReference Include="Testcontainers.Nats" Version="4.7.0"/>
-    <PackageReference Include="xunit" Version="2.9.3"/>
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+    <PackageReference Include="Eshva.Common.Testing"/>
+    <PackageReference Include="Meziantou.Extensions.Logging.Xunit"/>
+    <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+    <PackageReference Include="NATS.Client.Core"/>
+    <PackageReference Include="NATS.Client.ObjectStore"/>
+    <PackageReference Include="Reqnroll.xUnit"/>
+    <PackageReference Include="Testcontainers.Nats"/>
+    <PackageReference Include="xunit"/>
+    <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="FluentAssertions" Version="6.12.0"/>
+    <PackageReference Include="FluentAssertions"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats\Eshva.Caching.Nats.csproj" />
+    <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats\Eshva.Caching.Nats.csproj"/>
     <ProjectReference Include="..\Eshva.Caching.Nats.Tests.Tools\Eshva.Caching.Nats.Tests.Tools.csproj"/>
   </ItemGroup>
 

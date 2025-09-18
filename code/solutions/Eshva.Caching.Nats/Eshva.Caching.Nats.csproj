@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
@@ -11,11 +11,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Eshva.Common.Testing" Version="1.2.0"/>
-    <PackageReference Include="JetBrains.Annotations" Version="2025.2.2"/>
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.8"/>
-    <PackageReference Include="NATS.Client.ObjectStore" Version="2.6.8"/>
-    <PackageReference Include="Testcontainers.Nats" Version="4.7.0"/>
+    <PackageReference Include="Eshva.Common.Testing"/>
+    <PackageReference Include="JetBrains.Annotations"/>
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions"/>
+    <PackageReference Include="NATS.Client.ObjectStore"/>
+    <PackageReference Include="Testcontainers.Nats"/>
   </ItemGroup>
 
 </Project>

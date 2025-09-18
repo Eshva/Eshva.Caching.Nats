@@ -1,5 +1,10 @@
 <Solution>
-  <Project Path="solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj" />
-  <Project Path="tests/Eshva.Caching.Nats.Tests.OutOfProcess/Eshva.Caching.Nats.Tests.OutOfProcess.csproj" />
-  <Project Path="tests/Eshva.Caching.Nats.Tests.Tools/Eshva.Caching.Nats.Tests.Tools.csproj" />
+  <Folder Name="/shared/"/>
+  <Folder Name="/shared/dotnet-settings/">
+    <File Path="Directory.Build.props"/>
+    <File Path="Directory.Packages.props"/>
+  </Folder>
+  <Project Path="solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj"/>
+  <Project Path="tests/Eshva.Caching.Nats.Tests.OutOfProcess/Eshva.Caching.Nats.Tests.OutOfProcess.csproj"/>
+  <Project Path="tests/Eshva.Caching.Nats.Tests.Tools/Eshva.Caching.Nats.Tests.Tools.csproj"/>
 </Solution>
