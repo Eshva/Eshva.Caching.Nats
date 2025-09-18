@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using CommunityToolkit.HighPerformance;
 using Eshva.Caching.Abstractions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Distributed;
@@ -304,6 +305,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
 
     try {
+      // TODO: Change to IBufferWriterExtensions.AsStream(IBufferWriter<Byte>)
       destination.Write(await _cacheBucket.GetBytesAsync(key, token));
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, token);
 
@@ -325,13 +327,35 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   }
 
   public void Set(string key, ReadOnlySequence<byte> value, DistributedCacheEntryOptions options) =>
-    throw new NotImplementedException();
+    SetAsync(key, value, options).GetAwaiter().GetResult();
 
   public async ValueTask SetAsync(
     string key,
     ReadOnlySequence<byte> value,
     DistributedCacheEntryOptions options,
-    CancellationToken token = new()) { }
+    CancellationToken token = default) {
+    ValidateKey(key);
+    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
+
+    try {
+      var objectMetadata = await _cacheBucket.PutAsync(
+        new ObjectMetadata {
+          Name = key,
+          Metadata = FillCacheEntryMetadata(options)
+        },
+        value.AsStream(),
+        leaveOpen: true,
+        token);
+
+      _logger.LogDebug(
+        "An entry with the key '{Key}' has been put into cache. Cache entry metadata: @{ObjectMetadata}",
+        key,
+        objectMetadata);
+    }
+    catch (NatsObjException exception) {
+      throw new InvalidOperationException($"Failed to put cache entry with key '{key}'.", exception);
+    }
+  }
 
   private Dictionary<string, string> FillCacheEntryMetadata(DistributedCacheEntryOptions options) {
     var absoluteExpirationUtc = _expirationStrategy.CalculateAbsoluteExpiration(

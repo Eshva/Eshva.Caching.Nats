@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using Microsoft.Extensions.Caching.Distributed;
 using Reqnroll;
@@ -8,14 +6,17 @@ using Reqnroll;
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.ObjectStoreBasedCache;
 
 [Binding]
-public class SetEntrySteps {
-  public SetEntrySteps(CachesContext cachesContext, ErrorHandlingContext errorHandlingContext) {
+public class SetEntryUsingByteArraySteps {
+  public SetEntryUsingByteArraySteps(CachesContext cachesContext, ErrorHandlingContext errorHandlingContext) {
     _cachesContext = cachesContext;
     _errorHandlingContext = errorHandlingContext;
   }
 
-  [When("I set asynchronously '(.*)' cache entry with value '(.*)' and sliding expiration in (.*) minutes")]
-  public async Task WhenISetCacheEntryAsynchronouslyWithSlidingExpirationInMinutes(string key, string value, int minutes) {
+  [When("I set using byte array asynchronously '(.*)' cache entry with value '(.*)' and sliding expiration in (.*) minutes")]
+  public async Task WhenISetUsingByteArrayAsynchronouslyCacheEntryWithValueAndSlidingExpirationInMinutes(
+    string key,
+    string value,
+    int minutes) {
     try {
       await _cachesContext.Cache.SetAsync(
         key,
@@ -29,8 +30,8 @@ public class SetEntrySteps {
     }
   }
 
-  [When("I set synchronously '(.*)' cache entry with value '(.*)' and sliding expiration in (.*) minutes")]
-  public void WhenISetSynchronouslyCacheEntryWithValueAndSlidingExpirationInMinutes(string key, string value, int minutes) {
+  [When("I set using byte array synchronously '(.*)' cache entry with value '(.*)' and sliding expiration in (.*) minutes")]
+  public void WhenISetUsingByteArraySynchronouslyCacheEntryWithValueAndSlidingExpirationInMinutes(string key, string value, int minutes) {
     try {
       _cachesContext.Cache.Set(
         key,
@@ -44,8 +45,11 @@ public class SetEntrySteps {
     }
   }
 
-  [When(@"I set asynchronously '(.*)' cache entry with value '(.*)' and absolute expiration at today at (\d+:\d+)")]
-  public async Task WhenISetAsynchronouslyCacheEntryWithValueAndAbsoluteExpirationAtTodayAt(string key, string value, TimeSpan timeOfDay) {
+  [When(@"I set using byte array asynchronously '(.*)' cache entry with value '(.*)' and absolute expiration at today at (\d+:\d+)")]
+  public async Task WhenISetUsingByteArrayAsynchronouslyCacheEntryWithValueAndAbsoluteExpirationAtTodayAtDd(
+    string key,
+    string value,
+    TimeSpan timeOfDay) {
     try {
       await _cachesContext.Cache.SetAsync(
         key,
@@ -60,8 +64,8 @@ public class SetEntrySteps {
   }
 
   [When(
-    @"I set asynchronously '(.*)' cache entry with value '(.*)' and absolute expiration at today at (\d+:\d+) and sliding expiration in (.*) minutes")]
-  public async Task WhenISetAsynchronouslyCacheEntryWithValueAndAbsoluteExpirationAtTodayAtAndSlidingExpirationInMinutes(
+    @"I set using byte array asynchronously '(.*)' cache entry with value '(.*)' and absolute expiration at today at (\d+:\d+) and sliding expiration in (.*) minutes")]
+  public async Task WhenISetUsingByteArrayAsynchronouslyCacheEntryWithValueAndAbsoluteExpirationAtTodayAtDdAndSlidingExpirationInMinutes(
     string key,
     string value,
     TimeSpan timeOfDay,
@@ -81,8 +85,8 @@ public class SetEntrySteps {
   }
 
   [When(
-    @"I set synchronously '(.*)' cache entry with value '(.*)' and absolute expiration at today at (\d+:\d+) and sliding expiration in (.*) minutes")]
-  public async Task WhenISetSynchronouslyCacheEntryWithValueAndAbsoluteExpirationAtTodayAtDdAndSlidingExpirationInMinutes(
+    @"I set using byte array synchronously '(.*)' cache entry with value '(.*)' and absolute expiration at today at (\d+:\d+) and sliding expiration in (.*) minutes")]
+  public async Task WhenISetUsingByteArraySynchronouslyCacheEntryWithValueAndAbsoluteExpirationAtTodayAtDdAndSlidingExpirationInMinutes(
     string key,
     string value,
     TimeSpan timeOfDay,
@@ -101,8 +105,11 @@ public class SetEntrySteps {
     }
   }
 
-  [When(@"I set synchronously '(.*)' cache entry with value '(.*)' and absolute expiration at today at (\d+:\d+)")]
-  public void WhenISetSynchronouslyCacheEntryWithValueAndAbsoluteExpirationAtTodayAt(string key, string value, TimeSpan timeOfDay) {
+  [When(@"I set using byte array synchronously '(.*)' cache entry with value '(.*)' and absolute expiration at today at (\d+:\d+)")]
+  public void WhenISetUsingByteArraySynchronouslyCacheEntryWithValueAndAbsoluteExpirationAtTodayAtDd(
+    string key,
+    string value,
+    TimeSpan timeOfDay) {
     try {
       _cachesContext.Cache.Set(
         key,
@@ -116,9 +123,12 @@ public class SetEntrySteps {
     }
   }
 
-  [When("I set asynchronously '(.*)' cache entry with value '(.*)' and absolute expiration (.*) relative to now")]
+  [When("I set using byte array asynchronously '(.*)' cache entry with value '(.*)' and absolute expiration (.*) relative to now")]
   public async Task
-    WhenISetAsynchronouslyCacheEntryWithValueAndAbsoluteExpirationRelativeToNow(string key, string value, TimeSpan timeOfDay) {
+    WhenISetUsingByteArrayAsynchronouslyCacheEntryWithValueAndAbsoluteExpirationRelativeToNow(
+      string key,
+      string value,
+      TimeSpan timeOfDay) {
     try {
       await _cachesContext.Cache.SetAsync(
         key,
@@ -132,8 +142,11 @@ public class SetEntrySteps {
     }
   }
 
-  [When("I set synchronously '(.*)' cache entry with value '(.*)' and absolute expiration (.*) relative to now")]
-  public void WhenISetSynchronouslyCacheEntryWithValueAndAbsoluteExpirationRelativeToNow(string key, string value, TimeSpan timeOfDay) {
+  [When("I set using byte array synchronously '(.*)' cache entry with value '(.*)' and absolute expiration (.*) relative to now")]
+  public void WhenISetUsingByteArraySynchronouslyCacheEntryWithValueAndAbsoluteExpirationRelativeToNow(
+    string key,
+    string value,
+    TimeSpan timeOfDay) {
     try {
       _cachesContext.Cache.Set(
         key,
