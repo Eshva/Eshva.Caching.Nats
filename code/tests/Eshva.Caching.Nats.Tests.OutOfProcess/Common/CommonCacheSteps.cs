@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using Eshva.Caching.Abstractions;
 using Eshva.Caching.Nats.Tests.Tools;
 using FluentAssertions;
 using NATS.Client.ObjectStore;
@@ -80,8 +81,7 @@ public class CommonCacheSteps {
   [Given("object-store based cache with synchronous purge")]
   public void GivenObjectStoreBasedCacheWithSynchronousPurge() => _cachesContext.CreateAndAssignCacheServices();
 
-  [Given("clock set at today (.*)")]
-  public void GivenClockSetAtToday(TimeSpan timeOfDay) => _cachesContext.Clock.SetTimeOfDay(timeOfDay);
+  [Given("clock set at today (.*)")] public void GivenClockSetAtToday(TimeSpan timeOfDay) => _cachesContext.Clock.SetTimeOfDay(timeOfDay);
 
   [Then("'(.*)' entry should be expired today at (.*)")]
   public async Task ThenEntryShouldBeExpiredTodayAt(string key, TimeSpan timeOfDay) {

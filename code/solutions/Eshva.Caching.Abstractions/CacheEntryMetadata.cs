@@ -1,11 +1,11 @@
 ﻿using System.Globalization;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Abstractions;
 
 /// <summary>
 /// A NATS cache entry meta-data accessor.
 /// </summary>
-internal class CacheEntryMetadata {
+public class CacheEntryMetadata {
   /// <summary>
   /// Initialize a new NATS cache entry meta-data accessor instance with entry meta-data dictionary.
   /// </summary>

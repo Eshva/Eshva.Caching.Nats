@@ -1,42 +1,23 @@
 ﻿using System.Buffers;
-using Eshva.Caching.Abstractions;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using NATS.Client.ObjectStore;
-using NATS.Client.ObjectStore.Models;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Abstractions;
 
 /// <summary>
 /// NATS object-store based distributed cache.
 /// </summary>
 [PublicAPI]
-public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
+public abstract class BufferDistributedCache : IBufferDistributedCache {
   /// <summary>
   /// Initializes a new instance of a NATS object-store based distributed cache.
   /// </summary>
-  /// <param name="cacheBucket">NATS object-store cache bucket.</param>
-  /// <param name="expirationStrategy">Cache entry expiration strategy.</param>
-  /// <param name="expiredEntriesPurger">Expired entries purger.</param>
-  /// <param name="logger">Logger.</param>
+  /// <param name="dataAccessStrategy">Data access strategy used by this cache.</param>
   /// <exception cref="ArgumentNullException">
   /// One of required arguments isn't specified.
   /// </exception>
-  public NatsObjectStoreBasedCache(
-    INatsObjStore cacheBucket,
-    ICacheEntryExpirationStrategy expirationStrategy,
-    ICacheExpiredEntriesPurger expiredEntriesPurger,
-    ILogger<NatsObjectStoreBasedCache>? logger = null) {
-    ArgumentNullException.ThrowIfNull(cacheBucket);
-    ArgumentNullException.ThrowIfNull(expirationStrategy);
-    ArgumentNullException.ThrowIfNull(expiredEntriesPurger);
-
-    _cacheBucket = cacheBucket;
-    _expirationStrategy = expirationStrategy;
-    _expiredEntriesPurger = expiredEntriesPurger;
-    _logger = logger ?? new NullLogger<NatsObjectStoreBasedCache>();
+  protected BufferDistributedCache(IBufferDistributedCacheDataAccessStrategy dataAccessStrategy) {
+    _dataAccessStrategy = dataAccessStrategy ?? throw new ArgumentNullException(nameof(dataAccessStrategy));
   }
 
   /// <summary>
@@ -69,7 +50,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <item>Length of the read value less than length of the cache value.</item>
   /// </list>
   /// </exception>
-  public byte[]? Get(string key) => GetAsync(key).GetAwaiter().GetResult();
+  public byte[]? Get(string key) => _dataAccessStrategy.Get(key);
 
   /// <summary>
   /// Get value of a cache key <paramref name="key"/>.
@@ -102,48 +83,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <item>Length of the read value less than length of the cache value.</item>
   /// </list>
   /// </exception>
-  public async Task<byte[]?> GetAsync(string key, CancellationToken token = default) {
-    ValidateKey(key);
-    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
-
-    var valueStream = new MemoryStream();
-
-    try {
-      var objectMetadata = await _cacheBucket.GetAsync(
-        key,
-        valueStream,
-        leaveOpen: true,
-        token);
-      _logger.LogDebug(
-        "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
-        key,
-        objectMetadata);
-
-      await RefreshExpiresAt(objectMetadata, token);
-    }
-    catch (NatsObjNotFoundException) {
-      return null;
-    }
-    catch (NatsObjException exception) {
-      throw new InvalidOperationException($"Failed to read cache key '{key}' value.", exception);
-    }
-
-    if (valueStream.Length == 0) {
-      _logger.LogDebug("No key '{Key}' has been found in the object-store", key);
-      return null;
-    }
-
-    valueStream.Seek(offset: 0, SeekOrigin.Begin);
-    var buffer = new byte[valueStream.Length];
-    var bytesRead = await valueStream.ReadAsync(buffer, token);
-
-    if (bytesRead != valueStream.Length) {
-      throw new InvalidOperationException(
-        $"Should be read {valueStream.Length} bytes but read {bytesRead} bytes for a cache entry wih ID '{key}'.");
-    }
-
-    return buffer;
-  }
+  public Task<byte[]?> GetAsync(string key, CancellationToken token = default) => _dataAccessStrategy.GetAsync(key, token);
 
   /// <summary>
   /// Set a cache entry value.
@@ -154,7 +94,8 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <exception cref="ArgumentNullException">
   /// The key is not specified.
   /// </exception>
-  public void Set(string key, byte[] value, DistributedCacheEntryOptions options) => SetAsync(key, value, options).GetAwaiter().GetResult();
+  public void Set(string key, byte[] value, DistributedCacheEntryOptions options) =>
+    _dataAccessStrategy.Set(key, value, options);
 
   /// <summary>
   /// Set a cache entry value.
@@ -166,24 +107,16 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <exception cref="ArgumentNullException">
   /// The key is not specified.
   /// </exception>
-  public async Task SetAsync(
+  public Task SetAsync(
     string key,
     byte[] value,
     DistributedCacheEntryOptions options,
-    CancellationToken token = new()) {
-    ValidateKey(key);
-    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
-
-    try {
-      var objectMetadata = await _cacheBucket.PutAsync(key, value, token);
-      objectMetadata.Metadata = FillCacheEntryMetadata(options);
-      await _cacheBucket.UpdateMetaAsync(key, objectMetadata, token);
-      _logger.LogDebug("An entry with '{Key}' put into cache", key);
-    }
-    catch (NatsObjException exception) {
-      throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.", exception);
-    }
-  }
+    CancellationToken token = default) =>
+    _dataAccessStrategy.SetAsync(
+      key,
+      value,
+      options,
+      token);
 
   /// <summary>
   /// Refresh expiration time of the cache entry with <paramref name="key"/>.
@@ -195,7 +128,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <exception cref="InvalidOperationException">
   /// Cache entry with <paramref name="key"/> not found.
   /// </exception>
-  public void Refresh(string key) => RefreshAsync(key).GetAwaiter().GetResult();
+  public void Refresh(string key) => _dataAccessStrategy.Refresh(key);
 
   /// <summary>
   /// Refresh expiration time of the cache entry with <paramref name="key"/>.
@@ -208,18 +141,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <exception cref="InvalidOperationException">
   /// Cache entry with <paramref name="key"/> not found.
   /// </exception>
-  public async Task RefreshAsync(string key, CancellationToken token = new()) {
-    ValidateKey(key);
-    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
-
-    try {
-      var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, token);
-      await RefreshExpiresAt(objectMetadata, token);
-    }
-    catch (NatsObjException exception) {
-      throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.", exception);
-    }
-  }
+  public Task RefreshAsync(string key, CancellationToken token = default) => _dataAccessStrategy.RefreshAsync(key, token);
 
   /// <summary>
   /// Remove a cache entry.
@@ -250,17 +172,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <exception cref="InvalidOperationException">
   /// Cache entry metadata are corrupted.
   /// </exception>
-  public async Task RemoveAsync(string key, CancellationToken token = new()) {
-    ValidateKey(key);
-    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
-
-    try {
-      await _cacheBucket.DeleteAsync(key, token);
-    }
-    catch (NatsObjException exception) {
-      throw new InvalidOperationException($"An occurred on removing entry with key '{key}'.", exception);
-    }
-  }
+  public Task RemoveAsync(string key, CancellationToken token = default) => _dataAccessStrategy.RemoveAsync(key, token);
 
   /// <summary>
   /// Try to get a cache entry.
@@ -279,7 +191,8 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <exception cref="InvalidOperationException">
   /// Failed to read cache key value.
   /// </exception>
-  public bool TryGet(string key, IBufferWriter<byte> destination) => TryGetAsync(key, destination).GetAwaiter().GetResult();
+  public bool TryGet(string key, IBufferWriter<byte> destination) =>
+    _dataAccessStrategy.TryGet(key, destination);
 
   /// <summary>
   /// Try to get a cache entry.
@@ -299,64 +212,22 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <exception cref="InvalidOperationException">
   /// Failed to read cache key value.
   /// </exception>
-  public async ValueTask<bool> TryGetAsync(string key, IBufferWriter<byte> destination, CancellationToken token = new()) {
-    ValidateKey(key);
-    await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
-
-    try {
-      destination.Write(await _cacheBucket.GetBytesAsync(key, token));
-      var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, token);
-
-      _logger.LogDebug(
-        "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
-        key,
-        objectMetadata);
-
-      await RefreshExpiresAt(objectMetadata, token);
-
-      return true;
-    }
-    catch (NatsObjNotFoundException) {
-      return false;
-    }
-    catch (NatsObjException exception) {
-      throw new InvalidOperationException($"Failed to read cache key '{key}' value.", exception);
-    }
-  }
+  public ValueTask<bool> TryGetAsync(string key, IBufferWriter<byte> destination, CancellationToken token = new()) =>
+    _dataAccessStrategy.TryGetAsync(key, destination, token);
 
   public void Set(string key, ReadOnlySequence<byte> value, DistributedCacheEntryOptions options) =>
-    throw new NotImplementedException();
+    _dataAccessStrategy.Set(key, value, options);
 
-  public async ValueTask SetAsync(
+  public ValueTask SetAsync(
     string key,
     ReadOnlySequence<byte> value,
     DistributedCacheEntryOptions options,
-    CancellationToken token = new()) { }
+    CancellationToken token = default) =>
+    _dataAccessStrategy.SetAsync(
+      key,
+      value,
+      options,
+      token);
 
-  private Dictionary<string, string> FillCacheEntryMetadata(DistributedCacheEntryOptions options) {
-    var absoluteExpirationUtc = _expirationStrategy.CalculateAbsoluteExpiration(
-      options.AbsoluteExpiration,
-      options.AbsoluteExpirationRelativeToNow);
-    return new CacheEntryMetadata {
-      SlidingExpiration = options.SlidingExpiration,
-      AbsoluteExpirationUtc = absoluteExpirationUtc,
-      ExpiresAtUtc = _expirationStrategy.CalculateExpiration(absoluteExpirationUtc, options.SlidingExpiration)
-    };
-  }
-
-  private async Task RefreshExpiresAt(ObjectMetadata objectMetadata, CancellationToken token) {
-    objectMetadata.Metadata ??= new Dictionary<string, string>();
-    var entryMetadata = new CacheEntryMetadata(objectMetadata.Metadata);
-    entryMetadata.ExpiresAtUtc = _expirationStrategy.CalculateExpiration(
-      entryMetadata.AbsoluteExpirationUtc,
-      entryMetadata.SlidingExpiration);
-    await _cacheBucket.UpdateMetaAsync(objectMetadata.Name, objectMetadata, token);
-  }
-
-  private static void ValidateKey(string key) => ArgumentException.ThrowIfNullOrWhiteSpace(key, "The key is not specified.");
-
-  private readonly INatsObjStore _cacheBucket;
-  private readonly ICacheEntryExpirationStrategy _expirationStrategy;
-  private readonly ICacheExpiredEntriesPurger _expiredEntriesPurger;
-  private readonly ILogger<NatsObjectStoreBasedCache> _logger;
+  private readonly IBufferDistributedCacheDataAccessStrategy _dataAccessStrategy;
 }

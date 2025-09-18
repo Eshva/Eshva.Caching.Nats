@@ -18,4 +18,9 @@
     <PackageReference Include="Testcontainers.Nats" Version="4.7.0"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Eshva.Caching.Abstractions\Eshva.Caching.Abstractions.csproj"/>
+    <ProjectReference Include="..\Eshva.Caching.Nats.ObjectStore.DataAccessors\Eshva.Caching.Nats.ObjectStore.DataAccessors.csproj" />
+  </ItemGroup>
+
 </Project>

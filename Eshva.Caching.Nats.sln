@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eshva.Caching.Nats.Tests.To
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eshva.Caching.Nats.Tests.OutOfProcess", "code\tests\Eshva.Caching.Nats.Tests.OutOfProcess\Eshva.Caching.Nats.Tests.OutOfProcess.csproj", "{2A1F2F6E-2035-487B-9AAC-F9D1E9CB925F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eshva.Caching.Abstractions", "code\solutions\Eshva.Caching.Abstractions\Eshva.Caching.Abstractions.csproj", "{67D121E9-582D-428C-BFDF-3BC48A7DA92B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Eshva.Caching.Nats.ObjectStore.DataAccessors", "code\solutions\Eshva.Caching.Nats.ObjectStore.DataAccessors\Eshva.Caching.Nats.ObjectStore.DataAccessors.csproj", "{5C1D2A4F-CAA1-4BE9-BA0A-288BB75D0332}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,13 @@ Global
 		{2A1F2F6E-2035-487B-9AAC-F9D1E9CB925F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2A1F2F6E-2035-487B-9AAC-F9D1E9CB925F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2A1F2F6E-2035-487B-9AAC-F9D1E9CB925F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67D121E9-582D-428C-BFDF-3BC48A7DA92B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67D121E9-582D-428C-BFDF-3BC48A7DA92B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67D121E9-582D-428C-BFDF-3BC48A7DA92B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67D121E9-582D-428C-BFDF-3BC48A7DA92B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C1D2A4F-CAA1-4BE9-BA0A-288BB75D0332}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C1D2A4F-CAA1-4BE9-BA0A-288BB75D0332}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C1D2A4F-CAA1-4BE9-BA0A-288BB75D0332}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C1D2A4F-CAA1-4BE9-BA0A-288BB75D0332}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
