@@ -9,6 +9,7 @@
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2"/>
     <PackageVersion Include="Meziantou.Extensions.Logging.Xunit" Version="1.0.17"/>
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.8"/>
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.8"/>
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
     <PackageVersion Include="NATS.Client.Core" Version="2.6.8"/>
     <PackageVersion Include="NATS.Client.ObjectStore" Version="2.6.8"/>

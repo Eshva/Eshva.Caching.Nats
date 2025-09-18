@@ -12,4 +12,8 @@
     <PackageReference Include="Testcontainers.Nats"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Eshva.Caching.Abstractions\Eshva.Caching.Abstractions.csproj"/>
+  </ItemGroup>
+
 </Project>

@@ -1,4 +1,4 @@
-﻿using System;
+﻿using Eshva.Caching.Abstractions;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using FluentAssertions;
 using Reqnroll;
@@ -29,11 +29,9 @@ public class StandardCacheEntryExpirationStrategySteps {
   [When("I check is cache entry expired")]
   public void WhenICheckIsCacheEntryExpired() => _isExpired = _sut.IsCacheEntryExpired(_expiresAt);
 
-  [Then("it should be not expired")]
-  public void ThenItShouldBeNotExpired() => _isExpired.Should().BeFalse();
+  [Then("it should be not expired")] public void ThenItShouldBeNotExpired() => _isExpired.Should().BeFalse();
 
-  [Then("it should be expired")]
-  public void ThenItShouldBeExpired() => _isExpired.Should().BeTrue();
+  [Then("it should be expired")] public void ThenItShouldBeExpired() => _isExpired.Should().BeTrue();
 
   [Given("absolute expiration today at (.*)")]
   public void GivenAbsoluteExpirationTodayAt(DateTimeOffset absoluteExpiration) =>
@@ -42,11 +40,9 @@ public class StandardCacheEntryExpirationStrategySteps {
   [Given("sliding expiration in {int} minutes")]
   public void GivenSlidingExpirationInMinutes(int minutes) => _slidingExpiration = TimeSpan.FromMinutes(minutes);
 
-  [Given("no absolute expiration")]
-  public void GivenNoAbsoluteExpiration() => _absoluteExpiration = null;
+  [Given("no absolute expiration")] public void GivenNoAbsoluteExpiration() => _absoluteExpiration = null;
 
-  [Given("no sliding expiration")]
-  public void GivenNoSlidingExpiration() => _slidingExpiration = null;
+  [Given("no sliding expiration")] public void GivenNoSlidingExpiration() => _slidingExpiration = null;
 
   [When("I calculate expiration time")]
   public void WhenICalculateExpirationTime() => _calculatedExpiration = _sut.CalculateExpiration(_absoluteExpiration, _slidingExpiration);

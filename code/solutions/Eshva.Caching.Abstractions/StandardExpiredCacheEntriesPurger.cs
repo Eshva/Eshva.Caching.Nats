@@ -3,7 +3,7 @@ using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Abstractions;
 
 /// <summary>
 /// Standard expired cache entries purger.
@@ -19,7 +19,8 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   /// Initializes a new instance of a standard expired cache entries purger.
   /// </summary>
   /// <remarks>
-  /// If <paramref name="clock"/> is not specified <see cref="SystemClock"/> will be used. If <paramref name="logger"/> isn't
+  /// If <paramref name="clock"/> is not specified <see cref="Microsoft.Extensions.Internal.SystemClock"/> will be used. If
+  /// <paramref name="logger"/> isn't
   /// specified a null logger will be used.
   /// </remarks>
   /// <param name="purgerSettings">Purger settings.</param>

@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Abstractions;
 
 /// <summary>
 /// Time-based expiration strategy settings.
