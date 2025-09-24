@@ -39,13 +39,13 @@ public class TryGetAsyncVariantsBenchmarks {
     _memory = new Memory<byte>(new byte[EntrySize]);
   }
 
-  [Benchmark]
+  [Benchmark(Description = "with a stream")]
   public async Task<bool> TryGetAsyncWithByteStream() {
     var sut = new TryGetAsyncWithByteStream(_bucket);
     return await sut.TryGetAsync(EntryName, new MemoryBufferWriter<byte>(_memory));
   }
 
-  [Benchmark]
+  [Benchmark(Description = "with an array", Baseline = true)]
   public async Task<bool> TryGetAsyncWithByteSequence() {
     var sut = new TryGetAsyncWithByteSequence(_bucket);
     return await sut.TryGetAsync(EntryName, new MemoryBufferWriter<byte>(_memory));
