@@ -1,20 +1,24 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Eshva.Caching.Nats.Benchmarks.Tools/Eshva.Caching.Nats.Benchmarks.Tools.csproj"
+             Type="Classic C#"/>
+    <Project
+      Path="benchmarks/Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks/Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks.csproj"
+      Type="Classic C#"/>
+  </Folder>
+  <Folder Name="/common/">v
+    <Project Path="solutions/Eshva.Caching.Abstractions/Eshva.Caching.Abstractions.csproj" Type="Classic C#"/>
+    <Project
+      Path="solutions/Eshva.Caching.Nats.Tests.OutOfProcessDeployments/Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"
+      Type="Classic C#"/>
+    <Project Path="solutions/Eshva.Tests.Deployments/Eshva.Tests.Deployments.csproj" Type="Classic C#"/>
+  </Folder>
   <Folder Name="/shared/"/>
   <Folder Name="/shared/dotnet-settings/">
     <File Path="Directory.Build.props"/>
     <File Path="Directory.Packages.props"/>
   </Folder>
-  <Project Path="benchmarks/Eshva.Caching.Nats.Benchmarks.Tools/Eshva.Caching.Nats.Benchmarks.Tools.csproj"
-           Type="Classic C#"/>
-  <Project
-    Path="benchmarks/Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks/Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks.csproj"
-    Type="Classic C#"/>
   <Project Path="solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj"/>
-  <Project Path="solutions/Eshva.Tests.Deployments/Eshva.Tests.Deployments.csproj" Type="Classic C#"/>
-  <Project Path="solutions/Eshva.Caching.Abstractions/Eshva.Caching.Abstractions.csproj" Type="Classic C#"/>
-  <Project
-    Path="solutions/Eshva.Caching.Nats.Tests.OutOfProcessDeployments/Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"
-    Type="Classic C#"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.OutOfProcess/Eshva.Caching.Nats.Tests.OutOfProcess.csproj"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.Tools/Eshva.Caching.Nats.Tests.Tools.csproj"/>
 </Solution>
