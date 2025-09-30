@@ -8,6 +8,7 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance"/>
     <PackageReference Include="Eshva.Common.Testing"/>
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     <PackageReference Include="BenchmarkDotNet"/>
     <PackageReference Include="BenchmarkDotNet.TestAdapter"/>
@@ -18,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats.Tests.OutOfProcessDeployments\Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"/>
     <ProjectReference Include="..\Eshva.Caching.Nats.Benchmarks.Tools\Eshva.Caching.Nats.Benchmarks.Tools.csproj"/>
+    <ProjectReference Include="..\Eshva.Caching.Nats.TestWebApp\Eshva.Caching.Nats.TestWebApp.csproj"/>
   </ItemGroup>
 
 </Project>

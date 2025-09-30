@@ -27,6 +27,10 @@ public partial class NatsServerDeployment {
       this with { IsJetStreamEnabled = true };
 
     public Settings CreateBucket(ObjectStoreBucket bucketSettings) =>
-      this with { Buckets = Buckets.Add(bucketSettings) };
+      this with {
+        Buckets = !Buckets.IsDefault
+          ? Buckets.Add(bucketSettings)
+          : [bucketSettings]
+      };
   }
 }

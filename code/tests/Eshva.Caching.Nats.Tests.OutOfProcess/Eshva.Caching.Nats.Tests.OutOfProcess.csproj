@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats.Tests.OutOfProcessDeployments\Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"/>
     <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats\Eshva.Caching.Nats.csproj"/>
     <ProjectReference Include="..\Eshva.Caching.Nats.Tests.Tools\Eshva.Caching.Nats.Tests.Tools.csproj"/>
   </ItemGroup>
