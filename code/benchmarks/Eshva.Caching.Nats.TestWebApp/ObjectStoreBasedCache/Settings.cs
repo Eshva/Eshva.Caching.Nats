@@ -1,5 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿namespace Eshva.Caching.Nats.TestWebApp.ObjectStoreBasedCache;
 
-namespace Eshva.Caching.Nats.TestWebApp.ObjectStoreBasedCache;
-
-public record Settings([Required] string NatsServerConnectionString);
+public class Settings {
+  public string NatsServerConnectionString { get; init; } = string.Empty;
+}

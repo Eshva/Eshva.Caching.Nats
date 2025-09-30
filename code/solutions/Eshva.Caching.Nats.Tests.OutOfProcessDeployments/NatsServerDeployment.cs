@@ -1,4 +1,5 @@
-﻿using DotNet.Testcontainers.Builders;
+﻿using System.Text.RegularExpressions;
+using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Eshva.Tests.Deployments;
 using JetBrains.Annotations;
@@ -10,31 +11,30 @@ using Testcontainers.Nats;
 namespace Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 
 [PublicAPI]
-public partial class NatsServerDeployment(NatsServerDeployment.Settings settings) : IOutOfProcessDeployment {
+public partial class NatsServerDeployment(NatsServerDeployment.Configuration configuration) : IOutOfProcessDeployment {
   public INatsConnection Connection { get; private set; } = null!;
 
   public INatsJSContext JetStreamContext { get; private set; } = null!;
 
   public INatsObjContext ObjectStoreContext { get; private set; } = null!;
 
-  public static Settings Named(string name) => new() { Name = name };
+  public static Configuration Named(string name) => new() { Name = name };
 
-  public static implicit operator NatsServerDeployment(Settings settings) => new(settings);
+  public static implicit operator NatsServerDeployment(Configuration configuration) => new(configuration);
 
   public virtual Task Build() {
     var builder = new ContainerBuilder()
-      .WithImage(settings.ImageTag)
-      .WithName(settings.ContainerName)
-      .WithPortBinding(settings.HostNetworkClientPort, NatsBuilder.NatsClientPort)
+      .WithImage(configuration.ImageTag)
+      .WithName(configuration.ContainerName)
+      .WithPortBinding(configuration.HostNetworkClientPort, NatsBuilder.NatsClientPort)
       .WithCleanUp(cleanUp: true)
       .WithAutoRemove(autoRemove: true)
       .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Server is ready"));
 
-    if (settings.IsJetStreamEnabled) builder.WithCommand("--jetstream");
-    if (settings.HostNetworkHttpManagementPort.HasValue) {
-      builder.WithPortBinding(settings.HostNetworkHttpManagementPort.Value, NatsHttpManagementPort)
-        .WithCommand("--http_port", NatsHttpManagementPort.ToString());
-    }
+    builder = EnableJetStreamIfRequired(builder);
+    builder = MapHttpManagementPortToHostIfRequired(builder);
+    builder = EnableDebugOutputIfRequired(builder);
+    builder = EnableTraceOutputIfRequired(builder);
 
     return Task.FromResult(_container = builder.Build());
   }
@@ -48,25 +48,47 @@ public partial class NatsServerDeployment(NatsServerDeployment.Settings settings
   }
 
   public async ValueTask DisposeAsync() {
-    if (_container != null) await _container.DisposeAsync();
+    if (_container == null) return;
+
+    await _container.DisposeAsync();
+    _container = null;
   }
+
+  private ContainerBuilder EnableDebugOutputIfRequired(ContainerBuilder builder) =>
+    configuration.ShouldEnableDebugOutput ? builder.WithCommand("--debug") : builder;
+
+  private ContainerBuilder EnableTraceOutputIfRequired(ContainerBuilder builder) =>
+    configuration.ShouldEnableTraceOutput ? builder.WithCommand("--trace") : builder;
+
+  private ContainerBuilder MapHttpManagementPortToHostIfRequired(ContainerBuilder builder) {
+    if (configuration.HostNetworkHttpManagementPort.HasValue) {
+      builder = builder.WithPortBinding(configuration.HostNetworkHttpManagementPort.Value, NatsHttpManagementPort)
+        .WithCommand("--http_port", NatsHttpManagementPort.ToString());
+    }
+
+    return builder;
+  }
+
+  private ContainerBuilder EnableJetStreamIfRequired(ContainerBuilder builder) =>
+    configuration.ShouldEnableJetStream ? builder.WithCommand("--jetstream") : builder;
 
   private async Task ConnectToNats() {
     Connection = new NatsConnection(
-      new NatsOpts { Url = $"nats://localhost:{settings.HostNetworkClientPort}" });
+      new NatsOpts { Url = $"nats://localhost:{configuration.HostNetworkClientPort}" });
+    await Connection.ConnectAsync();
     JetStreamContext = new NatsJSContext(Connection);
     ObjectStoreContext = new NatsObjContext(JetStreamContext);
-    await Connection.ConnectAsync();
   }
 
   private async Task CreateBuckets() {
-    foreach (var bucket in settings.Buckets) {
+    foreach (var bucket in configuration.Buckets) {
+      var bucketName = Regex.Replace(configuration.Name, "[^a-zA-Z0-9]", "-");
       await ObjectStoreContext.CreateObjectStoreAsync(
-        new NatsObjConfig(settings.Name) { MaxBytes = bucket.BucketVolumeBytes });
+        new NatsObjConfig(bucketName) { MaxBytes = bucket.BucketVolumeBytes });
     }
   }
 
-  private IContainer _container = null!; // TODO: Add NoneContainer.
+  private IContainer? _container; // TODO: Add NoneContainer.
   public const ushort NatsClientPort = 4222;
   public const ushort NatsClusterRoutingPort = 6222;
   public const ushort NatsHttpManagementPort = 8222;
