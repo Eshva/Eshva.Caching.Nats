@@ -17,9 +17,7 @@ public class StandardCacheEntryExpirationStrategySteps {
     double defaultSlidingExpirationTime) {
     _cachesContext.TimeProvider.AdjustTime(_cachesContext.Today + currentTime);
     _sut = new StandardCacheEntryExpirationStrategy(
-      new ExpirationStrategySettings {
-        DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(defaultSlidingExpirationTime)
-      },
+      new ExpirationStrategySettings { DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(defaultSlidingExpirationTime) },
       _cachesContext.TimeProvider);
   }
 
@@ -34,8 +32,8 @@ public class StandardCacheEntryExpirationStrategySteps {
   [Then("it should be expired")] public void ThenItShouldBeExpired() => _isExpired.Should().BeTrue();
 
   [Given("absolute expiration today at (.*)")]
-  public void GivenAbsoluteExpirationTodayAt(DateTimeOffset absoluteExpiration) =>
-    _absoluteExpiration = new DateTimeOffset(absoluteExpiration.DateTime, TimeSpan.Zero);
+  public void GivenAbsoluteExpirationTodayAt(TimeSpan absoluteExpirationTime) =>
+    _absoluteExpiration = _cachesContext.Today.Add(absoluteExpirationTime);
 
   [Given("sliding expiration in {int} minutes")]
   public void GivenSlidingExpirationInMinutes(int minutes) => _slidingExpiration = TimeSpan.FromMinutes(minutes);

@@ -3,11 +3,13 @@ using BenchmarkDotNet.Attributes;
 using Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 using Eshva.Caching.Nats.TestWebApp;
 using Eshva.Common.Testing;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks.CachingImageProvider;
 
 [MemoryDiagnoser]
+// ReSharper disable once InconsistentNaming
 public class CachingImageProviderBenchmarks {
   [Params(
     EntrySizes.Bytes016,
@@ -18,11 +20,12 @@ public class CachingImageProviderBenchmarks {
     EntrySizes.MiB001,
     EntrySizes.MiB005,
     EntrySizes.MiB050)]
-  public int EntrySize { get; set; }
+  public int EntrySize { get; [UsedImplicitly] set; }
 
   [Benchmark]
   public async Task<bool> TryGetAsyncWithByteStream() {
     Debugger.Break();
+    Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/object-store/images/{EntryName}");
     return response.IsSuccessStatusCode;
   }
@@ -43,8 +46,8 @@ public class CachingImageProviderBenchmarks {
 
   [GlobalSetup]
   public async Task SetupDeployment() {
-    _hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
-    _hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(_hostNetworkClientPort + 1));
+    var hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
+    var hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(hostNetworkClientPort + 1));
     _deployment = CachingImageProviderBenchmarksDeployment
       .Named($"{nameof(CachingImageProviderBenchmarks)}-{EntrySize}")
       .WithNatsServerInContainer(
@@ -52,9 +55,9 @@ public class CachingImageProviderBenchmarks {
           .Named($"{nameof(CachingImageProviderBenchmarks)}-{EntrySize}")
           .FromImageTag("nats:2.11")
           .WithContainerName($"caching-image-provider-benchmarks-{EntrySize}")
-          .WithHostNetworkClientPort(_hostNetworkClientPort)
-          .WithHostNetworkHttpManagementPort(_hostNetworkHttpManagementPort)
-          .WithJetStreamEnabled()
+          .WithHostNetworkClientPort(hostNetworkClientPort)
+          .WithHostNetworkHttpManagementPort(hostNetworkHttpManagementPort)
+          .EnabledJetStream()
           .CreateBucket(
             ObjectStoreBucket
               .Named($"{nameof(CachingImageProviderBenchmarks)}-{EntrySize}")
@@ -66,9 +69,20 @@ public class CachingImageProviderBenchmarks {
 
   [GlobalCleanup]
   public async Task CleanupDeployment() {
-    await _deployment.DisposeAsync();
-    _webAppClient.Dispose();
-    await _webAppFactory.DisposeAsync();
+    if (_deployment != null) {
+      await _deployment.DisposeAsync();
+      _deployment = null;
+    }
+
+    if (_webAppClient != null) {
+      _webAppClient.Dispose();
+      _webAppClient = null;
+    }
+
+    if (_webAppFactory != null) {
+      await _webAppFactory.DisposeAsync();
+      _webAppFactory = null;
+    }
   }
 
   private void SetupWebAppTestee() {
@@ -76,10 +90,8 @@ public class CachingImageProviderBenchmarks {
     _webAppClient = _webAppFactory.CreateClient();
   }
 
-  private CachingImageProviderBenchmarksDeployment _deployment = null!;
-  private ushort _hostNetworkClientPort;
-  private ushort _hostNetworkHttpManagementPort;
-  private HttpClient _webAppClient = null!;
-  private WebApplicationFactory<AssemblyTag> _webAppFactory = null!;
+  private CachingImageProviderBenchmarksDeployment? _deployment;
+  private HttpClient? _webAppClient;
+  private WebApplicationFactory<AssemblyTag>? _webAppFactory;
   private const string EntryName = "benchmark-entry";
 }
