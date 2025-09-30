@@ -9,5 +9,5 @@
     <PackageReference Include="NATS.Client.ObjectStore"/>
     <PackageReference Include="Testcontainers.Nats"/>
   </ItemGroup>
-  
+
 </Project>
