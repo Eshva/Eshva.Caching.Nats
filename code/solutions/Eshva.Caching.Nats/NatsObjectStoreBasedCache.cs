@@ -305,9 +305,16 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     await _expiredEntriesPurger.ScanForExpiredEntriesIfRequired(token);
 
     try {
-      // TODO: Change to IBufferWriterExtensions.AsStream(IBufferWriter<Byte>)
-      destination.Write(await _cacheBucket.GetBytesAsync(key, token));
-      var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, token);
+      var stream = new MemoryStream();
+      var objectMetadata = await _cacheBucket.GetAsync(
+        key,
+        stream,
+        leaveOpen: true,
+        token);
+      stream.Seek(offset: 0, SeekOrigin.Begin);
+
+      var destinationStream = destination.AsStream();
+      await stream.CopyToAsync(destinationStream, token);
 
       _logger.LogDebug(
         "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
@@ -339,10 +346,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
 
     try {
       var objectMetadata = await _cacheBucket.PutAsync(
-        new ObjectMetadata {
-          Name = key,
-          Metadata = FillCacheEntryMetadata(options)
-        },
+        new ObjectMetadata { Name = key, Metadata = FillCacheEntryMetadata(options) },
         value.AsStream(),
         leaveOpen: true,
         token);

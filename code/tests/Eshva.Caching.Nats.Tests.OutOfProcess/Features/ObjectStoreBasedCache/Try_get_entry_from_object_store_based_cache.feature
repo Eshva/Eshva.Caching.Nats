@@ -4,13 +4,14 @@
     Given expired entries purging interval 2 minutes
     And default sliding expiration interval 1 minutes
     And object-store based cache with synchronous purge
+    And entry with key 'big one' and random byte array as value which expires in 3 minutes put into cache
     And entry with key 'will be gotten' and value 'will be gotten value' which expires in 3 minutes put into cache
     And entry with key 'will be removed' and value 'will be removed value' which expires in 1 minutes put into cache
 
   Scenario: 01. Get will be gotten cache entry by key asynchronously
-    When I try get 'will be gotten' cache entry asynchronously
+    When I try get 'big one' cache entry asynchronously
     Then cache entry successfully read
-    Then I should get value 'will be gotten value' as the requested entry
+    Then I should get same value as the requested entry
 
   Scenario: 02. Get will be gotten cache entry by key synchronously
     When I try get 'will be gotten' cache entry synchronously
