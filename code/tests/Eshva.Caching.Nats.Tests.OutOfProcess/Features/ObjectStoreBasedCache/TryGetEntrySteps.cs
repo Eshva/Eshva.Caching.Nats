@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
+﻿using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using FluentAssertions;
 using NATS.Client.Core;
 using Reqnroll;
@@ -15,7 +13,7 @@ public class TryGetEntrySteps {
   }
 
   [When("I try get {string} cache entry asynchronously")]
-  public async Task WhenITryGetCacheEntryAsynchronously(string key) {
+  public async Task WhenITryGetStringCacheEntryAsynchronously(string key) {
     try {
       var destination = new NatsBufferWriter<byte>();
       _isSuccessfullyRead = await _cachesContext.Cache.TryGetAsync(key, destination);
@@ -41,8 +39,7 @@ public class TryGetEntrySteps {
   [Then("cache entry successfully read")]
   public void ThenCacheEntrySuccessfullyRead() => _isSuccessfullyRead.Should().BeTrue();
 
-  [Then("cache entry did not read")]
-  public void ThenCacheEntryDidNotRead() => _isSuccessfullyRead.Should().BeFalse();
+  [Then("cache entry did not read")] public void ThenCacheEntryDidNotRead() => _isSuccessfullyRead.Should().BeFalse();
 
   private readonly CachesContext _cachesContext;
   private readonly ErrorHandlingContext _errorHandlingContext;

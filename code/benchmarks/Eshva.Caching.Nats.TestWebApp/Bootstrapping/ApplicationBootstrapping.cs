@@ -20,7 +20,7 @@ public static class ApplicationBootstrapping {
 
   public static void MapEndpoints(this IEndpointRouteBuilder endpoints) => Module.MapEndpoints(endpoints);
 
-  private static void AddSharedServices(this IServiceCollection services) { }
+  private static void AddSharedServices(this IServiceCollection services) => services.AddSingleton(TimeProvider.System);
 
   private static void AddConfiguration(this IServiceCollection services) {
     services.AddOptions<Settings>()

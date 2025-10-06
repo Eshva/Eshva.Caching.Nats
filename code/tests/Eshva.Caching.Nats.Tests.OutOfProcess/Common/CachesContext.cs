@@ -36,7 +36,7 @@ public class CachesContext {
 
   public NatsObjectStoreBasedCache Cache { get; private set; } = null!;
 
-  public byte[]? GottenCacheEntryValue { get; set; }
+  public byte[] GottenCacheEntryValue { get; set; } = [];
 
   public void CreateAndAssignCacheServices() {
     var expirationStrategy = new StandardCacheEntryExpirationStrategy(

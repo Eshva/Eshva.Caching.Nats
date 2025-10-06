@@ -30,6 +30,24 @@ public class CommonCacheSteps {
     await _cachesContext.Bucket.UpdateMetaAsync(key, objectMetadata);
   }
 
+  [Given("entry with key {string} and random byte array as value which expires in {double} minutes put into cache")]
+  public async Task GivenEntryWithKeyStringAndRandomByteArrayAsValueWhichExpiresInDoubleMinutesPutIntoCache(
+    string key,
+    double expiresInMinutes) {
+    _originalValue = new byte[1 * 1024 * 1024 + 5];
+    Random.Shared.NextBytes(_originalValue);
+    await _cachesContext.Bucket.PutAsync(key, _originalValue);
+
+    var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
+    objectMetadata.Metadata = new CacheEntryMetadata(objectMetadata.Metadata!) {
+      ExpiresAtUtc = _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes),
+      SlidingExpiration = TimeSpan.FromMinutes(expiresInMinutes)
+    };
+    _cachesContext.XUnitLogger.WriteLine(
+      $"Put entry '{key}' that expires at {new CacheEntryMetadata(objectMetadata.Metadata!).ExpiresAtUtc}");
+    await _cachesContext.Bucket.UpdateMetaAsync(key, objectMetadata);
+  }
+
   [Given("passed a bit more than purging expired entries interval")]
   public void GivenPassedABitMoreThanPurgingExpiredEntriesInterval() =>
     _cachesContext.TimeProvider.Advance(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: 1)));
@@ -41,6 +59,10 @@ public class CommonCacheSteps {
   [Then("I should get value {string} as the requested entry")]
   public void ThenIShouldGetValueAsTheRequestedEntry(string value) =>
     Encoding.UTF8.GetBytes(value).Should().BeEquivalentTo(_cachesContext.GottenCacheEntryValue);
+
+  [Then("I should get same value as the requested entry")]
+  public void ThenIShouldGetSameValueAsTheRequestedEntry() =>
+    _cachesContext.GottenCacheEntryValue.Should().BeEquivalentTo(_originalValue);
 
   [Then("I should get a null value as the requested entry")]
   public void ThenIShouldGetANullValueAsTheRequestedEntry() => _cachesContext.GottenCacheEntryValue.Should().BeNull();
@@ -99,4 +121,5 @@ public class CommonCacheSteps {
   }
 
   private readonly CachesContext _cachesContext;
+  private byte[] _originalValue = [];
 }

@@ -30,20 +30,6 @@ public class CachingImageProviderBenchmarks {
     return response.IsSuccessStatusCode;
   }
 
-  /*
-  [Benchmark(Description = "with a stream")]
-  public Task<bool> TryGetAsyncWithByteStream() =>
-    // var sut = new TryGetAsyncWithByteStream(_bucket);
-    // return await sut.TryGetAsync(EntryName, new MemoryBufferWriter<byte>(_memory));
-    Task.FromResult(result: true);
-
-  [Benchmark(Description = "with an array", Baseline = true)]
-  public Task<bool> TryGetAsyncWithByteSequence() =>
-    // var sut = new TryGetAsyncWithByteSequence(_bucket);
-    // return await sut.TryGetAsync(EntryName, new MemoryBufferWriter<byte>(_memory));
-    Task.FromResult(result: true);
-    */
-
   [GlobalSetup]
   public async Task SetupDeployment() {
     var hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
@@ -64,7 +50,17 @@ public class CachingImageProviderBenchmarks {
               .OfSize(100 * 1024 * 1024)));
     await _deployment.Build();
     await _deployment.Start();
+
+    await CreateCacheBucket();
     SetupWebAppTestee();
+  }
+
+  [IterationSetup]
+  public void AddImageIntoCache() {
+    var bucket = _deployment!.NatsServer.ObjectStoreContext.GetObjectStoreAsync("images").GetAwaiter().GetResult();
+    var image = new byte[EntrySize];
+    Random.Shared.NextBytes(image);
+    bucket.PutAsync(EntryName, image).GetAwaiter().GetResult();
   }
 
   [GlobalCleanup]
@@ -85,7 +81,14 @@ public class CachingImageProviderBenchmarks {
     }
   }
 
+  private async Task CreateCacheBucket() =>
+    await _deployment!.NatsServer.ObjectStoreContext.CreateObjectStoreAsync("images");
+
   private void SetupWebAppTestee() {
+    Environment.SetEnvironmentVariable(
+      "BENCHMARKS_ObjectStoreBasedCache__NatsServerConnectionString",
+      _deployment!.NatsServer.Connection.Opts.Url);
+
     _webAppFactory = new WebApplicationFactory<AssemblyTag>();
     _webAppClient = _webAppFactory.CreateClient();
   }
