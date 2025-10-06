@@ -1,4 +1,5 @@
-﻿Feature: Remove entry from object-store based cache
+﻿@out-of-process
+Feature: Remove entry from object-store based cache
 
   Background:
     Given expired entries purging interval 2 minutes

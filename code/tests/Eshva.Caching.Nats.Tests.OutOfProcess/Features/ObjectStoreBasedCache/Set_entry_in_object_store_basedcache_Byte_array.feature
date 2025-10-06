@@ -1,4 +1,5 @@
-﻿Feature: Set entry in object-store based cache. Byte array
+﻿@out-of-process
+Feature: Set entry in object-store based cache. Byte array
 
   Background:
     Given expired entries purging interval 2 minutes

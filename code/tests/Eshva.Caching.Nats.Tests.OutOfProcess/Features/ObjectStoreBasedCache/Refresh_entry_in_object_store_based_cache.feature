@@ -1,4 +1,5 @@
-﻿Feature: Refresh entry in object-store based cache
+﻿@out-of-process
+Feature: Refresh entry in object-store based cache
 
   Background:
     Given clock set at today 00:00

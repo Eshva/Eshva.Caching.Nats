@@ -1,4 +1,5 @@
-﻿Feature: Try get entry from object-store based cache
+﻿@out-of-process
+Feature: Try get entry from object-store based cache
 
   Background:
     Given expired entries purging interval 2 minutes
