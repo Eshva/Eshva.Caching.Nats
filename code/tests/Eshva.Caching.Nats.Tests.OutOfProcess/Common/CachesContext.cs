@@ -36,21 +36,17 @@ public class CachesContext {
 
   public NatsObjectStoreBasedCache Cache { get; private set; } = null!;
 
-  public byte[] GottenCacheEntryValue { get; set; } = [];
+  public byte[]? GottenCacheEntryValue { get; set; } = [];
 
   public void CreateAndAssignCacheServices() {
     var expirationStrategy = new StandardCacheEntryExpirationStrategy(
-      new ExpirationStrategySettings {
-        DefaultSlidingExpirationInterval = DefaultSlidingExpirationInterval
-      },
+      new ExpirationStrategySettings { DefaultSlidingExpirationInterval = DefaultSlidingExpirationInterval },
       TimeProvider);
 
     var expiredEntriesPurger = new ObjectStoreBasedCacheExpiredEntriesPurger(
       Bucket,
       expirationStrategy,
-      new PurgerSettings {
-        ExpiredEntriesPurgingInterval = ExpiredEntriesPurgingInterval
-      },
+      new PurgerSettings { ExpiredEntriesPurgingInterval = ExpiredEntriesPurgingInterval },
       TimeProvider,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheExpiredEntriesPurger>(_xUnitLogger)) {
       ShouldPurgeSynchronously = true
