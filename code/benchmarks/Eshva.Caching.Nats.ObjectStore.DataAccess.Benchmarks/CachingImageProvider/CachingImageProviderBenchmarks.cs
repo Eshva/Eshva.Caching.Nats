@@ -34,7 +34,7 @@ public class CachingImageProviderBenchmarks {
   public async Task SetupDeployment() {
     var hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
     var hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(hostNetworkClientPort + 1));
-    _deployment = CachingImageProviderBenchmarksDeployment
+    _deployment = NatsBasedCachingTestsDeployment
       .Named($"{nameof(CachingImageProviderBenchmarks)}-{EntrySize}")
       .WithNatsServerInContainer(
         NatsServerDeployment
@@ -93,7 +93,7 @@ public class CachingImageProviderBenchmarks {
     _webAppClient = _webAppFactory.CreateClient();
   }
 
-  private CachingImageProviderBenchmarksDeployment? _deployment;
+  private NatsBasedCachingTestsDeployment? _deployment;
   private HttpClient? _webAppClient;
   private WebApplicationFactory<AssemblyTag>? _webAppFactory;
   private const string EntryName = "benchmark-entry";

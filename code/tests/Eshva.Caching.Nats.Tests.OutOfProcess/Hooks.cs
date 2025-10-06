@@ -15,7 +15,7 @@ public sealed class Hooks {
 
     _hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
     _hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(_hostNetworkClientPort + 1));
-    _deployment = CachingImageProviderBenchmarksDeployment
+    _deployment = NatsBasedCachingTestsDeployment
       .Named($"NatsCache out of process tests with suffix '{_suffix}'")
       .WithNatsServerInContainer(
         NatsServerDeployment
@@ -55,7 +55,7 @@ public sealed class Hooks {
     scenarioContext.ScenarioContainer.RegisterInstanceAs(cachesContext);
   }
 
-  private static CachingImageProviderBenchmarksDeployment? _deployment;
+  private static NatsBasedCachingTestsDeployment? _deployment;
   private static ushort _hostNetworkHttpManagementPort;
   private static ushort _hostNetworkClientPort;
   private static string _suffix = string.Empty;

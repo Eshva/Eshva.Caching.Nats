@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 namespace Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 
 [PublicAPI]
-public partial class CachingImageProviderBenchmarksDeployment(CachingImageProviderBenchmarksDeployment.Configuration configuration)
+public partial class NatsBasedCachingTestsDeployment(NatsBasedCachingTestsDeployment.Configuration configuration)
   : IOutOfProcessDeployment {
   public NatsServerDeployment NatsServer { get; private set; } = null!;
 
@@ -31,7 +31,7 @@ public partial class CachingImageProviderBenchmarksDeployment(CachingImageProvid
   /// <returns>
   /// A new deployment created with provided <paramref name="configuration"/>.
   /// </returns>
-  public static implicit operator CachingImageProviderBenchmarksDeployment(Configuration configuration) => new(configuration);
+  public static implicit operator NatsBasedCachingTestsDeployment(Configuration configuration) => new(configuration);
 
   /// <summary>
   /// A factory method of a new configuration of the deployment.
