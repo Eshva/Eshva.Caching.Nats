@@ -1,10 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Eshva.Tests.Deployments\Eshva.Tests.Deployments.csproj"/>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
     <PackageReference Include="Testcontainers.Nats"/>

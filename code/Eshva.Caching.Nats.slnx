@@ -12,7 +12,6 @@
     <Project
       Path="solutions/Eshva.Caching.Nats.Tests.OutOfProcessDeployments/Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"
       Type="Classic C#"/>
-    <Project Path="solutions/Eshva.Tests.Deployments/Eshva.Tests.Deployments.csproj" Type="Classic C#"/>
   </Folder>
   <Folder Name="/shared/">
     <File Path="../.gitignore"/>

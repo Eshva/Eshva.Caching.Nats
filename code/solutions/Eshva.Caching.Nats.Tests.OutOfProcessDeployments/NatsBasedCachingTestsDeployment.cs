@@ -1,5 +1,4 @@
-﻿using Eshva.Tests.Deployments;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 

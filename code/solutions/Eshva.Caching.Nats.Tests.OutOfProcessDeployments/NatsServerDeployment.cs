@@ -1,7 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using Eshva.Tests.Deployments;
 using JetBrains.Annotations;
 using NATS.Client.Core;
 using NATS.Client.JetStream;

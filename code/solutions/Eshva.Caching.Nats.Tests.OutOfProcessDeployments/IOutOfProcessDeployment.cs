@@ -1,4 +1,4 @@
-﻿namespace Eshva.Tests.Deployments;
+﻿namespace Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 
 public interface IOutOfProcessDeployment : IAsyncDisposable {
   Task Build();
