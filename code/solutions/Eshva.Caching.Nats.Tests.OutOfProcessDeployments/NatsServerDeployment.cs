@@ -81,6 +81,8 @@ public partial class NatsServerDeployment(NatsServerDeployment.Configuration con
   }
 
   private async Task CreateBuckets() {
+    if (configuration.Buckets.IsDefaultOrEmpty) return;
+
     foreach (var bucket in configuration.Buckets) {
       var bucketName = Regex.Replace(configuration.Name, "[^a-zA-Z0-9]", "-");
       await ObjectStoreContext.CreateObjectStoreAsync(

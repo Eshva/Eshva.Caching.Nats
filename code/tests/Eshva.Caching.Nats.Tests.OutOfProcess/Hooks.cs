@@ -26,11 +26,7 @@ public sealed class Hooks {
           .WithHostNetworkHttpManagementPort(_hostNetworkHttpManagementPort)
           .EnabledJetStream()
           .EnableDebugOutput()
-          .EnableTraceOutput()
-          .CreateBucket(
-            ObjectStoreBucket
-              .Named("object-store-cache-tests-entries")
-              .OfSize(100 * 1024 * 1024)));
+          .EnableTraceOutput());
     await _deployment.Build();
     await _deployment.Start();
   }
