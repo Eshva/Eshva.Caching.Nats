@@ -56,30 +56,27 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   public bool ShouldPurgeSynchronously { get; set; }
 
   /// <inheritdoc/>
-  public async Task ScanForExpiredEntriesIfRequired(CancellationToken token = default) {
-    lock (_scanForExpiredItemsLock) {
-      var utcNow = _timeProvider.GetUtcNow();
-      var timePassedSinceTheLastPurging = utcNow - _lastExpirationScan;
-      if (timePassedSinceTheLastPurging < _expiredEntriesPurgingInterval) {
-        Logger.LogDebug(
-          "Since the last purging expired entries {TimePassed} has passed that is less than {PurgingInterval}. Purging is not required",
-          timePassedSinceTheLastPurging,
-          _expiredEntriesPurgingInterval);
-        return;
+  public async Task PurgeExpiredEntriesIfRequired(CancellationToken token = default) {
+    const byte purgingInProgress = 1;
+    const byte notYetPurging = 0;
+    if (Interlocked.CompareExchange(ref _isPurgingInProgress, purgingInProgress, notYetPurging) == purgingInProgress) {
+      Logger.LogDebug("Purging already in progress");
+      return;
+    }
+
+    if (!ShouldPurgeEntries()) return;
+
+    try {
+      _lastExpirationScan = _timeProvider.GetUtcNow();
+      if (ShouldPurgeSynchronously) {
+        await DeleteExpiredCacheEntries(token).ConfigureAwait(false);
       }
-
-      Logger.LogDebug(
-        "Since the last purging expired entries {TimePassed} has passed that is greeter than or equals to {PurgingInterval}. Purging is required",
-        timePassedSinceTheLastPurging,
-        _expiredEntriesPurgingInterval);
-      _lastExpirationScan = utcNow;
+      else {
+        _ = Task.Run(() => DeleteExpiredCacheEntries(token), token);
+      }
     }
-
-    if (ShouldPurgeSynchronously) {
-      await Task.Run(() => DeleteExpiredCacheEntries(token), token);
-    }
-    else {
-      _ = Task.Run(() => DeleteExpiredCacheEntries(token), token);
+    finally {
+      _isPurgingInProgress = notYetPurging;
     }
   }
 
@@ -108,6 +105,24 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   protected void NotifyPurgeCompleted(uint totalCount, uint purgedCount) =>
     PurgeCompleted?.Invoke(this, new PurgeStatistics(totalCount, purgedCount));
 
+  private bool ShouldPurgeEntries() {
+    var utcNow = _timeProvider.GetUtcNow();
+    var timePassedSinceTheLastPurging = utcNow - _lastExpirationScan;
+    if (timePassedSinceTheLastPurging < _expiredEntriesPurgingInterval) {
+      Logger.LogDebug(
+        "Since the last purging expired entries {TimePassed} has passed that is less than {PurgingInterval}. Purging is not required",
+        timePassedSinceTheLastPurging,
+        _expiredEntriesPurgingInterval);
+      return false;
+    }
+
+    Logger.LogDebug(
+      "Since the last purging expired entries {TimePassed} has passed that is greeter than or equals to {PurgingInterval}. Purging is required",
+      timePassedSinceTheLastPurging,
+      _expiredEntriesPurgingInterval);
+    return true;
+  }
+
   /// <inheritdoc/>
   public event EventHandler? PurgeStarted;
 
@@ -115,7 +130,7 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   public event EventHandler<PurgeStatistics>? PurgeCompleted;
 
   private readonly TimeSpan _expiredEntriesPurgingInterval;
-  private readonly Lock _scanForExpiredItemsLock = new();
   private readonly TimeProvider _timeProvider;
+  private byte _isPurgingInProgress;
   private DateTimeOffset _lastExpirationScan;
 }
