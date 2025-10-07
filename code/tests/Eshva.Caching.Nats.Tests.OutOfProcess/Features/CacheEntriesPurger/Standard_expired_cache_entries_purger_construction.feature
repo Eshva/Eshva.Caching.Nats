@@ -14,8 +14,3 @@
   Scenario: 03. Should report an error if purging interval is less than minimal purging interval
     When I construct standard purger with purging interval of 1 minutes
     Then argument out of range exception should be reported
-
-  Scenario: 04. Purging should start on time
-    When I construct standard purger with purging interval of 6 minutes
-    Then purging should start after 6 minutes
-
