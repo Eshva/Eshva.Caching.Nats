@@ -8,5 +8,5 @@ public interface ICacheExpiredEntriesPurger {
   /// Execute scan for expired cache entries if required according to behavior logic.
   /// </summary>
   /// <param name="token">Cancellation token.</param>
-  Task ScanForExpiredEntriesIfRequired(CancellationToken token = default);
+  Task PurgeExpiredEntriesIfRequired(CancellationToken token = default);
 }

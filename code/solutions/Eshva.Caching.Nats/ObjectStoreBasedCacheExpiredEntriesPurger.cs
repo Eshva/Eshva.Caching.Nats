@@ -42,13 +42,13 @@ public sealed class ObjectStoreBasedCacheExpiredEntriesPurger : StandardExpiredC
 
     uint totalCount = 0;
     uint purgedCount = 0;
-    await foreach (var entry in entries) {
+    await foreach (var entry in entries.ConfigureAwait(continueOnCapturedContext: false)) {
       totalCount++;
       Logger.LogDebug("Entry '{Key}' expires at {ExpiresAt}", entry.Name, EntryMetadata(entry).ExpiresAtUtc);
       if (!_cacheEntryExpirationStrategy.IsCacheEntryExpired(EntryMetadata(entry).ExpiresAtUtc)) continue;
 
       purgedCount++;
-      await _cacheBucket.DeleteAsync(entry.Name, token);
+      await _cacheBucket.DeleteAsync(entry.Name, token).ConfigureAwait(continueOnCapturedContext: false);
       Logger.LogDebug("Deleted expired entry '{Key}'", entry.Name);
     }
 

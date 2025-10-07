@@ -31,7 +31,7 @@ public class ObjectStoreBasedCacheExpiredEntriesPurgerSteps {
   }
 
   [When("I request scan for expired entries if required")]
-  public async Task WhenIRequestScanForExpiredEntriesIfRequired() => await _sut.ScanForExpiredEntriesIfRequired();
+  public async Task WhenIRequestScanForExpiredEntriesIfRequired() => await _sut.PurgeExpiredEntriesIfRequired();
 
   private readonly CachesContext _cachesContext;
   private ObjectStoreBasedCacheExpiredEntriesPurger _sut = null!;
