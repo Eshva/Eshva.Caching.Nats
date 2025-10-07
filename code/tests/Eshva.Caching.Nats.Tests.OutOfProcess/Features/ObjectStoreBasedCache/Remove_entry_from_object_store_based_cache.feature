@@ -1,5 +1,7 @@
 ﻿@out-of-process
 Feature: Remove entry from object-store based cache
+Those out of process tests work with the same NATS object-store bucket. They will interfere with cache entry names and
+purging expired entries. This is the reason why they can not be run in parallel.
 
   Background:
     Given expired entries purging interval 2 minutes

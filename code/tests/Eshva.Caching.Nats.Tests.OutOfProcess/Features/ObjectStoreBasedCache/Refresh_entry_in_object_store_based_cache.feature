@@ -1,5 +1,7 @@
 ﻿@out-of-process
 Feature: Refresh entry in object-store based cache
+Those out of process tests work with the same NATS object-store bucket. They will interfere with cache entry names and
+purging expired entries. This is the reason why they can not be run in parallel.
 
   Background:
     Given clock set at today 00:00
