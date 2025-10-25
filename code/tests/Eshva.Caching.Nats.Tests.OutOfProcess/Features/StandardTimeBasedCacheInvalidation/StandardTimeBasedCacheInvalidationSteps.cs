@@ -3,11 +3,11 @@ using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using FluentAssertions;
 using Reqnroll;
 
-namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.EntryExpirationStrategy;
+namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.StandardTimeBasedCacheInvalidation;
 
 [Binding]
-public class StandardCacheEntryExpirationStrategySteps {
-  public StandardCacheEntryExpirationStrategySteps(CachesContext cachesContext) {
+public class StandardTimeBasedCacheInvalidationSteps {
+  public StandardTimeBasedCacheInvalidationSteps(CachesContext cachesContext) {
     _cachesContext = cachesContext;
   }
 
@@ -16,8 +16,10 @@ public class StandardCacheEntryExpirationStrategySteps {
     TimeSpan currentTime,
     double defaultSlidingExpirationTime) {
     _cachesContext.TimeProvider.AdjustTime(_cachesContext.Today + currentTime);
-    _sut = new StandardCacheEntryExpirationStrategy(
-      new ExpirationStrategySettings { DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(defaultSlidingExpirationTime) },
+    _sut = new Abstractions.StandardTimeBasedCacheInvalidation(
+      new StandardTimeBasedCacheInvalidationSettings {
+        DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(defaultSlidingExpirationTime)
+      },
       _cachesContext.TimeProvider);
   }
 
@@ -58,5 +60,5 @@ public class StandardCacheEntryExpirationStrategySteps {
   private DateTimeOffset _expiresAt;
   private bool _isExpired;
   private TimeSpan? _slidingExpiration;
-  private StandardCacheEntryExpirationStrategy _sut = null!;
+  private Abstractions.StandardTimeBasedCacheInvalidation _sut = null!;
 }

@@ -27,11 +27,7 @@ public class InMemoryTestBuket : INatsObjStore, IBucketBackend {
 
   ValueTask<ObjectMetadata> INatsObjStore.PutAsync(string key, byte[] value, CancellationToken cancellationToken) {
     _entries[key] = value;
-    _metadata[key] = new ObjectMetadata {
-      Name = key,
-      Size = value.Length,
-      Bucket = _bucket
-    };
+    _metadata[key] = new ObjectMetadata { Name = key, Size = value.Length, Bucket = _bucket };
     return ValueTask.FromResult(_metadata[key]);
   }
 
@@ -43,11 +39,7 @@ public class InMemoryTestBuket : INatsObjStore, IBucketBackend {
     using var reader = new BinaryReader(stream);
     _entries[key] = reader.ReadBytes((int)stream.Length);
     if (!leaveOpen) stream.Close();
-    _metadata[key] = new ObjectMetadata {
-      Name = key,
-      Size = (int)stream.Length,
-      Bucket = _bucket
-    };
+    _metadata[key] = new ObjectMetadata { Name = key, Size = (int)stream.Length, Bucket = _bucket };
     return ValueTask.FromResult(_metadata[key]);
   }
 

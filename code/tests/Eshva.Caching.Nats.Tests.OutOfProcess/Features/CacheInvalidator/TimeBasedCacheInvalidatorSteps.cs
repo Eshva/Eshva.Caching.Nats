@@ -4,13 +4,12 @@ using FluentAssertions;
 using Meziantou.Extensions.Logging.Xunit;
 using Microsoft.Extensions.Logging;
 using Reqnroll;
-using Xunit;
 
-namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.CacheEntriesPurger;
+namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.CacheInvalidator;
 
 [Binding]
-public class StandardExpiredCacheEntriesPurgerSteps {
-  public StandardExpiredCacheEntriesPurgerSteps(CachesContext cachesContext, ErrorHandlingContext errorHandlingContext) {
+public class TimeBasedCacheInvalidatorSteps {
+  public TimeBasedCacheInvalidatorSteps(CachesContext cachesContext, ErrorHandlingContext errorHandlingContext) {
     _cachesContext = cachesContext;
     _errorHandlingContext = errorHandlingContext;
   }
@@ -63,7 +62,7 @@ public class StandardExpiredCacheEntriesPurgerSteps {
   [When("purging expired cache entries requested")]
   public async Task WhenPurgingExpiredCacheEntriesRequested() {
     try {
-      await _sut.PurgeExpiredEntriesIfRequired();
+      await _sut.PurgeEntriesIfRequired();
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -74,27 +73,18 @@ public class StandardExpiredCacheEntriesPurgerSteps {
   public async Task WhenAFewConcurrentPurgingExpiredCacheEntriesRequested() {
     try {
       await Task.WhenAll(
-        _sut.PurgeExpiredEntriesIfRequired(),
-        _sut.PurgeExpiredEntriesIfRequired(),
-        _sut.PurgeExpiredEntriesIfRequired(),
-        _sut.PurgeExpiredEntriesIfRequired(),
-        _sut.PurgeExpiredEntriesIfRequired());
+        _sut.PurgeEntriesIfRequired(),
+        _sut.PurgeEntriesIfRequired(),
+        _sut.PurgeEntriesIfRequired(),
+        _sut.PurgeEntriesIfRequired(),
+        _sut.PurgeEntriesIfRequired());
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
     }
   }
 
-  [Then("purging should be done")]
-  public void ThenPurgingShouldBeDone() {
-    _sut.IsPurgeStarted.Should().BeTrue();
-    // for (var turn = 0; turn < 10; turn++) {
-    //   if (_sut.IsPurgeStarted) return;
-    //   await Task.Delay(millisecondsDelay: 10);
-    // }
-    //
-    // Assert.Fail("Purging not started on time.");
-  }
+  [Then("purging should be done")] public void ThenPurgingShouldBeDone() => _sut.IsPurgeStarted.Should().BeTrue();
 
   [Then("purging should not start")] public void ThenPurgingShouldNotStart() => _sut.IsPurgeStarted.Should().BeFalse();
 
@@ -109,14 +99,14 @@ public class StandardExpiredCacheEntriesPurgerSteps {
   private TimeSpan _minimalExpiredEntriesPurgingInterval;
   private TestPurger _sut = null!;
 
-  private sealed class TestPurger : StandardExpiredCacheEntriesPurger {
+  private sealed class TestPurger : TimeBasedCacheInvalidator {
     public TestPurger(
       TimeSpan expiredEntriesPurgingInterval,
       TimeSpan minimalExpiredEntriesPurgingInterval,
       TimeProvider timeProvider,
       ILogger logger)
       : base(
-        new PurgerSettings { ExpiredEntriesPurgingInterval = expiredEntriesPurgingInterval },
+        new TimeBasedCacheInvalidatorSettings { ExpiredEntriesPurgingInterval = expiredEntriesPurgingInterval },
         minimalExpiredEntriesPurgingInterval,
         timeProvider,
         logger) { }

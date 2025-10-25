@@ -1,4 +1,4 @@
-﻿Feature: Calculate expiration with standard cache entry expiration strategy
+﻿Feature: Calculate expiration with standard time-based cache invalidation
 
   Background:
     Given standard cache entry expiration strategy with clock set at today 20:00 and default sliding expiration time 1 minutes

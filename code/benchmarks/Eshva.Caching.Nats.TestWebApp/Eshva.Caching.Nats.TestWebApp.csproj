@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats\Eshva.Caching.Nats.csproj" />
+    <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats\Eshva.Caching.Nats.csproj"/>
   </ItemGroup>
 
 </Project>

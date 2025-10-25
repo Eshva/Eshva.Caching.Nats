@@ -1,4 +1,4 @@
-﻿Feature: Standard expired cache entries purger construction
+﻿Feature: Time-based cache invalidator construction
 
   Background:
     Given minimal expired entries purging interval is 2 minutes

@@ -1,11 +1,10 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Eshva.Caching.Abstractions;
 
 /// <summary>
-/// Standard expired cache entries purger.
+/// Time-based cache invalidator.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -13,9 +12,9 @@ namespace Eshva.Caching.Abstractions;
 /// greater than configured purging interval.
 /// </para>
 /// </remarks>
-public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPurger, IPurgingNotifier, IPurgingSynchronicityController {
+public abstract class TimeBasedCacheInvalidator : ICacheInvalidator, IPurgingNotifier, IPurgingSynchronicityController {
   /// <summary>
-  /// Initializes a new instance of a standard expired cache entries purger.
+  /// Initializes a new instance of a time-based cache invalidator
   /// </summary>
   /// <remarks>
   /// If <paramref name="timeProvider"/> is not specified <see cref="Microsoft.Extensions.Internal.SystemClock"/> will be
@@ -23,32 +22,31 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   /// <paramref name="logger"/> isn't
   /// specified a null logger will be used.
   /// </remarks>
-  /// <param name="purgerSettings">Purger settings.</param>
+  /// <param name="timeBasedCacheInvalidatorSettings">Time-based cache invalidator settings.</param>
   /// <param name="minimalExpiredEntriesPurgingInterval">Minimal purging interval allowed.</param>
   /// <param name="timeProvider">Time provider.</param>
   /// <param name="logger">Logger.</param>
   /// <exception cref="ArgumentOutOfRangeException">
-  /// <paramref name="purgerSettings"/>.ExpiredEntriesPurgingInterval is less than
+  /// <paramref name="timeBasedCacheInvalidatorSettings"/>.ExpiredEntriesPurgingInterval is less than
   /// <paramref name="minimalExpiredEntriesPurgingInterval"/>.
   /// </exception>
-  [SuppressMessage("ReSharper", "VirtualMemberCallInConstructor")]
-  protected StandardExpiredCacheEntriesPurger(
-    PurgerSettings purgerSettings,
+  protected TimeBasedCacheInvalidator(
+    TimeBasedCacheInvalidatorSettings timeBasedCacheInvalidatorSettings,
     TimeSpan minimalExpiredEntriesPurgingInterval,
     TimeProvider timeProvider,
     ILogger? logger = null) {
-    ArgumentNullException.ThrowIfNull(purgerSettings);
+    ArgumentNullException.ThrowIfNull(timeBasedCacheInvalidatorSettings);
     ArgumentNullException.ThrowIfNull(timeProvider);
-    if (purgerSettings.ExpiredEntriesPurgingInterval < minimalExpiredEntriesPurgingInterval) {
+    if (timeBasedCacheInvalidatorSettings.ExpiredEntriesPurgingInterval < minimalExpiredEntriesPurgingInterval) {
       throw new ArgumentOutOfRangeException(
-        nameof(purgerSettings),
-        $"Expired entries purging interval {purgerSettings.ExpiredEntriesPurgingInterval} is less "
+        nameof(timeBasedCacheInvalidatorSettings),
+        $"Expired entries purging interval {timeBasedCacheInvalidatorSettings.ExpiredEntriesPurgingInterval} is less "
         + $"than minimal allowed value {minimalExpiredEntriesPurgingInterval}.");
     }
 
-    _expiredEntriesPurgingInterval = purgerSettings.ExpiredEntriesPurgingInterval;
+    _expiredEntriesPurgingInterval = timeBasedCacheInvalidatorSettings.ExpiredEntriesPurgingInterval;
     _timeProvider = timeProvider;
-    Logger = logger ?? new NullLogger<StandardExpiredCacheEntriesPurger>();
+    Logger = logger ?? new NullLogger<TimeBasedCacheInvalidator>();
     _lastExpirationScan = _timeProvider.GetUtcNow();
   }
 
@@ -56,7 +54,7 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
   public bool ShouldPurgeSynchronously { get; set; }
 
   /// <inheritdoc/>
-  public async Task PurgeExpiredEntriesIfRequired(CancellationToken token = default) {
+  public async Task PurgeEntriesIfRequired(CancellationToken token = default) {
     const byte purgingInProgress = 1;
     const byte notYetPurging = 0;
     if (Interlocked.CompareExchange(ref _isPurgingInProgress, purgingInProgress, notYetPurging) == purgingInProgress) {
@@ -69,7 +67,7 @@ public abstract class StandardExpiredCacheEntriesPurger : ICacheExpiredEntriesPu
     try {
       _lastExpirationScan = _timeProvider.GetUtcNow();
       if (ShouldPurgeSynchronously) {
-        await DeleteExpiredCacheEntries(token).ConfigureAwait(false);
+        await DeleteExpiredCacheEntries(token).ConfigureAwait(continueOnCapturedContext: false);
       }
       else {
         _ = Task.Run(() => DeleteExpiredCacheEntries(token), token);

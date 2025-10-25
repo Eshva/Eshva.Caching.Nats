@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
+﻿using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using Reqnroll;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.ObjectStoreBasedCache;

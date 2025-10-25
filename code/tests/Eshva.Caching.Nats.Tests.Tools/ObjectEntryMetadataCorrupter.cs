@@ -14,11 +14,7 @@ namespace Eshva.Caching.Nats.Tests.Tools;
 /// </remarks>
 public class ObjectEntryMetadataCorrupter {
   public async Task CorruptEntryMetadata(INatsObjStore bucket, string key) {
-    var corruptedObjectMetadata = await bucket.GetInfoAsync(key) with {
-      Nuid = null,
-      Description = "Corrupted!",
-      Digest = "Corrupted!"
-    };
+    var corruptedObjectMetadata = await bucket.GetInfoAsync(key) with { Nuid = null, Description = "Corrupted!", Digest = "Corrupted!" };
     await PublishMeta(
       bucket.JetStreamContext,
       bucket.Bucket,
@@ -31,17 +27,13 @@ public class ObjectEntryMetadataCorrupter {
     string bucket,
     ObjectMetadata meta,
     CancellationToken cancellationToken) {
-    var natsRollupHeaders = new NatsHeaders {
-      { NatsRollup, RollupSubject }
-    };
+    var natsRollupHeaders = new NatsHeaders { { NatsRollup, RollupSubject } };
     var ack = await jetStreamContext.PublishAsync(
       GetMetaSubject(meta.Name, bucket),
       meta,
       NatsObjJsonSerializer<ObjectMetadata>.Default,
       headers: natsRollupHeaders,
-      opts: new NatsJSPubOpts {
-        RetryAttempts = 1
-      },
+      opts: new NatsJSPubOpts { RetryAttempts = 1 },
       cancellationToken: cancellationToken);
     ack.EnsureSuccess();
   }

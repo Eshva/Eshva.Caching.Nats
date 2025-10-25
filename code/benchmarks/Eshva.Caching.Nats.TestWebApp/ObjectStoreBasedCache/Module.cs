@@ -28,29 +28,29 @@ internal static class Module {
         .GetAwaiter()
         .GetResult());
 
-    services.AddKeyedSingleton<ICacheEntryExpirationStrategy, StandardCacheEntryExpirationStrategy>(
+    services.AddKeyedSingleton<StandardTimeBasedCacheInvalidation>(
       ImagesCacheKey,
       (diContainer, _) =>
-        new StandardCacheEntryExpirationStrategy(
-          new ExpirationStrategySettings { DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 5) },
+        new StandardTimeBasedCacheInvalidation(
+          new StandardTimeBasedCacheInvalidationSettings { DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 5) },
           diContainer.GetRequiredService<TimeProvider>()));
 
-    services.AddKeyedSingleton<ICacheExpiredEntriesPurger, ObjectStoreBasedCacheExpiredEntriesPurger>(
+    services.AddKeyedSingleton<ICacheInvalidator, ObjectStoreBasedCacheInvalidator>(
       ImagesCacheKey,
       (diContainer, key) =>
-        new ObjectStoreBasedCacheExpiredEntriesPurger(
+        new ObjectStoreBasedCacheInvalidator(
           diContainer.GetRequiredKeyedService<INatsObjStore>(key),
-          diContainer.GetRequiredKeyedService<ICacheEntryExpirationStrategy>(key),
-          new PurgerSettings { ExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes: 5) },
+          diContainer.GetRequiredKeyedService<StandardTimeBasedCacheInvalidation>(key),
+          new TimeBasedCacheInvalidatorSettings { ExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes: 5) },
           diContainer.GetRequiredService<TimeProvider>(),
-          diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheExpiredEntriesPurger>>()));
+          diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheInvalidator>>()));
 
     services.AddKeyedSingleton<IBufferDistributedCache, NatsObjectStoreBasedCache>(
       ImagesCacheKey,
       (diContainer, key) => new NatsObjectStoreBasedCache(
         diContainer.GetRequiredKeyedService<INatsObjStore>(key),
-        diContainer.GetRequiredKeyedService<ICacheEntryExpirationStrategy>(key),
-        diContainer.GetRequiredKeyedService<ICacheExpiredEntriesPurger>(key),
+        diContainer.GetRequiredKeyedService<StandardTimeBasedCacheInvalidation>(key),
+        diContainer.GetRequiredKeyedService<ICacheInvalidator>(key),
         diContainer.GetRequiredService<ILogger<NatsObjectStoreBasedCache>>()));
 
     services.AddKeyedTransient<GetImageHttpRequestHandler>(

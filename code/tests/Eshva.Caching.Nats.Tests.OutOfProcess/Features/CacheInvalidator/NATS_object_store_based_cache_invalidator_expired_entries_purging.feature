@@ -1,4 +1,4 @@
-﻿Feature: Delete expired cache entries with purger for NATS object-store based cache
+﻿Feature: NATS object-store based cache invalidator expired entries purging
 
   Background:
     Given entry with key 'expires in 3 minutes' and value 'expires in 3 minutes value' which expires in 3 minutes put into cache

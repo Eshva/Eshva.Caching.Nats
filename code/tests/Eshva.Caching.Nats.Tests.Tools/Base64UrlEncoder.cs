@@ -52,8 +52,9 @@ internal static class Base64UrlEncoder {
     var offset = 0;
     var length = inArray.Length;
 
-    if (length == 0)
+    if (length == 0) {
       return string.Empty;
+    }
 
     var lengthMod3 = length % 3;
     var limit = length - lengthMod3;
@@ -103,8 +104,9 @@ internal static class Base64UrlEncoder {
       // default or case 0: no further operations are needed.
     }
 
-    if (raw)
+    if (raw) {
       return new string(output, startIndex: 0, j);
+    }
 
     for (var k = j; k < output.Length; k++) {
       output[k] = Base64PadCharacter;
@@ -132,8 +134,9 @@ internal static class Base64UrlEncoder {
 
   private static unsafe byte[] UnsafeDecode(string str) {
     var mod = str.Length % 4;
-    if (mod == 1)
+    if (mod == 1) {
       throw new FormatException(nameof(str));
+    }
 
     var needReplace = false;
     var decodedLength = str.Length + (4 - mod) % 4;
@@ -150,12 +153,15 @@ internal static class Base64UrlEncoder {
       fixed (char* dest = decodedString) {
         var i = 0;
         for (; i < str.Length; i++) {
-          if (str[i] == Base64UrlCharacter62)
+          if (str[i] == Base64UrlCharacter62) {
             dest[i] = Base64Character62;
-          else if (str[i] == Base64UrlCharacter63)
+          }
+          else if (str[i] == Base64UrlCharacter63) {
             dest[i] = Base64Character63;
-          else
+          }
+          else {
             dest[i] = str[i];
+          }
         }
 
         for (; i < decodedLength; i++) {
@@ -178,8 +184,9 @@ internal static class Base64UrlEncoder {
             str.Length * 2,
             str.Length * 2);
           dest[str.Length] = Base64PadCharacter;
-          if (str.Length + 2 == decodedLength)
+          if (str.Length + 2 == decodedLength) {
             dest[str.Length + 1] = Base64PadCharacter;
+          }
         }
       }
 

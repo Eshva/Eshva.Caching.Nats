@@ -1,4 +1,4 @@
-﻿Feature: Standard expired cache entries purger purging
+﻿Feature: Time-based cache invalidator expired entries purging
 
   Background:
     Given standard purger with purging interval of 6 minutes

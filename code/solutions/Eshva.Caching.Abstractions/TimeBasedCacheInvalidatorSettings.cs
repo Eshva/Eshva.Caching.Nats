@@ -3,10 +3,10 @@
 namespace Eshva.Caching.Abstractions;
 
 /// <summary>
-/// Expired cache entries purger settings.
+/// Time-based cache invalidator settings.
 /// </summary>
 [PublicAPI]
-public class PurgerSettings {
+public class TimeBasedCacheInvalidatorSettings {
   /// <summary>
   /// Purging interval.
   /// </summary>

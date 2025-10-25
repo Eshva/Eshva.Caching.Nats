@@ -1,5 +1,4 @@
-﻿using System;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Reqnroll;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
@@ -10,8 +9,7 @@ public class ErrorHandlingSteps {
     _errorHandlingContext = errorHandlingContext;
   }
 
-  [Then("no errors are reported")]
-  public void ThenNoErrorsAreReported() => _errorHandlingContext.LastException.Should().BeNull();
+  [Then("no errors are reported")] public void ThenNoErrorsAreReported() => _errorHandlingContext.LastException.Should().BeNull();
 
   [Then("invalid operation exception should be reported")]
   public void ThenInvalidOperationExceptionShouldBeReported() =>

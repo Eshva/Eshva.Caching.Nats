@@ -21,9 +21,7 @@ public class SetEntryUsingByteArraySteps {
       await _cachesContext.Cache.SetAsync(
         key,
         Encoding.UTF8.GetBytes(value),
-        new DistributedCacheEntryOptions {
-          SlidingExpiration = TimeSpan.FromMinutes(minutes)
-        });
+        new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(minutes) });
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -36,9 +34,7 @@ public class SetEntryUsingByteArraySteps {
       _cachesContext.Cache.Set(
         key,
         Encoding.UTF8.GetBytes(value),
-        new DistributedCacheEntryOptions {
-          SlidingExpiration = TimeSpan.FromMinutes(minutes)
-        });
+        new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(minutes) });
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -54,9 +50,7 @@ public class SetEntryUsingByteArraySteps {
       await _cachesContext.Cache.SetAsync(
         key,
         Encoding.UTF8.GetBytes(value),
-        new DistributedCacheEntryOptions {
-          AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay)
-        });
+        new DistributedCacheEntryOptions { AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay) });
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -75,8 +69,7 @@ public class SetEntryUsingByteArraySteps {
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions {
-          AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay),
-          SlidingExpiration = TimeSpan.FromMinutes(minutes)
+          AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay), SlidingExpiration = TimeSpan.FromMinutes(minutes)
         });
     }
     catch (Exception exception) {
@@ -96,8 +89,7 @@ public class SetEntryUsingByteArraySteps {
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions {
-          AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay),
-          SlidingExpiration = TimeSpan.FromMinutes(minutes)
+          AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay), SlidingExpiration = TimeSpan.FromMinutes(minutes)
         });
     }
     catch (Exception exception) {
@@ -114,9 +106,7 @@ public class SetEntryUsingByteArraySteps {
       _cachesContext.Cache.Set(
         key,
         Encoding.UTF8.GetBytes(value),
-        new DistributedCacheEntryOptions {
-          AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay)
-        });
+        new DistributedCacheEntryOptions { AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay) });
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -133,9 +123,7 @@ public class SetEntryUsingByteArraySteps {
       await _cachesContext.Cache.SetAsync(
         key,
         Encoding.UTF8.GetBytes(value),
-        new DistributedCacheEntryOptions {
-          AbsoluteExpirationRelativeToNow = timeOfDay
-        });
+        new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOfDay });
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -151,9 +139,7 @@ public class SetEntryUsingByteArraySteps {
       _cachesContext.Cache.Set(
         key,
         Encoding.UTF8.GetBytes(value),
-        new DistributedCacheEntryOptions {
-          AbsoluteExpirationRelativeToNow = timeOfDay
-        });
+        new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOfDay });
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;

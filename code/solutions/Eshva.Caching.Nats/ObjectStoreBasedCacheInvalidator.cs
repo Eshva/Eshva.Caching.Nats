@@ -8,30 +8,30 @@ namespace Eshva.Caching.Nats;
 /// <summary>
 /// Expired entries purger for NATS object-store based cache.
 /// </summary>
-public sealed class ObjectStoreBasedCacheExpiredEntriesPurger : StandardExpiredCacheEntriesPurger {
+public sealed class ObjectStoreBasedCacheInvalidator : TimeBasedCacheInvalidator {
   /// <summary>
   /// Initializes a new instance of expired entries purger for NATS object-store based cache.
   /// </summary>
   /// <param name="cacheBucket">NATS object-store cache bucket.</param>
-  /// <param name="cacheEntryExpirationStrategy">Cache entry expiration strategy.</param>
-  /// <param name="purgerSettings">Purger settings.</param>
+  /// <param name="timeBasedCacheInvalidation">Cache entry expiration strategy.</param>
+  /// <param name="timeBasedCacheInvalidatorSettings">Time-based cache invalidator settings.</param>
   /// <param name="timeProvider">Time provider.</param>
   /// <param name="logger">Logger.</param>
   /// <exception cref="ArgumentOutOfRangeException">
-  /// <paramref name="purgerSettings"/>.ExpiredEntriesPurgingInterval value is less than 1 minute.
+  /// <paramref name="timeBasedCacheInvalidatorSettings"/>.ExpiredEntriesPurgingInterval value is less than 1 minute.
   /// </exception>
-  public ObjectStoreBasedCacheExpiredEntriesPurger(
+  public ObjectStoreBasedCacheInvalidator(
     INatsObjStore cacheBucket,
-    ICacheEntryExpirationStrategy cacheEntryExpirationStrategy,
-    PurgerSettings purgerSettings,
+    StandardTimeBasedCacheInvalidation timeBasedCacheInvalidation,
+    TimeBasedCacheInvalidatorSettings timeBasedCacheInvalidatorSettings,
     TimeProvider timeProvider,
-    ILogger<ObjectStoreBasedCacheExpiredEntriesPurger>? logger = null) : base(
-    purgerSettings,
+    ILogger<ObjectStoreBasedCacheInvalidator>? logger = null) : base(
+    timeBasedCacheInvalidatorSettings,
     TimeSpan.FromMinutes(minutes: 1),
     timeProvider,
     logger) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
-    _cacheEntryExpirationStrategy = cacheEntryExpirationStrategy ?? throw new ArgumentNullException(nameof(cacheEntryExpirationStrategy));
+    _cacheEntryExpiration = timeBasedCacheInvalidation ?? throw new ArgumentNullException(nameof(timeBasedCacheInvalidation));
   }
 
   /// <inheritdoc/>
@@ -45,7 +45,7 @@ public sealed class ObjectStoreBasedCacheExpiredEntriesPurger : StandardExpiredC
     await foreach (var entry in entries.ConfigureAwait(continueOnCapturedContext: false)) {
       totalCount++;
       Logger.LogDebug("Entry '{Key}' expires at {ExpiresAt}", entry.Name, EntryMetadata(entry).ExpiresAtUtc);
-      if (!_cacheEntryExpirationStrategy.IsCacheEntryExpired(EntryMetadata(entry).ExpiresAtUtc)) continue;
+      if (!_cacheEntryExpiration.IsCacheEntryExpired(EntryMetadata(entry).ExpiresAtUtc)) continue;
 
       purgedCount++;
       await _cacheBucket.DeleteAsync(entry.Name, token).ConfigureAwait(continueOnCapturedContext: false);
@@ -64,5 +64,5 @@ public sealed class ObjectStoreBasedCacheExpiredEntriesPurger : StandardExpiredC
     : throw new InvalidOperationException($"A cache entry '{objectMetadata.Name}' has no metadata.");
 
   private readonly INatsObjStore _cacheBucket;
-  private readonly ICacheEntryExpirationStrategy _cacheEntryExpirationStrategy;
+  private readonly StandardTimeBasedCacheInvalidation _cacheEntryExpiration;
 }

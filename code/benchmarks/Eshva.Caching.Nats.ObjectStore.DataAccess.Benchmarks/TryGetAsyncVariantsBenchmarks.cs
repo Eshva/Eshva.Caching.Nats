@@ -32,10 +32,7 @@ public class TryGetAsyncVariantsBenchmarks {
     _bucketBackend.PutEntry(EntryName, new byte[EntrySize]);
     _bucketBackend.PutMetadata(
       EntryName,
-      new ObjectMetadata {
-        Name = EntryName,
-        Size = EntrySize
-      });
+      new ObjectMetadata { Name = EntryName, Size = EntrySize });
     _memory = new Memory<byte>(new byte[EntrySize]);
   }
 
