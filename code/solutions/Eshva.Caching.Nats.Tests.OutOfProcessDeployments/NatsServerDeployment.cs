@@ -5,7 +5,6 @@ using JetBrains.Annotations;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Client.ObjectStore;
-using Testcontainers.Nats;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 
@@ -25,7 +24,7 @@ public partial class NatsServerDeployment(NatsServerDeployment.Configuration con
     var builder = new ContainerBuilder()
       .WithImage(configuration.ImageTag)
       .WithName(configuration.ContainerName)
-      .WithPortBinding(configuration.HostNetworkClientPort, NatsBuilder.NatsClientPort)
+      .WithPortBinding(configuration.HostNetworkClientPort, NatsClientPort)
       .WithCleanUp(cleanUp: true)
       .WithAutoRemove(autoRemove: true)
       .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged("Server is ready"));
@@ -90,6 +89,7 @@ public partial class NatsServerDeployment(NatsServerDeployment.Configuration con
   }
 
   private IContainer? _container; // TODO: Add NoneContainer.
+
   public const ushort NatsClientPort = 4222;
   public const ushort NatsClusterRoutingPort = 6222;
   public const ushort NatsHttpManagementPort = 8222;

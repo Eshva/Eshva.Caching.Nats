@@ -3,7 +3,7 @@
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
-    <PackageReference Include="Testcontainers.Nats"/>
+    <PackageReference Include="Testcontainers"/>
   </ItemGroup>
 
 </Project>

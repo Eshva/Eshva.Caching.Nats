@@ -8,7 +8,6 @@
     <PackageReference Include="NATS.Client.Core"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
     <PackageReference Include="Reqnroll.xUnit"/>
-    <PackageReference Include="Testcontainers.Nats"/>
     <PackageReference Include="xunit"/>
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>

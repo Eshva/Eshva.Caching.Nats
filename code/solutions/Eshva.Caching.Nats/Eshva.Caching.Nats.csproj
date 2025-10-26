@@ -10,7 +10,6 @@
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
-    <PackageReference Include="Testcontainers.Nats"/>
   </ItemGroup>
 
   <ItemGroup>
