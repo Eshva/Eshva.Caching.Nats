@@ -30,7 +30,7 @@ public class CachingImageProviderBenchmarks {
     EntrySizes.MiB050)]
   public int EntrySize { get; [UsedImplicitly] set; }
 
-  [Benchmark]
+  [Benchmark(Description = "try-get-async")]
   public async Task<bool> TryGetAsyncWithByteStream() {
     Debugger.Break();
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
@@ -40,7 +40,7 @@ public class CachingImageProviderBenchmarks {
     return response.IsSuccessStatusCode;
   }
 
-  [Benchmark]
+  [Benchmark(Description = "get-async", Baseline = true)]
   public async Task<bool> GetAsyncWithByteStream() {
     Debugger.Break();
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
@@ -137,8 +137,7 @@ public sealed class CachingImageProviderBenchmarksConfig : ManualConfig {
     HideColumns(
       "Error",
       "StdDev",
-      "Median",
-      "RatioSD");
+      "Median");
     SummaryStyle = SummaryStyle.Default
       .WithTimeUnit(TimeUnit.Microsecond)
       .WithSizeUnit(SizeUnit.KB);
