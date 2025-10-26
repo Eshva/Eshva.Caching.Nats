@@ -76,16 +76,8 @@ public static class NatsCacheBootstrapping {
     return services;
   }
 
-  private static void AddObjectStoreBasedCache(IServiceCollection services, string serviceKey) =>
-    services.AddKeyedSingleton<IBufferDistributedCache, NatsObjectStoreBasedCache>(
-      serviceKey,
-      (diContainer, key) => new NatsObjectStoreBasedCache(
-        diContainer.GetRequiredKeyedService<INatsObjStore>(key),
-        diContainer.GetRequiredKeyedService<ObjectStoreBasedCacheInvalidation>(key),
-        diContainer.GetRequiredService<ILogger<NatsObjectStoreBasedCache>>()));
-
   private static void AddCacheInvalidation(IServiceCollection services, string serviceKey) =>
-    services.AddKeyedSingleton<ICacheInvalidation, ObjectStoreBasedCacheInvalidation>(
+    services.AddKeyedSingleton<ObjectStoreBasedCacheInvalidation>(
       serviceKey,
       (diContainer, key) =>
         new ObjectStoreBasedCacheInvalidation(
@@ -96,4 +88,12 @@ public static class NatsCacheBootstrapping {
           },
           diContainer.GetRequiredService<TimeProvider>(),
           diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheInvalidation>>()));
+
+  private static void AddObjectStoreBasedCache(IServiceCollection services, string serviceKey) =>
+    services.AddKeyedSingleton<IBufferDistributedCache, NatsObjectStoreBasedCache>(
+      serviceKey,
+      (diContainer, key) => new NatsObjectStoreBasedCache(
+        diContainer.GetRequiredKeyedService<INatsObjStore>(key),
+        diContainer.GetRequiredKeyedService<ObjectStoreBasedCacheInvalidation>(key),
+        diContainer.GetRequiredService<ILogger<NatsObjectStoreBasedCache>>()));
 }
