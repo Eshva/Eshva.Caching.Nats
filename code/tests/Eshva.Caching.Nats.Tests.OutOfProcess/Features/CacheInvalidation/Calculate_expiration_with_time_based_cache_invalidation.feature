@@ -1,7 +1,8 @@
-﻿Feature: Calculate expiration with standard time-based cache invalidation
+﻿Feature: Calculate expiration with time-based cache invalidation
 
   Background:
-    Given standard cache entry expiration strategy with clock set at today 20:00 and default sliding expiration time 1 minutes
+    Given clock set at today 20:00
+    And time-based cache invalidation with default sliding expiration time 1 minutes
 
   Scenario: 01. Given only absolute expiration on expiration calculation it should return absolute expriation
     Given absolute expiration today at 21:00

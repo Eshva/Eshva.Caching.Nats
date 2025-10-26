@@ -5,7 +5,7 @@ namespace Eshva.Caching.Nats;
 /// <summary>
 /// A NATS cache entry meta-data accessor.
 /// </summary>
-internal class CacheEntryMetadata {
+internal sealed class CacheEntryMetadata {
   /// <summary>
   /// Initialize a new NATS cache entry meta-data accessor instance with entry meta-data dictionary.
   /// </summary>

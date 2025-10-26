@@ -34,27 +34,23 @@ public class CachesContext {
 
   public INatsObjStore Bucket { get; }
 
-  public NatsObjectStoreBasedCache Cache { get; private set; } = null!;
+  public NatsObjectStoreBasedCache NatsObjectStoreBasedCache { get; private set; } = null!;
 
   public byte[]? GottenCacheEntryValue { get; set; } = [];
 
   public void CreateAndAssignCacheServices() {
-    var cacheInvalidation = new StandardTimeBasedCacheInvalidation(
-      new StandardTimeBasedCacheInvalidationSettings { DefaultSlidingExpirationInterval = DefaultSlidingExpirationInterval },
-      TimeProvider);
-
-    var expiredEntriesPurger = new ObjectStoreBasedCacheInvalidator(
+    var expiredEntriesPurger = new ObjectStoreBasedCacheInvalidation(
       Bucket,
-      cacheInvalidation,
-      new TimeBasedCacheInvalidatorSettings { ExpiredEntriesPurgingInterval = ExpiredEntriesPurgingInterval },
+      new TimeBasedCacheInvalidationSettings {
+        ExpiredEntriesPurgingInterval = ExpiredEntriesPurgingInterval, DefaultSlidingExpirationInterval = DefaultSlidingExpirationInterval
+      },
       TimeProvider,
-      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidator>(_xUnitLogger)) {
+      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger)) {
       ShouldPurgeSynchronously = true
     };
 
-    Cache = new NatsObjectStoreBasedCache(
+    NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache(
       Bucket,
-      cacheInvalidation,
       expiredEntriesPurger,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
   }

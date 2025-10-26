@@ -19,24 +19,20 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// Initializes a new instance of a NATS object-store based distributed cache.
   /// </summary>
   /// <param name="cacheBucket">NATS object-store cache bucket.</param>
-  /// <param name="expiration">Cache entry expiration strategy.</param>
-  /// <param name="invalidator">Expired entries purger.</param>
+  /// <param name="cacheInvalidation">Cache invalidation.</param>
   /// <param name="logger">Logger.</param>
   /// <exception cref="ArgumentNullException">
-  /// One of required arguments isn't specified.
+  /// Value of a required argument isn't specified.
   /// </exception>
   public NatsObjectStoreBasedCache(
     INatsObjStore cacheBucket,
-    StandardTimeBasedCacheInvalidation expiration,
-    ICacheInvalidator invalidator,
+    ObjectStoreBasedCacheInvalidation cacheInvalidation,
     ILogger<NatsObjectStoreBasedCache>? logger = null) {
     ArgumentNullException.ThrowIfNull(cacheBucket);
-    ArgumentNullException.ThrowIfNull(expiration);
-    ArgumentNullException.ThrowIfNull(invalidator);
+    ArgumentNullException.ThrowIfNull(cacheInvalidation);
 
     _cacheBucket = cacheBucket;
-    _expiration = expiration;
-    _invalidator = invalidator;
+    _cacheInvalidation = cacheInvalidation;
     _logger = logger ?? new NullLogger<NatsObjectStoreBasedCache>();
   }
 
@@ -105,7 +101,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// </exception>
   public async Task<byte[]?> GetAsync(string key, CancellationToken token = default) {
     ValidateKey(key);
-    await _invalidator.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
 
     var valueStream = new MemoryStream();
 
@@ -174,7 +170,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     DistributedCacheEntryOptions options,
     CancellationToken token = new()) {
     ValidateKey(key);
-    await _invalidator.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
 
     try {
       var objectMetadata = await _cacheBucket.PutAsync(key, value, token).ConfigureAwait(continueOnCapturedContext: false);
@@ -212,7 +208,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// </exception>
   public async Task RefreshAsync(string key, CancellationToken token = new()) {
     ValidateKey(key);
-    await _invalidator.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
 
     try {
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, token).ConfigureAwait(continueOnCapturedContext: false);
@@ -254,7 +250,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// </exception>
   public async Task RemoveAsync(string key, CancellationToken token = new()) {
     ValidateKey(key);
-    await _invalidator.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
 
     try {
       await _cacheBucket.DeleteAsync(key, token).ConfigureAwait(continueOnCapturedContext: false);
@@ -303,7 +299,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// </exception>
   public async ValueTask<bool> TryGetAsync(string key, IBufferWriter<byte> destination, CancellationToken token = new()) {
     ValidateKey(key);
-    await _invalidator.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
 
     try {
       var stream = new MemoryStream();
@@ -344,7 +340,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     DistributedCacheEntryOptions options,
     CancellationToken token = default) {
     ValidateKey(key);
-    await _invalidator.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
 
     try {
       var objectMetadata = await _cacheBucket.PutAsync(
@@ -365,20 +361,20 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   }
 
   private Dictionary<string, string> FillCacheEntryMetadata(DistributedCacheEntryOptions options) {
-    var absoluteExpirationUtc = _expiration.CalculateAbsoluteExpiration(
+    var absoluteExpirationUtc = _cacheInvalidation.CalculateAbsoluteExpiration(
       options.AbsoluteExpiration,
       options.AbsoluteExpirationRelativeToNow);
     return new CacheEntryMetadata {
       SlidingExpiration = options.SlidingExpiration,
       AbsoluteExpirationUtc = absoluteExpirationUtc,
-      ExpiresAtUtc = _expiration.CalculateExpiration(absoluteExpirationUtc, options.SlidingExpiration)
+      ExpiresAtUtc = _cacheInvalidation.CalculateExpiration(absoluteExpirationUtc, options.SlidingExpiration)
     };
   }
 
   private async Task RefreshExpiresAt(ObjectMetadata objectMetadata, CancellationToken token) {
     objectMetadata.Metadata ??= new Dictionary<string, string>();
     var entryMetadata = new CacheEntryMetadata(objectMetadata.Metadata);
-    entryMetadata.ExpiresAtUtc = _expiration.CalculateExpiration(
+    entryMetadata.ExpiresAtUtc = _cacheInvalidation.CalculateExpiration(
       entryMetadata.AbsoluteExpirationUtc,
       entryMetadata.SlidingExpiration);
     await _cacheBucket.UpdateMetaAsync(objectMetadata.Name, objectMetadata, token).ConfigureAwait(continueOnCapturedContext: false);
@@ -387,7 +383,6 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   private static void ValidateKey(string key) => ArgumentException.ThrowIfNullOrWhiteSpace(key, "The key is not specified.");
 
   private readonly INatsObjStore _cacheBucket;
-  private readonly StandardTimeBasedCacheInvalidation _expiration;
-  private readonly ICacheInvalidator _invalidator;
+  private readonly TimeBasedCacheInvalidation _cacheInvalidation;
   private readonly ILogger<NatsObjectStoreBasedCache> _logger;
 }

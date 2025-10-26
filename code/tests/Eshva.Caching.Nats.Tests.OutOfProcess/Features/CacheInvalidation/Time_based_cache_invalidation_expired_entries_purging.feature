@@ -1,7 +1,7 @@
-﻿Feature: Time-based cache invalidator expired entries purging
+﻿Feature: Time-based cache invalidation expired entries purging
 
   Background:
-    Given standard purger with purging interval of 6 minutes
+    Given time-based cache invalidation with purging interval of 6 minutes
 
   Scenario: 01. Purging should start on time
     Given time passed by 6 minutes

@@ -13,7 +13,7 @@ public class RefreshEntrySteps {
   [When("I refresh {string} cache entry asynchronously")]
   public async Task WhenIRefreshCacheEntryAsynchronously(string key) {
     try {
-      await _cachesContext.Cache.RefreshAsync(key);
+      await _cachesContext.NatsObjectStoreBasedCache.RefreshAsync(key);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -24,7 +24,7 @@ public class RefreshEntrySteps {
   public async Task WhenIRefreshCacheEntrySynchronously(string key) {
     try {
       // ReSharper disable once MethodHasAsyncOverload
-      _cachesContext.Cache.Refresh(key);
+      _cachesContext.NatsObjectStoreBasedCache.Refresh(key);
       await Task.Delay(millisecondsDelay: 1000);
     }
     catch (Exception exception) {

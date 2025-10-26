@@ -3,9 +3,9 @@
 namespace Eshva.Caching.Abstractions;
 
 /// <summary>
-/// Completed purge operation statistics.
+/// Cache invalidation statistics.
 /// </summary>
 /// <param name="TotalEntriesCount">Total cache entries scanned.</param>
 /// <param name="PurgedEntriesCount">Cache entries purged.</param>
 [PublicAPI]
-public readonly record struct PurgeStatistics(uint TotalEntriesCount, uint PurgedEntriesCount);
+public readonly record struct CacheInvalidationStatistics(uint TotalEntriesCount, uint PurgedEntriesCount);

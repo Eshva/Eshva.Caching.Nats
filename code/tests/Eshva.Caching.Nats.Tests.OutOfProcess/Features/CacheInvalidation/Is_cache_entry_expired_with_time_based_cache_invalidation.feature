@@ -1,7 +1,8 @@
-﻿Feature: Is cache entry expired with standard time-based cache invalidation
+﻿Feature: Is cache entry expired with time-based cache invalidation
 
   Background:
-    Given standard cache entry expiration strategy with clock set at today 20:00 and default sliding expiration time 1 minutes
+    Given clock set at today 20:00
+    And time-based cache invalidation with default sliding expiration time 1 minutes
 
   Scenario: 01. Cache entry which expires later than current time should not be reported as not expired
     Given cache entry that expires today at 20:00:01

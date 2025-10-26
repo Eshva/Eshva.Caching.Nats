@@ -28,29 +28,23 @@ internal static class Module {
         .GetAwaiter()
         .GetResult());
 
-    services.AddKeyedSingleton<StandardTimeBasedCacheInvalidation>(
-      ImagesCacheKey,
-      (diContainer, _) =>
-        new StandardTimeBasedCacheInvalidation(
-          new StandardTimeBasedCacheInvalidationSettings { DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 5) },
-          diContainer.GetRequiredService<TimeProvider>()));
-
-    services.AddKeyedSingleton<ICacheInvalidator, ObjectStoreBasedCacheInvalidator>(
+    services.AddKeyedSingleton<ICacheInvalidation, ObjectStoreBasedCacheInvalidation>(
       ImagesCacheKey,
       (diContainer, key) =>
-        new ObjectStoreBasedCacheInvalidator(
+        new ObjectStoreBasedCacheInvalidation(
           diContainer.GetRequiredKeyedService<INatsObjStore>(key),
-          diContainer.GetRequiredKeyedService<StandardTimeBasedCacheInvalidation>(key),
-          new TimeBasedCacheInvalidatorSettings { ExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes: 5) },
+          new TimeBasedCacheInvalidationSettings {
+            ExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes: 5),
+            DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 5)
+          },
           diContainer.GetRequiredService<TimeProvider>(),
-          diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheInvalidator>>()));
+          diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheInvalidation>>()));
 
     services.AddKeyedSingleton<IBufferDistributedCache, NatsObjectStoreBasedCache>(
       ImagesCacheKey,
       (diContainer, key) => new NatsObjectStoreBasedCache(
         diContainer.GetRequiredKeyedService<INatsObjStore>(key),
-        diContainer.GetRequiredKeyedService<StandardTimeBasedCacheInvalidation>(key),
-        diContainer.GetRequiredKeyedService<ICacheInvalidator>(key),
+        diContainer.GetRequiredKeyedService<ObjectStoreBasedCacheInvalidation>(key),
         diContainer.GetRequiredService<ILogger<NatsObjectStoreBasedCache>>()));
 
     services.AddKeyedTransient<GetImageHttpRequestHandler>(

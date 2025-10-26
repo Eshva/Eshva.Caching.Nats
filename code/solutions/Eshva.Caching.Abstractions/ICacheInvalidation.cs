@@ -1,9 +1,12 @@
-﻿namespace Eshva.Caching.Abstractions;
+﻿using JetBrains.Annotations;
+
+namespace Eshva.Caching.Abstractions;
 
 /// <summary>
-/// Contract of a cache expired entries purger.
+/// Contract of a cache invalidation.
 /// </summary>
-public interface ICacheInvalidator {
+[PublicAPI]
+public interface ICacheInvalidation {
   /// <summary>
   /// Execute scan for expired cache entries if required according to behavior logic.
   /// </summary>

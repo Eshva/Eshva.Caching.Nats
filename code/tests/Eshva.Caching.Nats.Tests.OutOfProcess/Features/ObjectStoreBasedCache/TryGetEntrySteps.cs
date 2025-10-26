@@ -16,7 +16,7 @@ public class TryGetEntrySteps {
   public async Task WhenITryGetStringCacheEntryAsynchronously(string key) {
     try {
       var destination = new NatsBufferWriter<byte>();
-      _isSuccessfullyRead = await _cachesContext.Cache.TryGetAsync(key, destination);
+      _isSuccessfullyRead = await _cachesContext.NatsObjectStoreBasedCache.TryGetAsync(key, destination);
       _cachesContext.GottenCacheEntryValue = destination.WrittenMemory.ToArray();
     }
     catch (Exception exception) {
@@ -28,7 +28,7 @@ public class TryGetEntrySteps {
   public void WhenITryGetStringCacheEntrySynchronously(string key) {
     try {
       var destination = new NatsBufferWriter<byte>();
-      _isSuccessfullyRead = _cachesContext.Cache.TryGet(key, destination);
+      _isSuccessfullyRead = _cachesContext.NatsObjectStoreBasedCache.TryGet(key, destination);
       _cachesContext.GottenCacheEntryValue = destination.WrittenMemory.ToArray();
     }
     catch (Exception exception) {

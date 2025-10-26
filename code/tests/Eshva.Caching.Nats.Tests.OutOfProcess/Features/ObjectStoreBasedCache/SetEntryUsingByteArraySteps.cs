@@ -18,7 +18,7 @@ public class SetEntryUsingByteArraySteps {
     string value,
     int minutes) {
     try {
-      await _cachesContext.Cache.SetAsync(
+      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(minutes) });
@@ -31,7 +31,7 @@ public class SetEntryUsingByteArraySteps {
   [When("I set using byte array synchronously '(.*)' cache entry with value '(.*)' and sliding expiration in (.*) minutes")]
   public void WhenISetUsingByteArraySynchronouslyCacheEntryWithValueAndSlidingExpirationInMinutes(string key, string value, int minutes) {
     try {
-      _cachesContext.Cache.Set(
+      _cachesContext.NatsObjectStoreBasedCache.Set(
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(minutes) });
@@ -47,7 +47,7 @@ public class SetEntryUsingByteArraySteps {
     string value,
     TimeSpan timeOfDay) {
     try {
-      await _cachesContext.Cache.SetAsync(
+      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions { AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay) });
@@ -65,7 +65,7 @@ public class SetEntryUsingByteArraySteps {
     TimeSpan timeOfDay,
     int minutes) {
     try {
-      await _cachesContext.Cache.SetAsync(
+      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions {
@@ -85,7 +85,7 @@ public class SetEntryUsingByteArraySteps {
     TimeSpan timeOfDay,
     int minutes) {
     try {
-      await _cachesContext.Cache.SetAsync(
+      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions {
@@ -103,7 +103,7 @@ public class SetEntryUsingByteArraySteps {
     string value,
     TimeSpan timeOfDay) {
     try {
-      _cachesContext.Cache.Set(
+      _cachesContext.NatsObjectStoreBasedCache.Set(
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions { AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay) });
@@ -120,7 +120,7 @@ public class SetEntryUsingByteArraySteps {
       string value,
       TimeSpan timeOfDay) {
     try {
-      await _cachesContext.Cache.SetAsync(
+      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOfDay });
@@ -136,7 +136,7 @@ public class SetEntryUsingByteArraySteps {
     string value,
     TimeSpan timeOfDay) {
     try {
-      _cachesContext.Cache.Set(
+      _cachesContext.NatsObjectStoreBasedCache.Set(
         key,
         Encoding.UTF8.GetBytes(value),
         new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOfDay });

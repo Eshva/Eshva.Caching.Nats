@@ -3,12 +3,17 @@
 namespace Eshva.Caching.Abstractions;
 
 /// <summary>
-/// Time-based expiration strategy settings.
+/// Time-based cache invalidation settings.
 /// </summary>
 [PublicAPI]
-public class StandardTimeBasedCacheInvalidationSettings {
+public class TimeBasedCacheInvalidationSettings {
   /// <summary>
   /// Default sliding expiration time of cache entries.
   /// </summary>
   public TimeSpan DefaultSlidingExpirationInterval { get; set; }
+
+  /// <summary>
+  /// Purging interval.
+  /// </summary>
+  public TimeSpan ExpiredEntriesPurgingInterval { get; set; }
 }

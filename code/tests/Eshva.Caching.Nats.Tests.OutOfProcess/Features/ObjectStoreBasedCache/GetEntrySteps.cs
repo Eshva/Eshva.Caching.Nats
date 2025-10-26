@@ -14,7 +14,7 @@ public class GetEntrySteps {
   public async Task WhenIGetCacheEntry(string key) {
     try {
       await Task.Delay(millisecondsDelay: 1000);
-      _cachesContext.GottenCacheEntryValue = await _cachesContext.Cache.GetAsync(key);
+      _cachesContext.GottenCacheEntryValue = await _cachesContext.NatsObjectStoreBasedCache.GetAsync(key);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -24,7 +24,7 @@ public class GetEntrySteps {
   [When("I get {string} cache entry synchronously")]
   public void WhenIGetCacheEntrySynchronously(string key) {
     try {
-      _cachesContext.GottenCacheEntryValue = _cachesContext.Cache.Get(key);
+      _cachesContext.GottenCacheEntryValue = _cachesContext.NatsObjectStoreBasedCache.Get(key);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;

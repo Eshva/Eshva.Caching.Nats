@@ -3,12 +3,12 @@
 namespace Eshva.Caching.Abstractions;
 
 /// <summary>
-/// Contract of purging synchronicity controller.
+/// Contract of cache invalidation synchronicity controller.
 /// </summary>
 [PublicAPI]
-public interface IPurgingSynchronicityController {
+public interface ICacheInvalidationSynchronicityController {
   /// <summary>
-  /// Should purger wait until purge finishes its work.
+  /// Should cache invalidation wait until purge finishes.
   /// </summary>
   bool ShouldPurgeSynchronously { get; set; }
 }
