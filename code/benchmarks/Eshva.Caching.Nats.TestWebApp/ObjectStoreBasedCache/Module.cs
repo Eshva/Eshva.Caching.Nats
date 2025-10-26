@@ -18,19 +18,30 @@ internal static class Module {
 
     services.AddNatsObjectStoreBasedCache(ImagesCacheKey, ImagesCacheNatsServerKey, ImagesCacheBucketName);
 
-    services.AddKeyedTransient<GetImageHttpRequestHandler>(
+    services.AddKeyedTransient<GetImageWithTryGetAsyncHttpRequestHandler>(
       ImagesCacheKey,
-      (diContainer, key) => new GetImageHttpRequestHandler(
+      (diContainer, key) => new GetImageWithTryGetAsyncHttpRequestHandler(
         diContainer.GetRequiredKeyedService<IBufferDistributedCache>(key),
-        diContainer.GetRequiredService<ILogger<GetImageHttpRequestHandler>>()));
+        diContainer.GetRequiredService<ILogger<GetImageWithTryGetAsyncHttpRequestHandler>>()));
+    services.AddKeyedTransient<GetImageWithGetAsyncHttpRequestHandler>(
+      ImagesCacheKey,
+      (diContainer, key) => new GetImageWithGetAsyncHttpRequestHandler(
+        diContainer.GetRequiredKeyedService<IBufferDistributedCache>(key),
+        diContainer.GetRequiredService<ILogger<GetImageWithGetAsyncHttpRequestHandler>>()));
   }
 
-  public static void MapEndpoints(IEndpointRouteBuilder endpoints) =>
+  public static void MapEndpoints(IEndpointRouteBuilder endpoints) {
     endpoints.MapGet(
-      "/object-store/images/{name}",
+      "/object-store/try-get-async/{name}",
       async (
-        [FromKeyedServices(ImagesCacheKey)] GetImageHttpRequestHandler handler,
+        [FromKeyedServices(ImagesCacheKey)] GetImageWithTryGetAsyncHttpRequestHandler handler,
         string name) => await handler.Handle(name));
+    endpoints.MapGet(
+      "/object-store/get-async/{name}",
+      async (
+        [FromKeyedServices(ImagesCacheKey)] GetImageWithGetAsyncHttpRequestHandler handler,
+        string name) => await handler.Handle(name));
+  }
 
   private const string ImagesCacheNatsServerKey = "cache NATS server";
   private const string ImagesCacheKey = "images cache";

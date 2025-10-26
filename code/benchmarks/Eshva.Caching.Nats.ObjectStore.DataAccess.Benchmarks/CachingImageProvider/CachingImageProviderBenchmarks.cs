@@ -1,15 +1,23 @@
 ﻿using System.Diagnostics;
+using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Columns;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Environments;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Reports;
 using Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 using Eshva.Caching.Nats.TestWebApp;
 using Eshva.Common.Testing;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Perfolizer.Horology;
+using Perfolizer.Metrology;
 
 namespace Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks.CachingImageProvider;
 
-[MemoryDiagnoser]
-// ReSharper disable once InconsistentNaming
+[Config(typeof(CachingImageProviderBenchmarksConfig))]
 public class CachingImageProviderBenchmarks {
   [Params(
     EntrySizes.Bytes016,
@@ -26,7 +34,19 @@ public class CachingImageProviderBenchmarks {
   public async Task<bool> TryGetAsyncWithByteStream() {
     Debugger.Break();
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
-    var response = await _webAppClient.GetAsync($"/object-store/images/{EntryName}");
+    var response = await _webAppClient.GetAsync($"/object-store/try-get-async/{EntryName}");
+    var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
+    if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    return response.IsSuccessStatusCode;
+  }
+
+  [Benchmark]
+  public async Task<bool> GetAsyncWithByteStream() {
+    Debugger.Break();
+    Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
+    var response = await _webAppClient.GetAsync($"/object-store/get-async/{EntryName}");
+    var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
+    if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
     return response.IsSuccessStatusCode;
   }
 
@@ -57,10 +77,11 @@ public class CachingImageProviderBenchmarks {
 
   [IterationSetup]
   public void AddImageIntoCache() {
-    var bucket = _deployment!.NatsServer.ObjectStoreContext.GetObjectStoreAsync("images").GetAwaiter().GetResult();
+    var bucket = _deployment!.NatsServer.ObjectStoreContext.GetObjectStoreAsync("images").AsTask().GetAwaiter().GetResult();
     var image = new byte[EntrySize];
     Random.Shared.NextBytes(image);
-    bucket.PutAsync(EntryName, image).GetAwaiter().GetResult();
+    _imageHash = SHA256.HashData(image);
+    bucket.PutAsync(EntryName, image).AsTask().GetAwaiter().GetResult();
   }
 
   [GlobalCleanup]
@@ -94,7 +115,32 @@ public class CachingImageProviderBenchmarks {
   }
 
   private NatsBasedCachingTestsDeployment? _deployment;
+  private byte[] _imageHash = [];
   private HttpClient? _webAppClient;
   private WebApplicationFactory<AssemblyTag>? _webAppFactory;
   private const string EntryName = "benchmark-entry";
+}
+
+public sealed class CachingImageProviderBenchmarksConfig : ManualConfig {
+  public CachingImageProviderBenchmarksConfig() {
+    AddDiagnoser(MemoryDiagnoser.Default);
+    AddJob(
+      new Job()
+        .WithId(".NET 9")
+        .WithRuntime(CoreRuntime.Core90)
+        .WithIterationCount(count: 100)
+        .WithAnalyzeLaunchVariance(value: true)
+        .WithGcConcurrent(value: true)
+        .WithGcServer(value: true)
+        .WithLaunchCount(count: 1));
+    AddColumn(StatisticColumn.P50, StatisticColumn.P95);
+    HideColumns(
+      "Error",
+      "StdDev",
+      "Median",
+      "RatioSD");
+    SummaryStyle = SummaryStyle.Default
+      .WithTimeUnit(TimeUnit.Microsecond)
+      .WithSizeUnit(SizeUnit.KB);
+  }
 }

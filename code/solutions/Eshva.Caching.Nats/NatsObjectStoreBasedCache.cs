@@ -302,17 +302,17 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
 
     try {
-      var stream = new MemoryStream();
+      // var stream = new MemoryStream();
       var objectMetadata = await _cacheBucket.GetAsync(
           key,
-          stream,
+          destination.AsStream(),
           leaveOpen: true,
           token)
         .ConfigureAwait(continueOnCapturedContext: false);
-      stream.Seek(offset: 0, SeekOrigin.Begin);
-
-      var destinationStream = destination.AsStream();
-      await stream.CopyToAsync(destinationStream, token).ConfigureAwait(continueOnCapturedContext: false);
+      // stream.Seek(offset: 0, SeekOrigin.Begin);
+      //
+      // var destinationStream = destination.AsStream();
+      // await stream.CopyToAsync(destinationStream, token).ConfigureAwait(continueOnCapturedContext: false);
 
       _logger.LogDebug(
         "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
