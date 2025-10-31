@@ -16,6 +16,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="FluentAssertions"/>
+    <PackageReference Include="XunitXml.TestLogger"/>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats.Tests.OutOfProcessDeployments\Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"/>
