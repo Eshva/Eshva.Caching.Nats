@@ -3,6 +3,8 @@ using NATS.Client.JetStream;
 using NATS.Client.ObjectStore;
 using NATS.Client.ObjectStore.Models;
 
+#pragma warning disable VSTHRD200
+
 namespace Eshva.Caching.Nats.Tests.Tools;
 
 /// <summary>

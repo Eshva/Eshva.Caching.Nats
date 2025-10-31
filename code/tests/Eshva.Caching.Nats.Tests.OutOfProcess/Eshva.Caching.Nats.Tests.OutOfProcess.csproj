@@ -1,5 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Eshva.Common.Testing"/>
     <PackageReference Include="Meziantou.Extensions.Logging.Xunit"/>
@@ -15,11 +17,9 @@
     </PackageReference>
     <PackageReference Include="FluentAssertions"/>
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats.Tests.OutOfProcessDeployments\Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"/>
     <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats\Eshva.Caching.Nats.csproj"/>
     <ProjectReference Include="..\Eshva.Caching.Nats.Tests.Tools\Eshva.Caching.Nats.Tests.Tools.csproj"/>
   </ItemGroup>
-
 </Project>

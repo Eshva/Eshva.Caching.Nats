@@ -1,9 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
     <OutputType>Exe</OutputType>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance"/>
     <PackageReference Include="Eshva.Common.Testing"/>
@@ -11,11 +10,9 @@
     <PackageReference Include="BenchmarkDotNet"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats.Tests.OutOfProcessDeployments\Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"/>
     <ProjectReference Include="..\Eshva.Caching.Nats.Benchmarks.Tools\Eshva.Caching.Nats.Benchmarks.Tools.csproj"/>
     <ProjectReference Include="..\Eshva.Caching.Nats.TestWebApp\Eshva.Caching.Nats.TestWebApp.csproj"/>
   </ItemGroup>
-
 </Project>

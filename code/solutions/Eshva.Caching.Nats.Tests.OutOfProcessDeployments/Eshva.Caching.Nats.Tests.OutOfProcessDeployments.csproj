@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
     <PackageReference Include="Testcontainers"/>
   </ItemGroup>
-
 </Project>

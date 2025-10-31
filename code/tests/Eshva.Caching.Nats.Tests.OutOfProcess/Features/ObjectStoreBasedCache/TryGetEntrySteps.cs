@@ -39,7 +39,8 @@ public class TryGetEntrySteps {
   [Then("cache entry successfully read")]
   public void ThenCacheEntrySuccessfullyRead() => _isSuccessfullyRead.Should().BeTrue();
 
-  [Then("cache entry did not read")] public void ThenCacheEntryDidNotRead() => _isSuccessfullyRead.Should().BeFalse();
+  [Then("cache entry did not read")]
+  public void ThenCacheEntryDidNotRead() => _isSuccessfullyRead.Should().BeFalse();
 
   private readonly CachesContext _cachesContext;
   private readonly ErrorHandlingContext _errorHandlingContext;

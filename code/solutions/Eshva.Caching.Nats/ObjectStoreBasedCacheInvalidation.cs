@@ -25,13 +25,14 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
     TimeProvider timeProvider,
     ILogger<ObjectStoreBasedCacheInvalidation>? logger = null) : base(
     settings,
-    TimeSpan.FromMinutes(minutes: 1),
+    TimeSpan.FromMinutes(value: 1D),
     timeProvider,
     logger) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
     _timeProvider = timeProvider;
   }
 
+  /// <inheritdoc/>
   protected override async Task<CacheInvalidationStatistics> DeleteExpiredCacheEntries(CancellationToken cancellation) {
     Logger.LogDebug("Deleting expired entries started at {CurrentTime}", _timeProvider.GetUtcNow());
 

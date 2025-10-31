@@ -33,7 +33,7 @@ internal sealed class CacheEntryMetadata {
   public DateTimeOffset ExpiresAtUtc {
     get =>
       _entryMetadata.TryGetValue(nameof(ExpiresAtUtc), out var expiresAtUtc)
-        ? long.TryParse(expiresAtUtc, CultureInfo.InvariantCulture, out var result)
+        ? long.TryParse(expiresAtUtc, out var result)
           ? new DateTimeOffset(result, TimeSpan.Zero)
           : NeverExpires
         : NeverExpires;

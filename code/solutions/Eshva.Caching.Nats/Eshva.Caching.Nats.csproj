@@ -1,5 +1,30 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
+  <PropertyGroup>
+    <PackageId>Eshva.Caching.Nats</PackageId>
+    <Version>0.1.0</Version>
+    <Description>NATS-based caches based on Microsoft.Extensions.Caching.Abstractions interfaces (IDistributedCache and IBufferDistributedCache).</Description>
+    <PackageTags>caching;cache;abstractions</PackageTags>
+    <PackageReadmeFile>readme.md</PackageReadmeFile>
+    <PackageIcon>cache-nats-128.png</PackageIcon>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net6.0;net7.0;net8.0;net9.0;net462</TargetFrameworks>
+    <RootNamespace>Eshva.Caching.Nats</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DocumentationFile>bin\Debug\Eshva.Caching.Nats.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DocumentationFile>bin\Release\Eshva.Caching.Nats.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../../readme.md" Pack="true" PackagePath="/"/>
+    <None Include="../../../documentation/cache-nats-128.png" Pack="true" PackagePath="/"/>
+  </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Eshva.Caching.Nats.Tests.OutOfProcess"/>
   </ItemGroup>

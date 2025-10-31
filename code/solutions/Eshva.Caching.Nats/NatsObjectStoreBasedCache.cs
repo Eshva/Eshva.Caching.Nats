@@ -8,6 +8,9 @@ using Microsoft.Extensions.Logging.Abstractions;
 using NATS.Client.ObjectStore;
 using NATS.Client.ObjectStore.Models;
 
+#pragma warning disable VSTHRD002
+#pragma warning disable VSTHRD200
+
 namespace Eshva.Caching.Nats;
 
 /// <summary>
@@ -28,11 +31,8 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     INatsObjStore cacheBucket,
     ObjectStoreBasedCacheInvalidation cacheInvalidation,
     ILogger<NatsObjectStoreBasedCache>? logger = null) {
-    ArgumentNullException.ThrowIfNull(cacheBucket);
-    ArgumentNullException.ThrowIfNull(cacheInvalidation);
-
-    _cacheBucket = cacheBucket;
-    _cacheInvalidation = cacheInvalidation;
+    _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
+    _cacheInvalidation = cacheInvalidation ?? throw new ArgumentNullException(nameof(cacheInvalidation));
     _logger = logger ?? new NullLogger<NatsObjectStoreBasedCache>();
   }
 
@@ -285,9 +285,6 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// <param name="key">Cache entry key.</param>
   /// <param name="destination">Buffer writer to write cache entry value into.</param>
   /// <param name="token">Cancellation token.</param>
-  /// <exception cref="ArgumentNullException">
-  /// The key is not specified.
-  /// </exception>
   /// <returns>
   /// <c>true</c> - value successfully read, <c>false</c> - entry not found in the cache.
   /// </returns>
@@ -302,17 +299,12 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     _cacheInvalidation.PurgeEntriesIfRequired(token);
 
     try {
-      // var stream = new MemoryStream();
       var objectMetadata = await _cacheBucket.GetAsync(
           key,
           destination.AsStream(),
           leaveOpen: true,
           token)
         .ConfigureAwait(continueOnCapturedContext: false);
-      // stream.Seek(offset: 0, SeekOrigin.Begin);
-      //
-      // var destinationStream = destination.AsStream();
-      // await stream.CopyToAsync(destinationStream, token).ConfigureAwait(continueOnCapturedContext: false);
 
       _logger.LogDebug(
         "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
@@ -331,9 +323,34 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     }
   }
 
+  /// <summary>
+  /// Set cache entry with <paramref name="key"/> with <paramref name="value"/>.
+  /// </summary>
+  /// <param name="key">Cache entry key.</param>
+  /// <param name="value">Cache entry value.</param>
+  /// <param name="options">Expiration options.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  /// <exception cref="InvalidOperationException">
+  /// Failed to set cache key value.
+  /// </exception>
   public void Set(string key, ReadOnlySequence<byte> value, DistributedCacheEntryOptions options) =>
     SetAsync(key, value, options).AsTask().GetAwaiter().GetResult();
 
+  /// <summary>
+  /// Set cache entry with <paramref name="key"/> with <paramref name="value"/>.
+  /// </summary>
+  /// <param name="key">Cache entry key.</param>
+  /// <param name="value">Cache entry value.</param>
+  /// <param name="options">Expiration options.</param>
+  /// <param name="token">Cancellation token.</param>
+  /// <exception cref="ArgumentNullException">
+  /// The key is not specified.
+  /// </exception>
+  /// <exception cref="InvalidOperationException">
+  /// Failed to set cache key value.
+  /// </exception>
   public async ValueTask SetAsync(
     string key,
     ReadOnlySequence<byte> value,
@@ -380,7 +397,9 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     await _cacheBucket.UpdateMetaAsync(objectMetadata.Name, objectMetadata, token).ConfigureAwait(continueOnCapturedContext: false);
   }
 
-  private static void ValidateKey(string key) => ArgumentException.ThrowIfNullOrWhiteSpace(key, "The key is not specified.");
+  private static void ValidateKey(string key) {
+    if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Value cannot be null or whitespace.", nameof(key));
+  }
 
   private readonly INatsObjStore _cacheBucket;
   private readonly TimeBasedCacheInvalidation _cacheInvalidation;

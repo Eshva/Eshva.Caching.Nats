@@ -7,8 +7,13 @@ using NATS.Client.Core;
 using NATS.Client.ObjectStore;
 using NATS.Net;
 
+#pragma warning disable VSTHRD002
+
 namespace Eshva.Caching.Nats;
 
+/// <summary>
+/// NATS-based caches bootstrapping extensions.
+/// </summary>
 [PublicAPI]
 public static class NatsCacheBootstrapping {
   /// <summary>
@@ -83,8 +88,8 @@ public static class NatsCacheBootstrapping {
         new ObjectStoreBasedCacheInvalidation(
           diContainer.GetRequiredKeyedService<INatsObjStore>(key),
           new TimeBasedCacheInvalidationSettings {
-            ExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(minutes: 5),
-            DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes: 5)
+            ExpiredEntriesPurgingInterval = TimeSpan.FromMinutes(value: 5D),
+            DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(value: 5D)
           },
           diContainer.GetRequiredService<TimeProvider>(),
           diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheInvalidation>>()));
