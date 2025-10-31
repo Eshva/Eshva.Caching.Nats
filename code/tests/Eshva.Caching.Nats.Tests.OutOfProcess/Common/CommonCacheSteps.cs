@@ -2,6 +2,7 @@
 using Eshva.Caching.Nats.Tests.Tools;
 using FluentAssertions;
 using NATS.Client.ObjectStore;
+using NATS.Client.ObjectStore.Models;
 using Reqnroll;
 using Xunit;
 
@@ -14,20 +15,20 @@ public class CommonCacheSteps {
   }
 
   [Given("entry with key {string} and value {string} which expires in {double} minutes put into cache")]
-  public async Task GivenEntryWithKeyStringAndValueStringWhichExpiresInMinutesPutIntoCache(
+  public async Task GivenEntryWithKeyStringAndValueStringWhichExpiresInDoubleMinutesPutIntoCache(
     string key,
     string value,
     double expiresInMinutes) {
-    await _cachesContext.Bucket.PutAsync(key, Encoding.UTF8.GetBytes(value));
-
-    var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
-    objectMetadata.Metadata = new CacheEntryMetadata(objectMetadata.Metadata!) {
+    var metadata = new CacheEntryMetadata {
       ExpiresAtUtc = _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes),
       SlidingExpiration = TimeSpan.FromMinutes(expiresInMinutes)
     };
-    _cachesContext.XUnitLogger.WriteLine(
-      $"Put entry '{key}' that expires at {new CacheEntryMetadata(objectMetadata.Metadata!).ExpiresAtUtc}");
-    await _cachesContext.Bucket.UpdateMetaAsync(key, objectMetadata);
+
+    await _cachesContext.Bucket.PutAsync(
+      new ObjectMetadata { Name = key, Metadata = metadata },
+      new MemoryStream(Encoding.UTF8.GetBytes(value)));
+
+    _cachesContext.XUnitLogger.WriteLine($"Put entry '{key}' that expires at {new CacheEntryMetadata(metadata).ExpiresAtUtc}");
   }
 
   [Given("entry with key {string} and random byte array as value which expires in {double} minutes put into cache")]
@@ -103,6 +104,10 @@ public class CommonCacheSteps {
   [Given("clock set at today (.*)")]
   public void GivenClockSetAtToday(TimeSpan timeOfDay) =>
     _cachesContext.TimeProvider.AdjustTime(_cachesContext.Today + timeOfDay);
+
+  [Given("time passed by {double} minutes")]
+  public void GivenTimePassedByDoubleMinutes(double minutes) =>
+    _cachesContext.TimeProvider.Advance(TimeSpan.FromMinutes(minutes));
 
   [Then("'(.*)' entry should be expired today at (.*)")]
   public async Task ThenEntryShouldBeExpiredTodayAt(string key, TimeSpan timeOfDay) {

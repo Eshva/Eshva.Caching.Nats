@@ -29,23 +29,22 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
     timeProvider,
     logger) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
+    _timeProvider = timeProvider;
   }
 
-  /// <inheritdoc/>
-  protected override async Task DeleteExpiredCacheEntries(CancellationToken token) {
-    Logger.LogDebug("Deleting expired entries started");
-    NotifyPurgeStarted();
-    var entries = _cacheBucket.ListAsync(cancellationToken: token);
+  protected override async Task<CacheInvalidationStatistics> DeleteExpiredCacheEntries(CancellationToken cancellation) {
+    Logger.LogDebug("Deleting expired entries started at {CurrentTime}", _timeProvider.GetUtcNow());
 
     uint totalCount = 0;
     uint purgedCount = 0;
-    await foreach (var entry in entries.ConfigureAwait(continueOnCapturedContext: false)) {
+    var entries = _cacheBucket.ListAsync(cancellationToken: cancellation).ConfigureAwait(continueOnCapturedContext: false);
+    await foreach (var entry in entries) {
       totalCount++;
       Logger.LogDebug("Entry '{Key}' expires at {ExpiresAt}", entry.Name, EntryMetadata(entry).ExpiresAtUtc);
-      if (!IsCacheEntryExpired(EntryMetadata(entry).ExpiresAtUtc)) continue;
+      if (!ExpiryCalculator.IsCacheEntryExpired(EntryMetadata(entry).ExpiresAtUtc)) continue;
 
       purgedCount++;
-      await _cacheBucket.DeleteAsync(entry.Name, token).ConfigureAwait(continueOnCapturedContext: false);
+      await _cacheBucket.DeleteAsync(entry.Name, cancellation).ConfigureAwait(continueOnCapturedContext: false);
       Logger.LogDebug("Deleted expired entry '{Key}'", entry.Name);
     }
 
@@ -53,7 +52,8 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
       "Deleting expired entries completed: total {TotalCount} entries, purged {PurgedCount} entries",
       totalCount,
       purgedCount);
-    NotifyPurgeCompleted(totalCount, purgedCount);
+
+    return new CacheInvalidationStatistics(totalCount, purgedCount);
   }
 
   private static CacheEntryMetadata EntryMetadata(ObjectMetadata objectMetadata) => objectMetadata.Metadata is not null
@@ -61,4 +61,5 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
     : throw new InvalidOperationException($"A cache entry '{objectMetadata.Name}' has no metadata.");
 
   private readonly INatsObjStore _cacheBucket;
+  private readonly TimeProvider _timeProvider;
 }

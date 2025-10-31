@@ -6,14 +6,11 @@
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance"/>
+    <PackageReference Include="Eshva.Caching.Abstractions"/>
     <PackageReference Include="Eshva.Common.Testing"/>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\Eshva.Caching.Abstractions\Eshva.Caching.Abstractions.csproj"/>
   </ItemGroup>
 
 </Project>

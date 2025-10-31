@@ -24,36 +24,20 @@ purging expired entries. This is the reason why they can not be run in parallel.
     And 'will be refreshed' entry should be expired today at 00:05
     And 'will be removed' entry is not present in the object-store bucket
 
-  Scenario: 03. Refresh asynchronously expired entry should get an error
-    Given time passed by 2 minutes
-    When I refresh 'will be removed' cache entry asynchronously
-    Then invalid operation exception should be reported
-    And 'will be refreshed' entry is present in the object-store bucket
-    And 'will be refreshed' entry should be expired today at 00:03
-    And 'will be removed' entry is not present in the object-store bucket
-
-  Scenario: 04. Refresh synchronously expired entry should get an error
-    Given time passed by 2 minutes
-    When I refresh 'will be removed' cache entry synchronously
-    Then invalid operation exception should be reported
-    And 'will be refreshed' entry is present in the object-store bucket
-    And 'will be refreshed' entry should be expired today at 00:03
-    And 'will be removed' entry is not present in the object-store bucket
-
-  Scenario: 05. Refresh asynchronously missed entry should report an error
+  Scenario: 03. Refresh asynchronously missed entry should report an error
     When I refresh 'missing' cache entry asynchronously
     Then invalid operation exception should be reported
 
-  Scenario: 06. Refresh asynchronously missed entry should report an error
+  Scenario: 04. Refresh asynchronously missed entry should report an error
     When I refresh 'missing' cache entry synchronously
     Then invalid operation exception should be reported
 
-  Scenario: 07. Refresh asynchronously already deleted entry should report an error
+  Scenario: 05. Refresh asynchronously already deleted entry should report an error
     Given object with key 'will be removed' removed from object-store bucket
     When I refresh 'will be removed' cache entry asynchronously
     Then invalid operation exception should be reported
 
-  Scenario: 08. Refresh synchronously already deleted entry should report an error
+  Scenario: 06. Refresh synchronously already deleted entry should report an error
     Given object with key 'will be removed' removed from object-store bucket
     When I refresh 'will be removed' cache entry synchronously
     Then invalid operation exception should be reported

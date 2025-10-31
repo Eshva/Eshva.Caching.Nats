@@ -39,19 +39,17 @@ public class CachesContext {
   public byte[]? GottenCacheEntryValue { get; set; } = [];
 
   public void CreateAndAssignCacheServices() {
-    var expiredEntriesPurger = new ObjectStoreBasedCacheInvalidation(
+    var cacheInvalidation = new ObjectStoreBasedCacheInvalidation(
       Bucket,
       new TimeBasedCacheInvalidationSettings {
         ExpiredEntriesPurgingInterval = ExpiredEntriesPurgingInterval, DefaultSlidingExpirationInterval = DefaultSlidingExpirationInterval
       },
       TimeProvider,
-      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger)) {
-      ShouldPurgeSynchronously = true
-    };
+      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
 
     NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache(
       Bucket,
-      expiredEntriesPurger,
+      cacheInvalidation,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
   }
 

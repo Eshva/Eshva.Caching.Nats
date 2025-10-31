@@ -8,7 +8,6 @@
     <Project Path="benchmarks/Eshva.Caching.Nats.TestWebApp/Eshva.Caching.Nats.TestWebApp.csproj" Type="Classic C#"/>
   </Folder>
   <Folder Name="/common/">
-    <Project Path="solutions/Eshva.Caching.Abstractions/Eshva.Caching.Abstractions.csproj" Type="Classic C#"/>
     <Project
       Path="solutions/Eshva.Caching.Nats.Tests.OutOfProcessDeployments/Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"
       Type="Classic C#"/>

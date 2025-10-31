@@ -101,7 +101,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// </exception>
   public async Task<byte[]?> GetAsync(string key, CancellationToken token = default) {
     ValidateKey(key);
-    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    _cacheInvalidation.PurgeEntriesIfRequired(token);
 
     var valueStream = new MemoryStream();
 
@@ -170,7 +170,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     DistributedCacheEntryOptions options,
     CancellationToken token = new()) {
     ValidateKey(key);
-    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    _cacheInvalidation.PurgeEntriesIfRequired(token);
 
     try {
       var objectMetadata = await _cacheBucket.PutAsync(key, value, token).ConfigureAwait(continueOnCapturedContext: false);
@@ -208,7 +208,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// </exception>
   public async Task RefreshAsync(string key, CancellationToken token = new()) {
     ValidateKey(key);
-    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    _cacheInvalidation.PurgeEntriesIfRequired(token);
 
     try {
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, token).ConfigureAwait(continueOnCapturedContext: false);
@@ -250,7 +250,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// </exception>
   public async Task RemoveAsync(string key, CancellationToken token = new()) {
     ValidateKey(key);
-    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    _cacheInvalidation.PurgeEntriesIfRequired(token);
 
     try {
       await _cacheBucket.DeleteAsync(key, token).ConfigureAwait(continueOnCapturedContext: false);
@@ -299,7 +299,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   /// </exception>
   public async ValueTask<bool> TryGetAsync(string key, IBufferWriter<byte> destination, CancellationToken token = new()) {
     ValidateKey(key);
-    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    _cacheInvalidation.PurgeEntriesIfRequired(token);
 
     try {
       // var stream = new MemoryStream();
@@ -340,7 +340,7 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
     DistributedCacheEntryOptions options,
     CancellationToken token = default) {
     ValidateKey(key);
-    await _cacheInvalidation.PurgeEntriesIfRequired(token).ConfigureAwait(continueOnCapturedContext: false);
+    _cacheInvalidation.PurgeEntriesIfRequired(token);
 
     try {
       var objectMetadata = await _cacheBucket.PutAsync(
@@ -361,20 +361,20 @@ public sealed class NatsObjectStoreBasedCache : IBufferDistributedCache {
   }
 
   private Dictionary<string, string> FillCacheEntryMetadata(DistributedCacheEntryOptions options) {
-    var absoluteExpirationUtc = _cacheInvalidation.CalculateAbsoluteExpiration(
+    var absoluteExpirationUtc = _cacheInvalidation.ExpiryCalculator.CalculateAbsoluteExpiration(
       options.AbsoluteExpiration,
       options.AbsoluteExpirationRelativeToNow);
     return new CacheEntryMetadata {
       SlidingExpiration = options.SlidingExpiration,
       AbsoluteExpirationUtc = absoluteExpirationUtc,
-      ExpiresAtUtc = _cacheInvalidation.CalculateExpiration(absoluteExpirationUtc, options.SlidingExpiration)
+      ExpiresAtUtc = _cacheInvalidation.ExpiryCalculator.CalculateExpiration(absoluteExpirationUtc, options.SlidingExpiration)
     };
   }
 
   private async Task RefreshExpiresAt(ObjectMetadata objectMetadata, CancellationToken token) {
     objectMetadata.Metadata ??= new Dictionary<string, string>();
     var entryMetadata = new CacheEntryMetadata(objectMetadata.Metadata);
-    entryMetadata.ExpiresAtUtc = _cacheInvalidation.CalculateExpiration(
+    entryMetadata.ExpiresAtUtc = _cacheInvalidation.ExpiryCalculator.CalculateExpiration(
       entryMetadata.AbsoluteExpirationUtc,
       entryMetadata.SlidingExpiration);
     await _cacheBucket.UpdateMetaAsync(objectMetadata.Name, objectMetadata, token).ConfigureAwait(continueOnCapturedContext: false);
