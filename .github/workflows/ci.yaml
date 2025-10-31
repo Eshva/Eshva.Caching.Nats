@@ -11,6 +11,11 @@ jobs:
     name: Verify quality
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+      issues: read
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
