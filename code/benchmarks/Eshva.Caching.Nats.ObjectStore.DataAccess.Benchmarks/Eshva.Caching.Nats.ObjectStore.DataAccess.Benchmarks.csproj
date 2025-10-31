@@ -10,7 +10,6 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing"/>
     <PackageReference Include="BenchmarkDotNet"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
-    <PackageReference Include="System.Linq.Async"/>
   </ItemGroup>
 
   <ItemGroup>
