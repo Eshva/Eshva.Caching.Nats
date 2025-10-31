@@ -1,0 +1,68 @@
+name: CI build to verify quality
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+jobs:
+  verify-quality:
+    name: Verify quality
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        framework: [ net6.0, net7.0, net8.0, net9.0 ]
+        include:
+          - framework: net6.0
+            dotnet: '6.0.x'
+          - framework: net7.0
+            dotnet: '7.0.x'
+          - framework: net8.0
+            dotnet: '8.0.x'
+          - framework: net9.0
+            dotnet: '9.0.x'
+          - os: windows-latest
+            framework: net462
+            dotnet: '9.0.x'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Setup .NET ${{ matrix.dotnet }} on ${{ matrix.os }}
+        id: setup-dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+          dotnet-quality: ga
+      - name: Verify quality
+        run: dotnet test code/Eshva.Caching.Nats.slnx --configuration Release --framework ${{ matrix.framework }} --logger:"xunit;LogFilePath=test_result.xml" --results-directory .
+      - name: Upload test results
+        if: (!cancelled())
+        uses: actions/upload-artifact@v5
+        with:
+          name: Test results with .NET ${{ matrix.framework }} on ${{ matrix.os }}
+          path: ./**/test_result.xml
+  publish-test-results:
+    name: Publish tests results
+    needs: verify-quality
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+      issues: read
+    if: (!cancelled())
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/**/*.xml"
+          report_individual_runs: true
+          check_name: "Test results"
+          action_fail: true

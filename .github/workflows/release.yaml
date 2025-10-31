@@ -1,0 +1,93 @@
+name: Build the NuGet-package and publish it to nuget.org
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+jobs:
+  verify-quality:
+    name: Verify quality
+    strategy:
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        framework: [ net6.0, net7.0, net8.0, net9.0 ]
+        include:
+          - framework: net6.0
+            dotnet: '6.0.x'
+          - framework: net7.0
+            dotnet: '7.0.x'
+          - framework: net8.0
+            dotnet: '8.0.x'
+          - framework: net9.0
+            dotnet: '9.0.x'
+          - os: windows-latest
+            framework: net462
+            dotnet: '9.0.x'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Setup .NET ${{ matrix.dotnet }} on ${{ matrix.os }}
+        id: setup-dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ matrix.dotnet }}
+          dotnet-quality: ga
+      - name: Verify quality
+        run: dotnet test code/Eshva.Caching.Nats.slnx --configuration Release --framework ${{ matrix.framework }} --logger:"xunit;LogFilePath=test_result.xml" --results-directory .
+      - name: Upload test results
+        if: (!cancelled())
+        uses: actions/upload-artifact@v5
+        with:
+          name: Test results with .NET ${{ matrix.framework }} on ${{ matrix.os }}
+          path: ./**/test_result.xml
+  publish-test-results:
+    name: Publish tests results
+    needs: verify-quality
+    runs-on: ubuntu-latest
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+      issues: read
+    if: (!cancelled())
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v6
+        with:
+          path: artifacts
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: "artifacts/**/*.xml"
+          report_individual_runs: true
+          check_name: "Test results"
+          action_fail: true
+  build-and-publish:
+    name: Build the NuGet-package and publish it to nuget.org
+    needs: [ verify-quality, publish-test-results ]
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Verify commit exists in origin/master
+        run: |
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+          git branch --remote --contains | grep origin/master
+      - name: Set VERSION variable from tag
+        run: echo "VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
+      - name: Build sources
+        run: dotnet build code/solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj --configuration Release
+      - name: Pack the NuGet-package
+        run: dotnet pack code/solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj --configuration Release /p:Version=${VERSION} --no-build --output .
+      - name: NuGet login (OIDC → temp API key)
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+      - name: Publish the NuGet-package to nuget.org
+        run: dotnet nuget push Eshva.Caching.Nats.${VERSION}.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
