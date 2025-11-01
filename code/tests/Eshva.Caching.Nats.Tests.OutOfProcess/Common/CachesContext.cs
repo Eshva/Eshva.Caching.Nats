@@ -34,7 +34,7 @@ public class CachesContext {
 
   public INatsObjStore Bucket { get; }
 
-  public NatsObjectStoreBasedCache NatsObjectStoreBasedCache { get; private set; } = null!;
+  public NatsObjectStoreBasedCache1 NatsObjectStoreBasedCache { get; private set; } = null!;
 
   public byte[]? GottenCacheEntryValue { get; set; } = [];
 
@@ -47,10 +47,10 @@ public class CachesContext {
       TimeProvider,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
 
-    NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache(
+    NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache1(
       Bucket,
       cacheInvalidation,
-      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
+      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache1>(_xUnitLogger));
   }
 
   private readonly ITestOutputHelper _xUnitLogger;

@@ -95,10 +95,10 @@ public static class NatsCacheBootstrapping {
           diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheInvalidation>>()));
 
   private static void AddObjectStoreBasedCache(IServiceCollection services, string serviceKey) =>
-    services.AddKeyedSingleton<IBufferDistributedCache, NatsObjectStoreBasedCache>(
+    services.AddKeyedSingleton<IBufferDistributedCache, NatsObjectStoreBasedCache1>(
       serviceKey,
-      (diContainer, key) => new NatsObjectStoreBasedCache(
+      (diContainer, key) => new NatsObjectStoreBasedCache1(
         diContainer.GetRequiredKeyedService<INatsObjStore>(key),
         diContainer.GetRequiredKeyedService<ObjectStoreBasedCacheInvalidation>(key),
-        diContainer.GetRequiredService<ILogger<NatsObjectStoreBasedCache>>()));
+        diContainer.GetRequiredService<ILogger<NatsObjectStoreBasedCache1>>()));
 }

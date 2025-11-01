@@ -13,7 +13,7 @@ public class GetEntrySteps {
   [When("I get {string} cache entry asynchronously")]
   public async Task WhenIGetCacheEntry(string key) {
     try {
-      await Task.Delay(millisecondsDelay: 1000);
+      // await Task.Delay(millisecondsDelay: 1000);
       _cachesContext.GottenCacheEntryValue = await _cachesContext.NatsObjectStoreBasedCache.GetAsync(key);
     }
     catch (Exception exception) {
