@@ -21,7 +21,7 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
   /// </exception>
   public ObjectStoreBasedCacheInvalidation(
     INatsObjStore cacheBucket,
-    TimeBasedCacheInvalidationSettings settings,
+    TimeBasedCacheInvalidationSettings settings, // TODO: Replace with calculator.
     TimeProvider timeProvider,
     ILogger<ObjectStoreBasedCacheInvalidation>? logger = null) : base(
     settings,

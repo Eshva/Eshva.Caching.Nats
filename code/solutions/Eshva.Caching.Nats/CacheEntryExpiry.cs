@@ -1,7 +1,7 @@
 namespace Eshva.Caching.Nats;
 
 /// <summary>
-/// 
+///
 /// </summary>
 /// <param name="ExpiresAtUtc"></param>
 /// <param name="AbsoluteExpirationUtc"></param>

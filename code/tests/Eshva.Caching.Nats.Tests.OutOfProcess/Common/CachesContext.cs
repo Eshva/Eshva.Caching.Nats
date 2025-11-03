@@ -34,11 +34,14 @@ public class CachesContext {
 
   public INatsObjStore Bucket { get; }
 
-  public NatsObjectStoreBasedCache1 NatsObjectStoreBasedCache { get; private set; } = null!;
+  public NatsObjectStoreBasedCache NatsObjectStoreBasedCache { get; private set; } = null!;
 
   public byte[]? GottenCacheEntryValue { get; set; } = [];
 
   public void CreateAndAssignCacheServices() {
+    // TODO: Use same calculator in TimeBasedCacheInvalidation constructor: change in Abstractions.
+    var expiryCalculator = new CacheEntryExpiryCalculator(DefaultSlidingExpirationInterval, TimeProvider);
+
     var cacheInvalidation = new ObjectStoreBasedCacheInvalidation(
       Bucket,
       new TimeBasedCacheInvalidationSettings {
@@ -47,10 +50,14 @@ public class CachesContext {
       TimeProvider,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
 
-    NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache1(
+    var cacheDatastore = new ObjectStoreBasedDatastore(
       Bucket,
+      expiryCalculator,
+      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedDatastore>(_xUnitLogger));
+    NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache(
+      cacheDatastore,
       cacheInvalidation,
-      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache1>(_xUnitLogger));
+      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
   }
 
   private readonly ITestOutputHelper _xUnitLogger;

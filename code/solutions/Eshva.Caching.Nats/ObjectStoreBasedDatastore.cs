@@ -1,38 +1,35 @@
 ﻿using System.Buffers;
 using CommunityToolkit.HighPerformance;
-using JetBrains.Annotations;
+using Eshva.Caching.Abstractions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using NATS.Client.ObjectStore;
 using NATS.Client.ObjectStore.Models;
-
-#pragma warning disable VSTHRD002
-#pragma warning disable VSTHRD200
 
 namespace Eshva.Caching.Nats;
 
 /// <summary>
-/// NATS object-store based distributed cache.
+/// NATS object store based cache datastore.
 /// </summary>
-[PublicAPI]
-public sealed class NatsObjectStoreBasedCache1 : BufferDistributedCache {
+public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
   /// <summary>
-  /// Initializes a new instance of a NATS object-store based distributed cache.
+  ///
   /// </summary>
-  /// <param name="cacheBucket">NATS object-store cache bucket.</param>
-  /// <param name="cacheInvalidation">Cache invalidation.</param>
-  /// <param name="logger">Logger.</param>
-  /// <exception cref="ArgumentNullException">
-  /// Value of a required argument isn't specified.
-  /// </exception>
-  public NatsObjectStoreBasedCache1(
+  /// <param name="cacheBucket"></param>
+  /// <param name="expiryCalculator"></param>
+  /// <param name="logger"></param>
+  /// <exception cref="ArgumentNullException"></exception>
+  public ObjectStoreBasedDatastore(
     INatsObjStore cacheBucket,
-    ObjectStoreBasedCacheInvalidation cacheInvalidation,
-    ILogger<NatsObjectStoreBasedCache1>? logger = null) : base(cacheInvalidation, logger) {
+    CacheEntryExpiryCalculator expiryCalculator,
+    ILogger<ObjectStoreBasedDatastore>? logger = null) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
+    _expiryCalculator = expiryCalculator;
+    _logger = logger ?? new NullLogger<ObjectStoreBasedDatastore>();
   }
 
   /// <inheritdoc/>
-  protected override async Task<CacheEntryExpiry> GetEntryExpiry(string key, CancellationToken cancellation) {
+  public async Task<CacheEntryExpiry> GetEntryExpiry(string key, CancellationToken cancellation) {
     try {
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
@@ -48,13 +45,12 @@ public sealed class NatsObjectStoreBasedCache1 : BufferDistributedCache {
   }
 
   /// <inheritdoc/>
-  protected override async Task RefreshEntry(string key, CacheEntryExpiry cacheEntryExpiry, CancellationToken cancellation) {
+  public async Task RefreshEntry(string key, CacheEntryExpiry cacheEntryExpiry, CancellationToken cancellation) {
     try {
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       var metadata = new CacheEntryMetadata(objectMetadata.Metadata);
-      metadata.ExpiresAtUtc =
-        CacheInvalidation.ExpiryCalculator.CalculateExpiration(metadata.AbsoluteExpirationUtc, metadata.SlidingExpiration);
+      metadata.ExpiresAtUtc = _expiryCalculator.CalculateExpiration(metadata.AbsoluteExpirationUtc, metadata.SlidingExpiration);
 
       await _cacheBucket.UpdateMetaAsync(key, objectMetadata, cancellation).ConfigureAwait(continueOnCapturedContext: false);
     }
@@ -64,7 +60,7 @@ public sealed class NatsObjectStoreBasedCache1 : BufferDistributedCache {
   }
 
   /// <inheritdoc/>
-  protected override async Task RemoveEntry(string key, CancellationToken cancellation) {
+  public async Task RemoveEntry(string key, CancellationToken cancellation) {
     try {
       await _cacheBucket.DeleteAsync(key, cancellation).ConfigureAwait(continueOnCapturedContext: false);
     }
@@ -74,7 +70,7 @@ public sealed class NatsObjectStoreBasedCache1 : BufferDistributedCache {
   }
 
   /// <inheritdoc/>
-  protected override async Task<(bool, CacheEntryExpiry)> TryGetEntry(
+  public async Task<(bool isEntryGotten, CacheEntryExpiry cacheEntryExpiry)> TryGetEntry(
     string key,
     IBufferWriter<byte> destination,
     CancellationToken cancellation) {
@@ -88,7 +84,7 @@ public sealed class NatsObjectStoreBasedCache1 : BufferDistributedCache {
       var metadata = new CacheEntryMetadata(objectMetadata.Metadata);
       var cacheEntryExpiry = new CacheEntryExpiry(metadata.ExpiresAtUtc, metadata.AbsoluteExpirationUtc, metadata.SlidingExpiration);
 
-      Logger.LogDebug(
+      _logger.LogDebug(
         "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
         key,
         objectMetadata);
@@ -104,7 +100,7 @@ public sealed class NatsObjectStoreBasedCache1 : BufferDistributedCache {
   }
 
   /// <inheritdoc/>
-  protected override async Task SetEntry(
+  public async Task SetEntry(
     string key,
     ReadOnlySequence<byte> value,
     CacheEntryExpiry cacheEntryExpiry,
@@ -118,7 +114,7 @@ public sealed class NatsObjectStoreBasedCache1 : BufferDistributedCache {
           cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
 
-      Logger.LogDebug(
+      _logger.LogDebug(
         "An entry with the key '{Key}' has been put into cache. Cache entry metadata: @{ObjectMetadata}",
         key,
         objectMetadata);
@@ -128,14 +124,21 @@ public sealed class NatsObjectStoreBasedCache1 : BufferDistributedCache {
     }
   }
 
+  /// <inheritdoc/>
+  public void ValidateKey(string key) {
+    if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Cache entry key can't be null or whitespace.", nameof(key));
+  }
+
   private Dictionary<string, string> FillCacheEntryMetadata(CacheEntryExpiry cacheEntryExpiry) =>
     new CacheEntryMetadata {
       SlidingExpiration = cacheEntryExpiry.SlidingExpiration,
       AbsoluteExpirationUtc = cacheEntryExpiry.AbsoluteExpirationUtc,
-      ExpiresAtUtc = CacheInvalidation.ExpiryCalculator.CalculateExpiration(
+      ExpiresAtUtc = _expiryCalculator.CalculateExpiration(
         cacheEntryExpiry.AbsoluteExpirationUtc,
         cacheEntryExpiry.SlidingExpiration)
     };
 
   private readonly INatsObjStore _cacheBucket;
+  private readonly CacheEntryExpiryCalculator _expiryCalculator;
+  private readonly ILogger<ObjectStoreBasedDatastore> _logger;
 }

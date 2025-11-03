@@ -107,7 +107,7 @@ public class CachingImageProviderBenchmarks {
 
   private void SetupWebAppTestee() {
     Environment.SetEnvironmentVariable(
-      "BENCHMARKS_ObjectStoreBasedCache__NatsServerConnectionString",
+      "BENCHMARKS_CacheNatsServer__NatsServerConnectionString",
       _deployment!.NatsServer.Connection.Opts.Url);
 
     _webAppFactory = new WebApplicationFactory<AssemblyTag>();
