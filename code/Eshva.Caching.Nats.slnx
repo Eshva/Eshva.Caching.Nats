@@ -14,10 +14,9 @@
   </Folder>
   <Folder Name="/shared/">
     <File Path="../.gitignore"/>
-    <File Path="../README.md"/>
-    <File Path="..\.github\workflows\ci.yaml"/>
-    <File Path="..\.github\workflows\release.yaml"/>
-    <File Path="..\readme.md"/>
+    <File Path="../.github/workflows/ci.yaml"/>
+    <File Path="../.github/workflows/release.yaml"/>
+    <File Path="../readme.md"/>
   </Folder>
   <Folder Name="/shared/dotnet-settings/">
     <File Path="Directory.Build.props"/>
