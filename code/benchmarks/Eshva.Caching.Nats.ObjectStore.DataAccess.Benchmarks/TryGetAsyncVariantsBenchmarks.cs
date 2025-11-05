@@ -42,7 +42,7 @@ public class TryGetAsyncVariantsBenchmarks {
     Random.Shared.NextBytes(image);
     _imageHash = SHA256.HashData(image);
     _bucketBackend.PutEntry(EntryName, image);
-    _bucketBackend.PutMetadata(EntryName, new ObjectMetadata { Name = EntryName, Size = EntrySize });
+    _bucketBackend.PutMetadata(EntryName, new ObjectMetadata { Name = EntryName, Size = (ulong)EntrySize });
     _memory = new Memory<byte>(new byte[EntrySize]);
   }
 

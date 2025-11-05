@@ -13,23 +13,26 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
   /// Initializes a new instance of expired entries purger for NATS object-store based cache.
   /// </summary>
   /// <param name="cacheBucket">NATS object-store cache bucket.</param>
-  /// <param name="settings">Time-based cache invalidation settings.</param>
+  /// <param name="expiredEntriesPurgingInterval">Expired entries purging interval.</param>
+  /// <param name="expiryCalculator">Cache entry expiry calculator.</param>
   /// <param name="timeProvider">Time provider.</param>
   /// <param name="logger">Logger.</param>
-  /// <exception cref="ArgumentOutOfRangeException">
-  /// <paramref name="settings"/>.ExpiredEntriesPurgingInterval value is less than 1 minute.
+  /// <exception cref="ArgumentNullException">
+  /// Value of a required parameter not specified.
   /// </exception>
   public ObjectStoreBasedCacheInvalidation(
     INatsObjStore cacheBucket,
-    TimeBasedCacheInvalidationSettings settings, // TODO: Replace with calculator.
+    TimeSpan expiredEntriesPurgingInterval,
+    CacheEntryExpiryCalculator expiryCalculator,
     TimeProvider timeProvider,
-    ILogger<ObjectStoreBasedCacheInvalidation>? logger = null) : base(
-    settings,
-    TimeSpan.FromMinutes(value: 1D),
-    timeProvider,
-    logger) {
+    ILogger<ObjectStoreBasedCacheInvalidation>? logger = null)
+    : base(
+      expiredEntriesPurgingInterval,
+      expiryCalculator,
+      timeProvider,
+      logger) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
-    _timeProvider = timeProvider;
+    _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
   }
 
   /// <inheritdoc/>
@@ -38,8 +41,7 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
 
     uint totalCount = 0;
     uint purgedCount = 0;
-    var entries = _cacheBucket.ListAsync(cancellationToken: cancellation).ConfigureAwait(continueOnCapturedContext: false);
-    await foreach (var entry in entries) {
+    await foreach (var entry in _cacheBucket.ListAsync(cancellationToken: cancellation).ConfigureAwait(continueOnCapturedContext: false)) {
       totalCount++;
       Logger.LogDebug("Entry '{Key}' expires at {ExpiresAt}", entry.Name, EntryMetadata(entry).ExpiresAtUtc);
       if (!ExpiryCalculator.IsCacheEntryExpired(EntryMetadata(entry).ExpiresAtUtc)) continue;

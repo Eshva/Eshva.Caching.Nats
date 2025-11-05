@@ -13,18 +13,20 @@ namespace Eshva.Caching.Nats;
 /// </summary>
 public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
   /// <summary>
-  ///
+  /// Initializes a new instance of object store based datastore.
   /// </summary>
-  /// <param name="cacheBucket"></param>
-  /// <param name="expiryCalculator"></param>
-  /// <param name="logger"></param>
-  /// <exception cref="ArgumentNullException"></exception>
+  /// <param name="cacheBucket">Cache bucket.</param>
+  /// <param name="expiryCalculator">Cache entry expiry calculator.</param>
+  /// <param name="logger">Logger.</param>
+  /// <exception cref="ArgumentNullException">
+  /// Value of a required parameter not specified.
+  /// </exception>
   public ObjectStoreBasedDatastore(
     INatsObjStore cacheBucket,
     CacheEntryExpiryCalculator expiryCalculator,
     ILogger<ObjectStoreBasedDatastore>? logger = null) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
-    _expiryCalculator = expiryCalculator;
+    _expiryCalculator = expiryCalculator ?? throw new ArgumentNullException(nameof(expiryCalculator));
     _logger = logger ?? new NullLogger<ObjectStoreBasedDatastore>();
   }
 
@@ -92,7 +94,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
       return (true, cacheEntryExpiry);
     }
     catch (NatsObjNotFoundException) {
-      return (false, new CacheEntryExpiry(DateTimeOffset.MinValue, AbsoluteExpirationUtc: null, SlidingExpiration: null));
+      return (false, new CacheEntryExpiry(DateTimeOffset.MinValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
     }
     catch (NatsObjException exception) {
       throw new InvalidOperationException($"Failed to read cache key '{key}' value.", exception);
@@ -131,11 +133,11 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
 
   private Dictionary<string, string> FillCacheEntryMetadata(CacheEntryExpiry cacheEntryExpiry) =>
     new CacheEntryMetadata {
-      SlidingExpiration = cacheEntryExpiry.SlidingExpiration,
-      AbsoluteExpirationUtc = cacheEntryExpiry.AbsoluteExpirationUtc,
+      SlidingExpiration = cacheEntryExpiry.SlidingExpiryInterval,
+      AbsoluteExpirationUtc = cacheEntryExpiry.AbsoluteExpiryAtUtc,
       ExpiresAtUtc = _expiryCalculator.CalculateExpiration(
-        cacheEntryExpiry.AbsoluteExpirationUtc,
-        cacheEntryExpiry.SlidingExpiration)
+        cacheEntryExpiry.AbsoluteExpiryAtUtc,
+        cacheEntryExpiry.SlidingExpiryInterval)
     };
 
   private readonly INatsObjStore _cacheBucket;

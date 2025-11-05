@@ -103,11 +103,8 @@ public static class NatsCacheBootstrapping {
         var settings = diContainer.GetRequiredKeyedService<ObjectStoreBasedCacheSettings>(key);
         return new ObjectStoreBasedCacheInvalidation(
           diContainer.GetRequiredKeyedService<INatsObjStore>(key),
-          // TODO: Replace with calculator.
-          new TimeBasedCacheInvalidationSettings {
-            ExpiredEntriesPurgingInterval = settings.ExpiredEntriesPurgingInterval,
-            DefaultSlidingExpirationInterval = settings.DefaultSlidingExpirationInterval
-          },
+          settings.ExpiredEntriesPurgingInterval,
+          diContainer.GetRequiredKeyedService<CacheEntryExpiryCalculator>(key),
           diContainer.GetRequiredService<TimeProvider>(),
           diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheInvalidation>>());
       });

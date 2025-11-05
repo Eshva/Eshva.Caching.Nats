@@ -39,14 +39,12 @@ public class CachesContext {
   public byte[]? GottenCacheEntryValue { get; set; } = [];
 
   public void CreateAndAssignCacheServices() {
-    // TODO: Use same calculator in TimeBasedCacheInvalidation constructor: change in Abstractions.
     var expiryCalculator = new CacheEntryExpiryCalculator(DefaultSlidingExpirationInterval, TimeProvider);
 
     var cacheInvalidation = new ObjectStoreBasedCacheInvalidation(
       Bucket,
-      new TimeBasedCacheInvalidationSettings {
-        ExpiredEntriesPurgingInterval = ExpiredEntriesPurgingInterval, DefaultSlidingExpirationInterval = DefaultSlidingExpirationInterval
-      },
+      ExpiredEntriesPurgingInterval,
+      expiryCalculator,
       TimeProvider,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
 
@@ -54,6 +52,7 @@ public class CachesContext {
       Bucket,
       expiryCalculator,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedDatastore>(_xUnitLogger));
+
     NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache(
       cacheDatastore,
       cacheInvalidation,
