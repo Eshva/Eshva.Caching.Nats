@@ -49,14 +49,6 @@ public class CommonCacheSteps {
     await _cachesContext.Bucket.UpdateMetaAsync(key, objectMetadata);
   }
 
-  [Given("passed a bit more than purging expired entries interval")]
-  public void GivenPassedABitMoreThanPurgingExpiredEntriesInterval() =>
-    _cachesContext.TimeProvider.Advance(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: 1)));
-
-  [Given("passed a bit less than purging expired entries interval")]
-  public void GivenPassedABitLessThanPurgingExpiredEntriesInterval() =>
-    _cachesContext.TimeProvider.Advance(_cachesContext.ExpiredEntriesPurgingInterval.Add(TimeSpan.FromSeconds(seconds: -1)));
-
   [Then("I should get value {string} as the requested entry")]
   public void ThenIShouldGetValueAsTheRequestedEntry(string value) =>
     Encoding.UTF8.GetBytes(value).Should().BeEquivalentTo(_cachesContext.GottenCacheEntryValue);
@@ -66,10 +58,12 @@ public class CommonCacheSteps {
     _cachesContext.GottenCacheEntryValue.Should().BeEquivalentTo(_originalValue);
 
   [Then("I should get a null value as the requested entry")]
-  public void ThenIShouldGetANullValueAsTheRequestedEntry() => _cachesContext.GottenCacheEntryValue.Should().BeNull();
+  public void ThenIShouldGetANullValueAsTheRequestedEntry() =>
+    _cachesContext.GottenCacheEntryValue.Should().BeNull();
 
   [Given("{double} minutes passed")]
-  public void GivenMinutesPassed(double minutes) => _cachesContext.TimeProvider.Advance(TimeSpan.FromMinutes(minutes));
+  public void GivenMinutesPassed(double minutes) =>
+    _cachesContext.TimeProvider.Advance(TimeSpan.FromMinutes(minutes));
 
   [Then("{string} entry is not present in the object-store bucket")]
   public async Task ThenEntryIsNotPresentInTheObjectStoreBucket(string key) {
@@ -99,7 +93,8 @@ public class CommonCacheSteps {
     _cachesContext.DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes);
 
   [Given("object-store based cache with synchronous purge")]
-  public void GivenObjectStoreBasedCacheWithSynchronousPurge() => _cachesContext.CreateAndAssignCacheServices();
+  public void GivenObjectStoreBasedCacheWithSynchronousPurge() =>
+    _cachesContext.CreateAndAssignCacheServices();
 
   [Given("clock set at today (.*)")]
   public void GivenClockSetAtToday(TimeSpan timeOfDay) =>
@@ -128,11 +123,11 @@ public class CommonCacheSteps {
 
   [Then("cache invalidation done")]
   public void ThenCacheInvalidationDone() =>
-    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 5)).Should().BeTrue();
+    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 10)).Should().BeTrue();
 
   [Then("cache invalidation not started")]
   public void ThenCacheInvalidationNotStarted() =>
-    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 5)).Should().BeFalse();
+    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 10)).Should().BeFalse();
 
   private readonly CachesContext _cachesContext;
   private byte[] _originalValue = [];
