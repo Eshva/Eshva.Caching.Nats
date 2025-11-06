@@ -93,8 +93,7 @@ public static class NatsCacheBootstrapping {
       serviceKey,
       (diContainer, key) => new ObjectStoreBasedDatastore(
         diContainer.GetRequiredKeyedService<INatsObjStore>(key),
-        diContainer.GetRequiredKeyedService<CacheEntryExpiryCalculator>(key),
-        diContainer.GetRequiredService<ILogger<ObjectStoreBasedDatastore>>()));
+        diContainer.GetRequiredKeyedService<CacheEntryExpiryCalculator>(key)));
 
   private static void AddCacheInvalidation(IServiceCollection services, string serviceKey) =>
     services.AddKeyedSingleton<ObjectStoreBasedCacheInvalidation>(

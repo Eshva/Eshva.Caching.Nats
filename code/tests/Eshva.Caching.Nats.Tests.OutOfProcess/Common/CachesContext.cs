@@ -48,10 +48,7 @@ public class CachesContext {
       TimeProvider,
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
 
-    var cacheDatastore = new ObjectStoreBasedDatastore(
-      Bucket,
-      expiryCalculator,
-      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedDatastore>(_xUnitLogger));
+    var cacheDatastore = new ObjectStoreBasedDatastore(Bucket, expiryCalculator);
 
     NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache(
       cacheDatastore,

@@ -1,8 +1,6 @@
 ﻿using System.Buffers;
 using CommunityToolkit.HighPerformance;
 using Eshva.Caching.Abstractions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using NATS.Client.ObjectStore;
 using NATS.Client.ObjectStore.Models;
 
@@ -17,17 +15,14 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
   /// </summary>
   /// <param name="cacheBucket">Cache bucket.</param>
   /// <param name="expiryCalculator">Cache entry expiry calculator.</param>
-  /// <param name="logger">Logger.</param>
   /// <exception cref="ArgumentNullException">
   /// Value of a required parameter not specified.
   /// </exception>
   public ObjectStoreBasedDatastore(
     INatsObjStore cacheBucket,
-    CacheEntryExpiryCalculator expiryCalculator,
-    ILogger<ObjectStoreBasedDatastore>? logger = null) {
+    CacheEntryExpiryCalculator expiryCalculator) {
     _cacheBucket = cacheBucket ?? throw new ArgumentNullException(nameof(cacheBucket));
     _expiryCalculator = expiryCalculator ?? throw new ArgumentNullException(nameof(expiryCalculator));
-    _logger = logger ?? new NullLogger<ObjectStoreBasedDatastore>();
   }
 
   /// <inheritdoc/>
@@ -85,12 +80,6 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
         .ConfigureAwait(continueOnCapturedContext: false);
       var metadata = new CacheEntryMetadata(objectMetadata.Metadata);
       var cacheEntryExpiry = new CacheEntryExpiry(metadata.ExpiresAtUtc, metadata.AbsoluteExpirationUtc, metadata.SlidingExpiration);
-
-      _logger.LogDebug(
-        "An object with the key '{Key}' has been read. Object meta-data: @{ObjectMetadata}",
-        key,
-        objectMetadata);
-
       return (true, cacheEntryExpiry);
     }
     catch (NatsObjNotFoundException) {
@@ -109,17 +98,12 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     CancellationToken cancellation) {
     try {
       var metadata = FillCacheEntryMetadata(cacheEntryExpiry);
-      var objectMetadata = await _cacheBucket.PutAsync(
+      await _cacheBucket.PutAsync(
           new ObjectMetadata { Name = key, Metadata = metadata },
           value.AsStream(),
           leaveOpen: true,
           cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
-
-      _logger.LogDebug(
-        "An entry with the key '{Key}' has been put into cache. Cache entry metadata: @{ObjectMetadata}",
-        key,
-        objectMetadata);
     }
     catch (NatsObjException exception) {
       throw new InvalidOperationException($"Failed to put cache entry with key '{key}'.", exception);
@@ -142,5 +126,4 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
 
   private readonly INatsObjStore _cacheBucket;
   private readonly CacheEntryExpiryCalculator _expiryCalculator;
-  private readonly ILogger<ObjectStoreBasedDatastore> _logger;
 }
