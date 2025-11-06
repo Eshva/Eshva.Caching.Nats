@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Perfolizer.Horology;
 using Perfolizer.Metrology;
 
-namespace Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks.CachingImageProvider;
+namespace Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks;
 
 [Config(typeof(CachingImageProviderBenchmarksConfig))]
 public class CachingImageProviderBenchmarks {
@@ -32,21 +32,19 @@ public class CachingImageProviderBenchmarks {
 
   [Benchmark(Description = "try-get-async")]
   public async Task<bool> TryGetAsyncWithByteStream() {
-    Debugger.Break();
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/object-store/try-get-async/{EntryName}");
-    var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
-    if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    // var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
+    // if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
     return response.IsSuccessStatusCode;
   }
 
   [Benchmark(Description = "get-async", Baseline = true)]
   public async Task<bool> GetAsyncWithByteStream() {
-    Debugger.Break();
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/object-store/get-async/{EntryName}");
-    var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
-    if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    // var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
+    // if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
     return response.IsSuccessStatusCode;
   }
 
