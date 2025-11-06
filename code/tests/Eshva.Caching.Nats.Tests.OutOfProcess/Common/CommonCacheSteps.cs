@@ -117,13 +117,22 @@ public class CommonCacheSteps {
   }
 
   [Given("object with key {string} removed from object-store bucket")]
-  public async Task GivenEntryWithKeyStringRemovedFromCache(string key) => await _cachesContext.Bucket.DeleteAsync(key);
+  public async Task GivenEntryWithKeyStringRemovedFromCache(string key) =>
+    await _cachesContext.Bucket.DeleteAsync(key);
 
   [Given("metadata of cache entry with key {string} corrupted")]
   public async Task GivenMetadataOfCacheEntryWithKeyStringCorrupted(string key) {
     var metadataCorrupter = new ObjectEntryMetadataCorrupter();
     await metadataCorrupter.CorruptEntryMetadata(_cachesContext.Bucket, key);
   }
+
+  [Then("cache invalidation done")]
+  public void ThenCacheInvalidationDone() =>
+    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 5)).Should().BeTrue();
+
+  [Then("cache invalidation not started")]
+  public void ThenCacheInvalidationNotStarted() =>
+    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 5)).Should().BeFalse();
 
   private readonly CachesContext _cachesContext;
   private byte[] _originalValue = [];

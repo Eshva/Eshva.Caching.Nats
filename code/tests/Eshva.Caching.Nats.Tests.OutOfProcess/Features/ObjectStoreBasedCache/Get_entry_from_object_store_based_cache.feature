@@ -34,20 +34,23 @@ purging expired entries. This is the reason why they can not be run in parallel.
     Then invalid operation exception should be reported
 
   Scenario: 06. Get cache entry operation triggers purging expired entries if its interval has passed
-    Given passed a bit more than purging expired entries interval
+    Given time passed by 2,5 minutes
     When I get 'will be gotten' cache entry asynchronously
-    Then 'will be gotten' entry is present in the object-store bucket
+    Then cache invalidation done
+    And 'will be gotten' entry is present in the object-store bucket
     And 'will be removed' entry is not present in the object-store bucket
 
   Scenario: 07. Get cache entry operation does not trigger purging expired entries if its interval has not passed
-    Given passed a bit less than purging expired entries interval
+    Given time passed by 1,5 minutes
     When I get 'will be gotten' cache entry asynchronously
-    Then 'will be gotten' entry is present in the object-store bucket
+    Then cache invalidation not started
+    And 'will be gotten' entry is present in the object-store bucket
     And 'will be removed' entry is present in the object-store bucket
 
   Scenario: 08. Expiration should be postponed for gotten entry
-    Given passed a bit more than purging expired entries interval
+    Given time passed by 2,5 minutes
     When I get 'will be gotten' cache entry asynchronously
-    Then 'will be gotten' entry is present in the object-store bucket
-    And 'will be gotten' entry should be expired today at 00:05:01
+    Then cache invalidation done
+    And 'will be gotten' entry is present in the object-store bucket
+    And 'will be gotten' entry should be expired today at 00:05:30
     And 'will be removed' entry is not present in the object-store bucket

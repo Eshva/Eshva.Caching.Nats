@@ -38,6 +38,8 @@ public class CachesContext {
 
   public byte[]? GottenCacheEntryValue { get; set; } = [];
 
+  public ManualResetEventSlim PurgingSignal { get; set; } = new(initialState: false);
+
   public void CreateAndAssignCacheServices() {
     var expiryCalculator = new CacheEntryExpiryCalculator(DefaultSlidingExpirationInterval, TimeProvider);
 
@@ -49,6 +51,7 @@ public class CachesContext {
       Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
 
     var cacheDatastore = new ObjectStoreBasedDatastore(Bucket, expiryCalculator);
+    cacheInvalidation.CacheInvalidationCompleted += (_, _) => PurgingSignal.Set();
 
     NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache(
       cacheDatastore,
