@@ -1,5 +1,10 @@
 ﻿using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Columns;
+using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Diagnosers;
+using BenchmarkDotNet.Environments;
+using BenchmarkDotNet.Jobs;
 using Eshva.Caching.Abstractions;
 using Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 using Eshva.Caching.Nats.TestWebApp;
@@ -9,10 +14,12 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.IO;
 using NATS.Client.Core;
 using NATS.Net;
+using Perfolizer.Horology;
+using Perfolizer.Metrology;
 
 namespace Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks;
 
-[Config(typeof(CachingImageProviderBenchmarksConfig))]
+[Config(typeof(ObjectStoreBasedCacheGetBenchmarksConfig))]
 public class ObjectStoreBasedCacheGetBenchmarks {
   [Params(
     EntrySizes.Bytes016,
@@ -29,7 +36,7 @@ public class ObjectStoreBasedCacheGetBenchmarks {
   public async Task<bool> TryGetAsyncWithByteStream() {
     var destination = StreamManager.GetStream();
     var result = await _testee.TryGetAsync(EntryName, destination);
-    // destination.Position = 0;
+    destination.Position = 0;
     // var contentHash = await SHA256.HashDataAsync(destination);
     // if (!contentHash.SequenceEqual(_imageHash)) throw new Exception($"Bytes: {destination.Length}");
     return result && destination.Length == EntrySize;
@@ -120,4 +127,25 @@ public class ObjectStoreBasedCacheGetBenchmarks {
   private const string BucketName = "images";
   private const string EntryName = "benchmark-entry";
   private static readonly RecyclableMemoryStreamManager StreamManager = new();
+}
+
+public sealed class ObjectStoreBasedCacheGetBenchmarksConfig : ManualConfig {
+  public ObjectStoreBasedCacheGetBenchmarksConfig() {
+    AddDiagnoser(MemoryDiagnoser.Default);
+    AddJob(
+      new Job()
+        .WithId(".NET 9")
+        .WithRuntime(CoreRuntime.Core90)
+        .WithAnalyzeLaunchVariance(value: true)
+        .WithGcConcurrent(value: true)
+        .WithGcServer(value: true));
+    AddColumn(StatisticColumn.P50, StatisticColumn.P95);
+    HideColumns(
+      "Error",
+      "StdDev",
+      "Median");
+    SummaryStyle = BenchmarkDotNet.Reports.SummaryStyle.Default
+      .WithTimeUnit(TimeUnit.Microsecond)
+      .WithSizeUnit(SizeUnit.KB);
+  }
 }
