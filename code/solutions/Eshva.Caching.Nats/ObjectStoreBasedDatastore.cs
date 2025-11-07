@@ -11,7 +11,7 @@ namespace Eshva.Caching.Nats;
 /// </summary>
 public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
   /// <summary>
-  /// Initializes a new instance of object store based datastore.
+  /// Initializes a new instance of NATS object store based datastore.
   /// </summary>
   /// <param name="cacheBucket">Cache bucket.</param>
   /// <param name="expiryCalculator">Cache entry expiry calculator.</param>

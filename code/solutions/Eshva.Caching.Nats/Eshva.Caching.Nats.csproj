@@ -35,6 +35,8 @@
     <PackageReference Include="Eshva.Common.Testing"/>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions"/>
+    <PackageReference Include="NATS.Client.KeyValueStore" />
     <PackageReference Include="NATS.Client.ObjectStore"/>
+    <PackageReference Include="System.Linq.Async" />
   </ItemGroup>
 </Project>

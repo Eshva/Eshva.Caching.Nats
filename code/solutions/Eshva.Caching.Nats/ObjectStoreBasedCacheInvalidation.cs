@@ -5,7 +5,7 @@ using NATS.Client.ObjectStore;
 namespace Eshva.Caching.Nats;
 
 /// <summary>
-/// Expired entries purger for NATS object-store based cache.
+/// Expired entries purger for NATS object store based cache.
 /// </summary>
 public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidation {
   /// <summary>
