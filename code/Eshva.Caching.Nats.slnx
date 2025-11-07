@@ -26,4 +26,5 @@
   <Project Path="solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.OutOfProcess/Eshva.Caching.Nats.Tests.OutOfProcess.csproj"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.Tools/Eshva.Caching.Nats.Tests.Tools.csproj"/>
+  <Project Path="tests\Eshva.Caching.Nats.Tests.InProcess\Eshva.Caching.Nats.Tests.InProcess.csproj" Type="Classic C#"/>
 </Solution>

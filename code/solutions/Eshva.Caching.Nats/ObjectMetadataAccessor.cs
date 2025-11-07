@@ -4,11 +4,11 @@ using NATS.Client.ObjectStore.Models;
 namespace Eshva.Caching.Nats;
 
 /// <summary>
-/// A NATS cache entry meta-data accessor.
+/// A NATS cache entry metadata accessor.
 /// </summary>
 internal sealed class ObjectMetadataAccessor {
   /// <summary>
-  /// Initialize a new NATS cache entry meta-data accessor instance with entry meta-data dictionary.
+  /// Initialize a new NATS cache entry metadata accessor instance with entry metadata dictionary.
   /// </summary>
   /// <param name="objectMetadata">Cache entry object metadata.</param>
   /// <exception cref="ArgumentNullException">
@@ -25,76 +25,75 @@ internal sealed class ObjectMetadataAccessor {
   public ObjectMetadata ObjectMetadata { get; }
 
   /// <summary>
-  /// Gets the entry expiration moment in time.
+  /// Gets or sets the cache entry expiry moment UTC.
   /// </summary>
-  /// <remarks>
-  /// UTC-based time in ticks.
-  /// </remarks>
   /// <value>
   /// <list type="bullet">
-  /// <item>If the value set in expires on meta-data entry then returns this value.</item>
-  /// <item>If expires on meta-data value isn't set returns that never expires.</item>
-  /// <item>If the value is set but can not be parsed return that never expires.</item>
+  /// <item>If object metadata dictionary value set it returns this value.</item>
+  /// <item>If object metadata dictionary value isn't set it returns never expires.</item>
+  /// <item>If object metadata dictionary value is set but can not be parsed it returns never expires.</item>
   /// </list>
   /// </value>
   public DateTimeOffset ExpiresAtUtc {
-    get =>
-      _entryMetadata.TryGetValue(nameof(ExpiresAtUtc), out var expiresAtUtc)
-        ? long.TryParse(expiresAtUtc, out var result)
-          ? new DateTimeOffset(result, TimeSpan.Zero)
-          : NeverExpires
-        : NeverExpires;
+    get => _entryMetadata.TryGetValue(nameof(ExpiresAtUtc), out var expiresAtUtc)
+      ? long.TryParse(expiresAtUtc, out var result)
+        ? new DateTimeOffset(result, TimeSpan.Zero)
+        : NeverExpires
+      : NeverExpires;
     set => _entryMetadata[nameof(ExpiresAtUtc)] = value.Ticks.ToString(CultureInfo.InvariantCulture);
   }
 
-  public DateTimeOffset? AbsoluteExpirationUtc {
-    get {
-      if (!_entryMetadata.TryGetValue(nameof(AbsoluteExpirationUtc), out var absoluteExpiration)) return null;
-      if (DateTimeOffset.TryParseExact(
-            absoluteExpiration,
-            "O",
-            CultureInfo.InvariantCulture,
-            DateTimeStyles.AdjustToUniversal,
-            out var result)) {
-        return result;
-      }
-
-      return null;
-    }
+  /// <summary>
+  /// Gets or sets the cache entry absolute expiry moment UTC.
+  /// </summary>
+  /// <value>
+  /// <list type="bullet">
+  /// <item>If object metadata dictionary value set it returns this value.</item>
+  /// <item>If object metadata dictionary value isn't set it returns <c>null</c>.</item>
+  /// <item>If object metadata dictionary value is set but can not be parsed it returns <c>null</c>.</item>
+  /// </list>
+  /// </value>
+  public DateTimeOffset? AbsoluteExpiryAtUtc {
+    get => _entryMetadata.TryGetValue(nameof(AbsoluteExpiryAtUtc), out var absoluteExpiryAtUtc)
+      ? long.TryParse(absoluteExpiryAtUtc, out var result)
+        ? new DateTimeOffset(result, TimeSpan.Zero)
+        : null
+      : null;
     set {
       switch (value) {
         case null:
-          _entryMetadata.Remove(nameof(AbsoluteExpirationUtc));
+          _entryMetadata.Remove(nameof(AbsoluteExpiryAtUtc));
           return;
-        default: _entryMetadata[nameof(AbsoluteExpirationUtc)] = value.Value.ToString("O", CultureInfo.InvariantCulture); break;
+        default: _entryMetadata[nameof(AbsoluteExpiryAtUtc)] = value.Value.Ticks.ToString(CultureInfo.InvariantCulture); break;
       }
     }
   }
 
-  public TimeSpan? SlidingExpiration {
-    get {
-      if (!_entryMetadata.TryGetValue(nameof(SlidingExpiration), out var slidingExpiration)) return null;
-      if (TimeSpan.TryParseExact(
-            slidingExpiration,
-            "G",
-            CultureInfo.InvariantCulture,
-            out var result)) {
-        return result;
-      }
-
-      return null;
-    }
+  /// <summary>
+  /// Gets or sets the cache entry sliding expiry interval.
+  /// </summary>
+  /// <value>
+  /// <list type="bullet">
+  /// <item>If object metadata dictionary value set it returns this value.</item>
+  /// <item>If object metadata dictionary value isn't set it returns <c>null</c>.</item>
+  /// <item>If object metadata dictionary value is set but can not be parsed it returns <c>null</c>.</item>
+  /// </list>
+  /// </value>
+  public TimeSpan? SlidingExpiryInterval {
+    get => _entryMetadata.TryGetValue(nameof(SlidingExpiryInterval), out var slidingExpiration)
+      ? long.TryParse(slidingExpiration, out var result)
+        ? new TimeSpan(result)
+        : null
+      : null;
     set {
       switch (value) {
         case null:
-          _entryMetadata.Remove(nameof(SlidingExpiration));
+          _entryMetadata.Remove(nameof(SlidingExpiryInterval));
           return;
-        default: _entryMetadata[nameof(SlidingExpiration)] = value.Value.ToString("G", CultureInfo.InvariantCulture); break;
+        default: _entryMetadata[nameof(SlidingExpiryInterval)] = value.Value.Ticks.ToString(CultureInfo.InvariantCulture); break;
       }
     }
   }
-
-  public static implicit operator Dictionary<string, string>(ObjectMetadataAccessor metadataAccessor) => metadataAccessor._entryMetadata;
 
   private readonly Dictionary<string, string> _entryMetadata;
   private static readonly DateTimeOffset NeverExpires = DateTimeOffset.MaxValue;

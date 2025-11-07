@@ -26,9 +26,9 @@
     <None Include="../../../documentation/cache-nats-128.png" Pack="true" PackagePath="/"/>
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Eshva.Caching.Nats.Tests.InProcess"/>
     <InternalsVisibleTo Include="Eshva.Caching.Nats.Tests.OutOfProcess"/>
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance"/>
     <PackageReference Include="Eshva.Caching.Abstractions"/>
@@ -37,5 +37,4 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
   </ItemGroup>
-
 </Project>

@@ -20,7 +20,7 @@ public class CommonCacheSteps {
     string value,
     double expiresInMinutes) {
     var metadataAccessor = new ObjectMetadataAccessor(new ObjectMetadata { Name = key }) {
-      SlidingExpiration = TimeSpan.FromMinutes(expiresInMinutes),
+      SlidingExpiryInterval = TimeSpan.FromMinutes(expiresInMinutes),
       ExpiresAtUtc = _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes)
     };
 
@@ -40,7 +40,7 @@ public class CommonCacheSteps {
     var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
     var metadataAccessor = new ObjectMetadataAccessor(objectMetadata) {
       ExpiresAtUtc = _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes),
-      SlidingExpiration = TimeSpan.FromMinutes(expiresInMinutes)
+      SlidingExpiryInterval = TimeSpan.FromMinutes(expiresInMinutes)
     };
 
     _cachesContext.XUnitLogger.WriteLine($"Put entry '{key}' that expires at {metadataAccessor.ExpiresAtUtc}");

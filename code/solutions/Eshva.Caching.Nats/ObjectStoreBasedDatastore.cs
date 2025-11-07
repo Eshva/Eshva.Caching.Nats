@@ -33,8 +33,8 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
       var cacheEntryMetadata = new ObjectMetadataAccessor(objectMetadata);
       return new CacheEntryExpiry(
         cacheEntryMetadata.ExpiresAtUtc,
-        cacheEntryMetadata.AbsoluteExpirationUtc,
-        cacheEntryMetadata.SlidingExpiration);
+        cacheEntryMetadata.AbsoluteExpiryAtUtc,
+        cacheEntryMetadata.SlidingExpiryInterval);
     }
     catch (NatsObjException exception) {
       throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.", exception);
@@ -47,7 +47,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       var metadata = new ObjectMetadataAccessor(objectMetadata);
-      metadata.ExpiresAtUtc = _expiryCalculator.CalculateExpiration(metadata.AbsoluteExpirationUtc, metadata.SlidingExpiration);
+      metadata.ExpiresAtUtc = _expiryCalculator.CalculateExpiration(metadata.AbsoluteExpiryAtUtc, metadata.SlidingExpiryInterval);
 
       await _cacheBucket.UpdateMetaAsync(key, objectMetadata, cancellation).ConfigureAwait(continueOnCapturedContext: false);
     }
@@ -79,7 +79,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
           cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       var metadata = new ObjectMetadataAccessor(objectMetadata);
-      var cacheEntryExpiry = new CacheEntryExpiry(metadata.ExpiresAtUtc, metadata.AbsoluteExpirationUtc, metadata.SlidingExpiration);
+      var cacheEntryExpiry = new CacheEntryExpiry(metadata.ExpiresAtUtc, metadata.AbsoluteExpiryAtUtc, metadata.SlidingExpiryInterval);
       return (true, cacheEntryExpiry);
     }
     catch (NatsObjNotFoundException) {
@@ -117,8 +117,8 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
 
   private ObjectMetadata MakeCacheEntryObjectMetadata(string key, CacheEntryExpiry cacheEntryExpiry) {
     var metadataAccessor = new ObjectMetadataAccessor(new ObjectMetadata { Name = key }) {
-      SlidingExpiration = cacheEntryExpiry.SlidingExpiryInterval,
-      AbsoluteExpirationUtc = cacheEntryExpiry.AbsoluteExpiryAtUtc,
+      SlidingExpiryInterval = cacheEntryExpiry.SlidingExpiryInterval,
+      AbsoluteExpiryAtUtc = cacheEntryExpiry.AbsoluteExpiryAtUtc,
       ExpiresAtUtc = _expiryCalculator.CalculateExpiration(cacheEntryExpiry.AbsoluteExpiryAtUtc, cacheEntryExpiry.SlidingExpiryInterval)
     };
     return metadataAccessor.ObjectMetadata;
