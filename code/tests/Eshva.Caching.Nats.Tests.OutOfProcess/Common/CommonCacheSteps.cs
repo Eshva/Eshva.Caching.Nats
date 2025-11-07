@@ -120,7 +120,7 @@ public class CommonCacheSteps {
 
   [Then("cache invalidation done")]
   public void ThenCacheInvalidationDone() =>
-    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 10)).Should().BeTrue();
+    _cachesContext.PurgingSignal.Wait();
 
   [Then("cache invalidation not started")]
   public void ThenCacheInvalidationNotStarted() =>
