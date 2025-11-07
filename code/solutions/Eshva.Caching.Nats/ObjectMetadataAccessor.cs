@@ -1,21 +1,28 @@
 ﻿using System.Globalization;
+using NATS.Client.ObjectStore.Models;
 
 namespace Eshva.Caching.Nats;
 
 /// <summary>
 /// A NATS cache entry meta-data accessor.
 /// </summary>
-internal sealed class CacheEntryMetadata {
+internal sealed class ObjectMetadataAccessor {
   /// <summary>
   /// Initialize a new NATS cache entry meta-data accessor instance with entry meta-data dictionary.
   /// </summary>
-  /// <param name="entryMetadata">Entry meta-data dictionary.</param>
+  /// <param name="objectMetadata">Cache entry object metadata.</param>
   /// <exception cref="ArgumentNullException">
-  /// Entry meta-data dictionary is not specified.
+  /// Cache entry object metadata is not specified.
   /// </exception>
-  public CacheEntryMetadata(Dictionary<string, string>? entryMetadata = null) {
-    _entryMetadata = entryMetadata ?? new Dictionary<string, string>();
+  public ObjectMetadataAccessor(ObjectMetadata objectMetadata) {
+    ObjectMetadata = objectMetadata ?? throw new ArgumentNullException(nameof(objectMetadata));
+    _entryMetadata = objectMetadata.Metadata = objectMetadata.Metadata ??= new Dictionary<string, string>();
   }
+
+  /// <summary>
+  /// Cache entry object metadata.
+  /// </summary>
+  public ObjectMetadata ObjectMetadata { get; }
 
   /// <summary>
   /// Gets the entry expiration moment in time.
@@ -87,7 +94,7 @@ internal sealed class CacheEntryMetadata {
     }
   }
 
-  public static implicit operator Dictionary<string, string>(CacheEntryMetadata metadata) => metadata._entryMetadata;
+  public static implicit operator Dictionary<string, string>(ObjectMetadataAccessor metadataAccessor) => metadataAccessor._entryMetadata;
 
   private readonly Dictionary<string, string> _entryMetadata;
   private static readonly DateTimeOffset NeverExpires = DateTimeOffset.MaxValue;

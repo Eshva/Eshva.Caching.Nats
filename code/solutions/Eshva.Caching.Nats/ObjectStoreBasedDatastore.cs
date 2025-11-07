@@ -30,7 +30,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     try {
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
-      var cacheEntryMetadata = new CacheEntryMetadata(objectMetadata.Metadata);
+      var cacheEntryMetadata = new ObjectMetadataAccessor(objectMetadata);
       return new CacheEntryExpiry(
         cacheEntryMetadata.ExpiresAtUtc,
         cacheEntryMetadata.AbsoluteExpirationUtc,
@@ -46,7 +46,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     try {
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
-      var metadata = new CacheEntryMetadata(objectMetadata.Metadata);
+      var metadata = new ObjectMetadataAccessor(objectMetadata);
       metadata.ExpiresAtUtc = _expiryCalculator.CalculateExpiration(metadata.AbsoluteExpirationUtc, metadata.SlidingExpiration);
 
       await _cacheBucket.UpdateMetaAsync(key, objectMetadata, cancellation).ConfigureAwait(continueOnCapturedContext: false);
@@ -78,7 +78,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
           leaveOpen: true,
           cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
-      var metadata = new CacheEntryMetadata(objectMetadata.Metadata);
+      var metadata = new ObjectMetadataAccessor(objectMetadata);
       var cacheEntryExpiry = new CacheEntryExpiry(metadata.ExpiresAtUtc, metadata.AbsoluteExpirationUtc, metadata.SlidingExpiration);
       return (true, cacheEntryExpiry);
     }
@@ -97,9 +97,9 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     CacheEntryExpiry cacheEntryExpiry,
     CancellationToken cancellation) {
     try {
-      var metadata = FillCacheEntryMetadata(cacheEntryExpiry);
+      var objectMetadata = MakeCacheEntryObjectMetadata(key, cacheEntryExpiry);
       await _cacheBucket.PutAsync(
-          new ObjectMetadata { Name = key, Metadata = metadata },
+          objectMetadata,
           value.AsStream(),
           leaveOpen: true,
           cancellation)
@@ -115,14 +115,14 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     if (string.IsNullOrWhiteSpace(key)) throw new ArgumentException("Cache entry key can't be null or whitespace.", nameof(key));
   }
 
-  private Dictionary<string, string> FillCacheEntryMetadata(CacheEntryExpiry cacheEntryExpiry) =>
-    new CacheEntryMetadata {
+  private ObjectMetadata MakeCacheEntryObjectMetadata(string key, CacheEntryExpiry cacheEntryExpiry) {
+    var metadataAccessor = new ObjectMetadataAccessor(new ObjectMetadata { Name = key }) {
       SlidingExpiration = cacheEntryExpiry.SlidingExpiryInterval,
       AbsoluteExpirationUtc = cacheEntryExpiry.AbsoluteExpiryAtUtc,
-      ExpiresAtUtc = _expiryCalculator.CalculateExpiration(
-        cacheEntryExpiry.AbsoluteExpiryAtUtc,
-        cacheEntryExpiry.SlidingExpiryInterval)
+      ExpiresAtUtc = _expiryCalculator.CalculateExpiration(cacheEntryExpiry.AbsoluteExpiryAtUtc, cacheEntryExpiry.SlidingExpiryInterval)
     };
+    return metadataAccessor.ObjectMetadata;
+  }
 
   private readonly INatsObjStore _cacheBucket;
   private readonly CacheEntryExpiryCalculator _expiryCalculator;

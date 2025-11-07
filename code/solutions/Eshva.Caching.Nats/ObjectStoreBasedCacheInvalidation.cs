@@ -1,7 +1,6 @@
 ﻿using Eshva.Caching.Abstractions;
 using Microsoft.Extensions.Logging;
 using NATS.Client.ObjectStore;
-using NATS.Client.ObjectStore.Models;
 
 namespace Eshva.Caching.Nats;
 
@@ -43,8 +42,8 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
     uint purgedCount = 0;
     await foreach (var entry in _cacheBucket.ListAsync(cancellationToken: cancellation).ConfigureAwait(continueOnCapturedContext: false)) {
       totalCount++;
-      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAt}", entry.Name, EntryMetadata(entry).ExpiresAtUtc);
-      if (!ExpiryCalculator.IsCacheEntryExpired(EntryMetadata(entry).ExpiresAtUtc)) continue;
+      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAt}", entry.Name, new ObjectMetadataAccessor(entry).ExpiresAtUtc);
+      if (!ExpiryCalculator.IsCacheEntryExpired(new ObjectMetadataAccessor(entry).ExpiresAtUtc)) continue;
 
       purgedCount++;
       await _cacheBucket.DeleteAsync(entry.Name, cancellation).ConfigureAwait(continueOnCapturedContext: false);
@@ -58,10 +57,6 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
 
     return new CacheInvalidationStatistics(totalCount, purgedCount);
   }
-
-  private static CacheEntryMetadata EntryMetadata(ObjectMetadata objectMetadata) => objectMetadata.Metadata is not null
-    ? new CacheEntryMetadata(objectMetadata.Metadata)
-    : throw new InvalidOperationException($"A cache entry '{objectMetadata.Name}' has no metadata.");
 
   private readonly INatsObjStore _cacheBucket;
   private readonly TimeProvider _timeProvider;
