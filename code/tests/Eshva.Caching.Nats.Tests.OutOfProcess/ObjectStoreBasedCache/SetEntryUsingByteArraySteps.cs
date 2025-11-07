@@ -3,7 +3,7 @@ using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using Microsoft.Extensions.Caching.Distributed;
 using Reqnroll;
 
-namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.ObjectStoreBasedCache;
+namespace Eshva.Caching.Nats.Tests.OutOfProcess.ObjectStoreBasedCache;
 
 [Binding]
 public class SetEntryUsingByteArraySteps {

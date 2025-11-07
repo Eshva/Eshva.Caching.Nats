@@ -4,7 +4,7 @@ using FluentAssertions;
 using NATS.Client.ObjectStore.Models;
 using Reqnroll;
 
-namespace Eshva.Caching.Nats.Tests.InProcess.Features.MetadataAccessor;
+namespace Eshva.Caching.Nats.Tests.InProcess.MetadataAccessor;
 
 [Binding]
 public class ObjectMetadataAccessorSteps {

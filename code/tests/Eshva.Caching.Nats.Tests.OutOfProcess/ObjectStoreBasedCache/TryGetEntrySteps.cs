@@ -3,7 +3,7 @@ using FluentAssertions;
 using NATS.Client.Core;
 using Reqnroll;
 
-namespace Eshva.Caching.Nats.Tests.OutOfProcess.Features.ObjectStoreBasedCache;
+namespace Eshva.Caching.Nats.Tests.OutOfProcess.ObjectStoreBasedCache;
 
 [Binding]
 public class TryGetEntrySteps {
