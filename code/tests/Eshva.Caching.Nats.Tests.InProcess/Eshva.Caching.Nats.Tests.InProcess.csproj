@@ -12,6 +12,7 @@
     </PackageReference>
     <PackageReference Include="FluentAssertions"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
+    <PackageReference Include="XunitXml.TestLogger"/>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../../solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj"/>
