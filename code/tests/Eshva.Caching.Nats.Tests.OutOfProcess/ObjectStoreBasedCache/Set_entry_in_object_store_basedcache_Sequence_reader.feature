@@ -6,7 +6,7 @@ purging expired entries. This is the reason why they can not be run in parallel.
   Background:
     Given expired entries purging interval 2 minutes
     And default sliding expiration interval 1 minutes
-    And object-store based cache with synchronous purge
+    And object-store based cache
     And entry with key 'existing' and value 'existing value' which expires in 3 minutes put into cache
     And entry with key 'will be removed' and value 'will be removed value' which expires in 1 minutes put into cache
 

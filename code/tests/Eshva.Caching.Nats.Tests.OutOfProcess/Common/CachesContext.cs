@@ -1,4 +1,7 @@
 ﻿using Eshva.Caching.Abstractions;
+using Eshva.Caching.Nats.Tests.OutOfProcess.ObjectStoreBasedCache;
+using Meziantou.Extensions.Logging.Xunit;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Time.Testing;
 using NATS.Client.ObjectStore;
 using Xunit.Abstractions;
@@ -7,7 +10,6 @@ namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 
 public class CachesContext {
   public CachesContext(INatsObjStore objectStore, ITestOutputHelper xUnitLogger) {
-    _xUnitLogger = xUnitLogger;
     Bucket = objectStore;
     var now = DateTimeOffset.UtcNow;
     Today = new DateTimeOffset(
@@ -19,10 +21,8 @@ public class CachesContext {
       second: 0,
       TimeSpan.Zero);
     TimeProvider = new FakeTimeProvider(Today);
-    XUnitLogger = xUnitLogger;
+    _xUnitLogger = xUnitLogger;
   }
-
-  public ITestOutputHelper XUnitLogger { get; }
 
   public DateTimeOffset Today { get; }
 
@@ -34,13 +34,15 @@ public class CachesContext {
 
   public INatsObjStore Bucket { get; }
 
-  public NatsObjectStoreBasedCache NatsObjectStoreBasedCache { get; private set; } = null!;
+  public IBufferDistributedCache Cache { get; private set; } = null!;
 
   public byte[]? GottenCacheEntryValue { get; set; } = [];
 
-  public ManualResetEventSlim PurgingSignal { get; set; } = new(initialState: false);
+  public ManualResetEventSlim PurgingSignal { get; } = new(initialState: false);
 
-  public void CreateAndAssignCacheServices() {
+  public ICacheStorageDriver Driver { get; private set; } = null!;
+
+  public void CreateObjectStoreDriver() {
     var expiryCalculator = new CacheEntryExpiryCalculator(DefaultSlidingExpirationInterval, TimeProvider);
 
     var cacheInvalidation = new ObjectStoreBasedCacheInvalidation(
@@ -48,15 +50,16 @@ public class CachesContext {
       ExpiredEntriesPurgingInterval,
       expiryCalculator,
       TimeProvider,
-      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
+      XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
 
     var cacheDatastore = new ObjectStoreBasedDatastore(Bucket, expiryCalculator);
     cacheInvalidation.CacheInvalidationCompleted += (_, _) => PurgingSignal.Set();
 
-    NatsObjectStoreBasedCache = new NatsObjectStoreBasedCache(
+    Cache = new NatsObjectStoreBasedCache(
       cacheDatastore,
       cacheInvalidation,
-      Meziantou.Extensions.Logging.Xunit.XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
+      XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
+    Driver = new ObjectStoreDriver(Bucket, _xUnitLogger);
   }
 
   private readonly ITestOutputHelper _xUnitLogger;

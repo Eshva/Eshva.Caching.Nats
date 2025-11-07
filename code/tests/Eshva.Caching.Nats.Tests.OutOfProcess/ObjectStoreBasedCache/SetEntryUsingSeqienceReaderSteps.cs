@@ -19,7 +19,7 @@ public class SetEntryUsingSequenceReaderSteps {
     string value,
     int minutes) {
     try {
-      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
+      await _cachesContext.Cache.SetAsync(
         key,
         new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
         new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(minutes) });
@@ -35,7 +35,7 @@ public class SetEntryUsingSequenceReaderSteps {
     string value,
     int minutes) {
     try {
-      _cachesContext.NatsObjectStoreBasedCache.Set(
+      _cachesContext.Cache.Set(
         key,
         new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
         new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(minutes) });
@@ -51,7 +51,7 @@ public class SetEntryUsingSequenceReaderSteps {
     string value,
     TimeSpan timeOfDay) {
     try {
-      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
+      await _cachesContext.Cache.SetAsync(
         key,
         new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
         new DistributedCacheEntryOptions { AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay) });
@@ -70,7 +70,7 @@ public class SetEntryUsingSequenceReaderSteps {
       TimeSpan timeOfDay,
       int minutes) {
     try {
-      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
+      await _cachesContext.Cache.SetAsync(
         key,
         new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
         new DistributedCacheEntryOptions {
@@ -91,7 +91,7 @@ public class SetEntryUsingSequenceReaderSteps {
       TimeSpan timeOfDay,
       int minutes) {
     try {
-      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
+      await _cachesContext.Cache.SetAsync(
         key,
         new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
         new DistributedCacheEntryOptions {
@@ -109,7 +109,7 @@ public class SetEntryUsingSequenceReaderSteps {
     string value,
     TimeSpan timeOfDay) {
     try {
-      _cachesContext.NatsObjectStoreBasedCache.Set(
+      _cachesContext.Cache.Set(
         key,
         new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
         new DistributedCacheEntryOptions { AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay) });
@@ -126,7 +126,7 @@ public class SetEntryUsingSequenceReaderSteps {
       string value,
       TimeSpan timeOfDay) {
     try {
-      await _cachesContext.NatsObjectStoreBasedCache.SetAsync(
+      await _cachesContext.Cache.SetAsync(
         key,
         new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
         new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOfDay });
@@ -142,7 +142,7 @@ public class SetEntryUsingSequenceReaderSteps {
     string value,
     TimeSpan timeOfDay) {
     try {
-      _cachesContext.NatsObjectStoreBasedCache.Set(
+      _cachesContext.Cache.Set(
         key,
         new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
         new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOfDay });

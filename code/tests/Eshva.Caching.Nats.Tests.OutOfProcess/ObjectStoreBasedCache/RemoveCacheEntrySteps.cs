@@ -13,7 +13,7 @@ public class RemoveCacheEntrySteps {
   [When("I remove {string} cache entry asynchronously")]
   public async Task WhenIRemoveCacheEntryAsynchronously(string key) {
     try {
-      await _cachesContext.NatsObjectStoreBasedCache.RemoveAsync(key);
+      await _cachesContext.Cache.RemoveAsync(key);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -23,7 +23,7 @@ public class RemoveCacheEntrySteps {
   [When("I remove {string} cache entry synchronously")]
   public void WhenIRemoveCacheEntrySynchronously(string key) {
     try {
-      _cachesContext.NatsObjectStoreBasedCache.Remove(key);
+      _cachesContext.Cache.Remove(key);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;

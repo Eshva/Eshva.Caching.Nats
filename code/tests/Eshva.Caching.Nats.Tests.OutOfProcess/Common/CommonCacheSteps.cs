@@ -1,10 +1,8 @@
 ﻿using System.Text;
+using Eshva.Caching.Abstractions;
 using Eshva.Caching.Nats.Tests.Tools;
 using FluentAssertions;
-using NATS.Client.ObjectStore;
-using NATS.Client.ObjectStore.Models;
 using Reqnroll;
-using Xunit;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 
@@ -18,16 +16,14 @@ public class CommonCacheSteps {
   public async Task GivenEntryWithKeyStringAndValueStringWhichExpiresInDoubleMinutesPutIntoCache(
     string key,
     string value,
-    double expiresInMinutes) {
-    var metadataAccessor = new ObjectMetadataAccessor(new ObjectMetadata { Name = key }) {
-      SlidingExpiryInterval = TimeSpan.FromMinutes(expiresInMinutes),
-      ExpiresAtUtc = _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes)
-    };
-
-    await _cachesContext.Bucket.PutAsync(metadataAccessor.ObjectMetadata, new MemoryStream(Encoding.UTF8.GetBytes(value)));
-
-    _cachesContext.XUnitLogger.WriteLine($"Put entry '{key}' that expires at {metadataAccessor.ExpiresAtUtc}");
-  }
+    double expiresInMinutes) =>
+    await _cachesContext.Driver.PutEntry(
+      key,
+      Encoding.UTF8.GetBytes(value),
+      new CacheEntryExpiry(
+        _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes),
+        AbsoluteExpiryAtUtc: null,
+        TimeSpan.FromMinutes(expiresInMinutes)));
 
   [Given("entry with key {string} and random byte array as value which expires in {double} minutes put into cache")]
   public async Task GivenEntryWithKeyStringAndRandomByteArrayAsValueWhichExpiresInDoubleMinutesPutIntoCache(
@@ -35,16 +31,13 @@ public class CommonCacheSteps {
     double expiresInMinutes) {
     _originalValue = new byte[1 * 1024 * 1024 + 5];
     Random.Shared.NextBytes(_originalValue);
-    await _cachesContext.Bucket.PutAsync(key, _originalValue);
-
-    var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
-    var metadataAccessor = new ObjectMetadataAccessor(objectMetadata) {
-      ExpiresAtUtc = _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes),
-      SlidingExpiryInterval = TimeSpan.FromMinutes(expiresInMinutes)
-    };
-
-    _cachesContext.XUnitLogger.WriteLine($"Put entry '{key}' that expires at {metadataAccessor.ExpiresAtUtc}");
-    await _cachesContext.Bucket.UpdateMetaAsync(key, objectMetadata);
+    await _cachesContext.Driver.PutEntry(
+      key,
+      _originalValue,
+      new CacheEntryExpiry(
+        _cachesContext.TimeProvider.GetUtcNow().AddMinutes(expiresInMinutes),
+        AbsoluteExpiryAtUtc: null,
+        TimeSpan.FromMinutes(expiresInMinutes)));
   }
 
   [Then("I should get value {string} as the requested entry")]
@@ -65,21 +58,14 @@ public class CommonCacheSteps {
 
   [Then("{string} entry is not present in the object-store bucket")]
   public async Task ThenStringEntryIsNotPresentInTheObjectStoreBucket(string key) {
-    try {
-      await _cachesContext.Bucket.GetInfoAsync(key);
-    }
-    catch (NatsObjNotFoundException) {
-      // Expected exception if object already deleted from the bucket.
-      return;
-    }
-
-    Assert.Fail($"'{key}' entry is still present in the cache");
+    var doesExist = await _cachesContext.Driver.DoesExist(key);
+    doesExist.Should().BeFalse();
   }
 
   [Then("{string} entry is present in the object-store bucket")]
   public async Task ThenStringEntryIsPresentInTheObjectStoreBucket(string key) {
-    var objectMetadata = await _cachesContext.Bucket.GetInfoAsync(key);
-    objectMetadata.Should().NotBeNull();
+    var doesExist = await _cachesContext.Driver.DoesExist(key);
+    doesExist.Should().BeTrue();
   }
 
   [Given("expired entries purging interval {int} minutes")]
@@ -90,9 +76,9 @@ public class CommonCacheSteps {
   public void GivenDefaultSlidingExpirationIntervalIntMinutes(int minutes) =>
     _cachesContext.DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes);
 
-  [Given("object-store based cache with synchronous purge")]
-  public void GivenObjectStoreBasedCacheWithSynchronousPurge() =>
-    _cachesContext.CreateAndAssignCacheServices();
+  [Given("object-store based cache")]
+  public void GivenObjectStoreBasedCache() =>
+    _cachesContext.CreateObjectStoreDriver();
 
   [Given("clock set at today (.*)")]
   public void GivenClockSetAtToday(TimeSpan timeOfDay) =>
@@ -104,13 +90,13 @@ public class CommonCacheSteps {
 
   [Then("'(.*)' entry should be expired today at (.*)")]
   public async Task ThenEntryShouldBeExpiredTodayAt(string key, TimeSpan timeOfDay) {
-    var metadataAccessor = new ObjectMetadataAccessor(await _cachesContext.Bucket.GetInfoAsync(key));
-    metadataAccessor.ExpiresAtUtc.Should().Be(_cachesContext.Today.Add(timeOfDay));
+    var entryExpiry = await _cachesContext.Driver.GetMetadata(key);
+    entryExpiry.ExpiresAtUtc.Should().Be(_cachesContext.Today.Add(timeOfDay));
   }
 
   [Given("object with key {string} removed from object-store bucket")]
   public async Task GivenObjectWithKeyStringRemovedFromObjectStoreBucket(string key) =>
-    await _cachesContext.Bucket.DeleteAsync(key);
+    await _cachesContext.Driver.Remove(key);
 
   [Given("metadata of cache entry with key {string} corrupted")]
   public async Task GivenMetadataOfCacheEntryWithKeyStringCorrupted(string key) {
