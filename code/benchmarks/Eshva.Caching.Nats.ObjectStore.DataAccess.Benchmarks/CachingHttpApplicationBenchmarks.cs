@@ -7,6 +7,7 @@ using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
+using Eshva.Caching.Abstractions;
 using Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 using Eshva.Caching.Nats.TestWebApp;
 using Eshva.Common.Testing;
@@ -17,34 +18,62 @@ using Perfolizer.Metrology;
 
 namespace Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks;
 
-[Config(typeof(CachingImageProviderBenchmarksConfig))]
-public class CachingImageProviderBenchmarks {
+[Config(typeof(CachingHttpApplicationBenchmarksConfig))]
+public class CachingHttpApplicationBenchmarks {
   [Params(
     EntrySizes.Bytes016,
     EntrySizes.Bytes256,
     EntrySizes.KiB001,
     EntrySizes.KiB064,
     EntrySizes.KiB256,
-    EntrySizes.MiB001,
-    EntrySizes.MiB005,
-    EntrySizes.MiB050)]
+    EntrySizes.MB001)]
   public int EntrySize { get; [UsedImplicitly] set; }
 
-  [Benchmark(Description = "try-get-async")]
-  public async Task<bool> TryGetAsyncWithByteStream() {
+  [Benchmark(Description = "obj-try-get")]
+  public async Task<bool> ObjectStoreTryGetAsyncWithByteStream() {
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/object-store/try-get-async/{EntryName}");
-    // var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
-    // if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    if (ShouldCompareOriginalAndGottenData) {
+      var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
+      if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    }
+
     return response.IsSuccessStatusCode;
   }
 
-  [Benchmark(Description = "get-async", Baseline = true)]
-  public async Task<bool> GetAsyncWithByteStream() {
+  [Benchmark(Description = "obj-get")]
+  public async Task<bool> ObjectStoreGetAsyncWithByteStream() {
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/object-store/get-async/{EntryName}");
-    // var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
-    // if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    if (ShouldCompareOriginalAndGottenData) {
+      var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
+      if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    }
+
+    return response.IsSuccessStatusCode;
+  }
+
+  [Benchmark(Description = "kv-try-get")]
+  public async Task<bool> TryGetAsyncWithByteStream1() {
+    Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
+    var response = await _webAppClient.GetAsync($"/key-value/try-get-async/{EntryName}");
+    if (ShouldCompareOriginalAndGottenData) {
+      var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
+      if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    }
+
+    return response.IsSuccessStatusCode;
+  }
+
+  [Benchmark(Description = "kv-get", Baseline = true)]
+  public async Task<bool> GetAsyncWithByteStream1() {
+    Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
+    var response = await _webAppClient.GetAsync($"/key-value/get-async/{EntryName}");
+    if (ShouldCompareOriginalAndGottenData) {
+      var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
+      if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+    }
+
     return response.IsSuccessStatusCode;
   }
 
@@ -53,19 +82,15 @@ public class CachingImageProviderBenchmarks {
     var hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
     var hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(hostNetworkClientPort + 1));
     _deployment = NatsBasedCachingTestsDeployment
-      .Named($"{nameof(CachingImageProviderBenchmarks)}-{EntrySize}")
+      .Named($"{nameof(CachingHttpApplicationBenchmarks)}-{EntrySize}")
       .WithNatsServerInContainer(
         NatsServerDeployment
-          .Named($"{nameof(CachingImageProviderBenchmarks)}-{EntrySize}")
+          .Named($"{nameof(CachingHttpApplicationBenchmarks)}-{EntrySize}")
           .FromImageTag("nats:2.11")
-          .WithContainerName($"caching-image-provider-benchmarks-{EntrySize}")
+          .WithContainerName($"caching-http-application-benchmarks-{EntrySize}")
           .WithHostNetworkClientPort(hostNetworkClientPort)
           .WithHostNetworkHttpManagementPort(hostNetworkHttpManagementPort)
-          .EnabledJetStream()
-          .CreateBucket(
-            ObjectStoreBucket
-              .Named($"{nameof(CachingImageProviderBenchmarks)}-{EntrySize}")
-              .OfSize(100 * 1024 * 1024)));
+          .EnabledJetStream());
     await _deployment.Build();
     await _deployment.Start();
 
@@ -75,11 +100,23 @@ public class CachingImageProviderBenchmarks {
 
   [IterationSetup]
   public void AddImageIntoCache() {
-    var bucket = _deployment!.NatsServer.ObjectStoreContext.GetObjectStoreAsync("images").AsTask().GetAwaiter().GetResult();
     var image = new byte[EntrySize];
     Random.Shared.NextBytes(image);
     _imageHash = SHA256.HashData(image);
+
+    var bucket = _deployment!.NatsServer.ObjectStoreContext.CreateObjectStoreAsync(BucketName).AsTask().GetAwaiter().GetResult();
     bucket.PutAsync(EntryName, image).AsTask().GetAwaiter().GetResult();
+
+    var valueStore = _deployment!.NatsServer.KeyValueContext.CreateStoreAsync(ValueStoreName).AsTask().GetAwaiter().GetResult();
+    var metadataStore = _deployment!.NatsServer.KeyValueContext.CreateStoreAsync(MetadataStoreName).AsTask().GetAwaiter().GetResult();
+    valueStore.PutAsync(EntryName, image).AsTask().GetAwaiter().GetResult();
+    metadataStore.PutAsync(
+        EntryName,
+        new CacheEntryExpiry(DateTimeOffset.Now.AddDays(days: 1), AbsoluteExpiryAtUtc: null, TimeSpan.FromDays(days: 1)),
+        new CacheEntryExpiryJsonSerializer())
+      .AsTask()
+      .GetAwaiter()
+      .GetResult();
   }
 
   [GlobalCleanup]
@@ -101,7 +138,7 @@ public class CachingImageProviderBenchmarks {
   }
 
   private async Task CreateCacheBucket() =>
-    await _deployment!.NatsServer.ObjectStoreContext.CreateObjectStoreAsync("images");
+    await _deployment!.NatsServer.ObjectStoreContext.CreateObjectStoreAsync(BucketName);
 
   private void SetupWebAppTestee() {
     Environment.SetEnvironmentVariable(
@@ -116,11 +153,16 @@ public class CachingImageProviderBenchmarks {
   private byte[] _imageHash = [];
   private HttpClient? _webAppClient;
   private WebApplicationFactory<AssemblyTag>? _webAppFactory;
+
+  private const bool ShouldCompareOriginalAndGottenData = true;
+  private const string MetadataStoreName = "image-metadata";
+  private const string ValueStoreName = "image-values";
   private const string EntryName = "benchmark-entry";
+  private const string BucketName = "images";
 }
 
-public sealed class CachingImageProviderBenchmarksConfig : ManualConfig {
-  public CachingImageProviderBenchmarksConfig() {
+public sealed class CachingHttpApplicationBenchmarksConfig : ManualConfig {
+  public CachingHttpApplicationBenchmarksConfig() {
     AddDiagnoser(MemoryDiagnoser.Default);
     AddJob(
       new Job()
@@ -137,7 +179,7 @@ public sealed class CachingImageProviderBenchmarksConfig : ManualConfig {
       "StdDev",
       "Median");
     SummaryStyle = SummaryStyle.Default
-      .WithTimeUnit(TimeUnit.Microsecond)
+      .WithTimeUnit(TimeUnit.Millisecond)
       .WithSizeUnit(SizeUnit.KB);
   }
 }

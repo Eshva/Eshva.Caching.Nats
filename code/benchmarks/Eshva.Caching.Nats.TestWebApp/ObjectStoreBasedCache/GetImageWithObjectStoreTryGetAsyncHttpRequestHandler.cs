@@ -4,10 +4,10 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace Eshva.Caching.Nats.TestWebApp.ObjectStoreBasedCache;
 
-public class GetImageWithTryGetAsyncHttpRequestHandler {
-  public GetImageWithTryGetAsyncHttpRequestHandler(
+public class GetImageWithObjectStoreTryGetAsyncHttpRequestHandler {
+  public GetImageWithObjectStoreTryGetAsyncHttpRequestHandler(
     IBufferDistributedCache cache,
-    ILogger<GetImageWithTryGetAsyncHttpRequestHandler> logger) {
+    ILogger<GetImageWithObjectStoreTryGetAsyncHttpRequestHandler> logger) {
     _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     _logger = logger ?? throw new ArgumentNullException(nameof(logger));
   }
@@ -26,5 +26,5 @@ public class GetImageWithTryGetAsyncHttpRequestHandler {
   }
 
   private readonly IBufferDistributedCache _cache;
-  private readonly ILogger<GetImageWithTryGetAsyncHttpRequestHandler> _logger;
+  private readonly ILogger<GetImageWithObjectStoreTryGetAsyncHttpRequestHandler> _logger;
 }

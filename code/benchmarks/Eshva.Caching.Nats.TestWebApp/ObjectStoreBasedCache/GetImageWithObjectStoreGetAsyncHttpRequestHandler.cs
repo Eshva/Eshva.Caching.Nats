@@ -2,10 +2,10 @@
 
 namespace Eshva.Caching.Nats.TestWebApp.ObjectStoreBasedCache;
 
-public class GetImageWithGetAsyncHttpRequestHandler {
-  public GetImageWithGetAsyncHttpRequestHandler(
+public class GetImageWithObjectStoreGetAsyncHttpRequestHandler {
+  public GetImageWithObjectStoreGetAsyncHttpRequestHandler(
     IBufferDistributedCache cache,
-    ILogger<GetImageWithGetAsyncHttpRequestHandler> logger) {
+    ILogger<GetImageWithObjectStoreGetAsyncHttpRequestHandler> logger) {
     _cache = cache ?? throw new ArgumentNullException(nameof(cache));
     _logger = logger ?? throw new ArgumentNullException(nameof(logger));
   }
@@ -22,5 +22,5 @@ public class GetImageWithGetAsyncHttpRequestHandler {
   }
 
   private readonly IBufferDistributedCache _cache;
-  private readonly ILogger<GetImageWithGetAsyncHttpRequestHandler> _logger;
+  private readonly ILogger<GetImageWithObjectStoreGetAsyncHttpRequestHandler> _logger;
 }
