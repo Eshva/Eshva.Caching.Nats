@@ -42,16 +42,19 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
     uint purgedCount = 0;
     await foreach (var entry in _cacheBucket.ListAsync(cancellationToken: cancellation).ConfigureAwait(continueOnCapturedContext: false)) {
       totalCount++;
-      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAt}", entry.Name, new ObjectMetadataAccessor(entry).ExpiresAtUtc);
-      if (!ExpiryCalculator.IsCacheEntryExpired(new ObjectMetadataAccessor(entry).ExpiresAtUtc)) continue;
+      var expiresAtUtc = new ObjectMetadataAccessor(entry).ExpiresAtUtc;
+      if (!ExpiryCalculator.IsCacheEntryExpired(expiresAtUtc)) {
+        Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc} - keep it", entry.Name, expiresAtUtc);
+        continue;
+      }
 
       purgedCount++;
+      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc} - purge it", entry.Name, expiresAtUtc);
       await _cacheBucket.DeleteAsync(entry.Name, cancellation).ConfigureAwait(continueOnCapturedContext: false);
-      Logger.LogDebug("Deleted expired entry '{Key}'", entry.Name);
     }
 
     Logger.LogDebug(
-      "Deleting expired entries completed: total {TotalCount} entries, purged {PurgedCount} entries",
+      "Deleting expired entries completed: total {TotalCount} entries scanned, purged {PurgedCount} entries",
       totalCount,
       purgedCount);
 

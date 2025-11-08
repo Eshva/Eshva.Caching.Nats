@@ -55,17 +55,20 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
 
       var entryMetadata = await _entryMetadataStore.GetEntryAsync(key, serializer: _expirySerializer, cancellationToken: cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
-      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc}", key, entryMetadata.Value.ExpiresAtUtc);
+      var expiresAtUtc = entryMetadata.Value.ExpiresAtUtc;
 
-      if (!ExpiryCalculator.IsCacheEntryExpired(entryMetadata.Value.ExpiresAtUtc)) continue;
+      if (!ExpiryCalculator.IsCacheEntryExpired(expiresAtUtc)) {
+        Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc} - keep it", key, expiresAtUtc);
+        continue;
+      }
 
+      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc} - purge it", key, expiresAtUtc);
       var valuePurgeStatus = await _entryValuesStore.TryPurgeAsync(key, cancellationToken: cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       var metadataPurgeStatus = await _entryMetadataStore.TryPurgeAsync(key, cancellationToken: cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       if (valuePurgeStatus.Success && metadataPurgeStatus.Success) {
         purgedCount++;
-        Logger.LogDebug("Deleted expired entry '{Key}'", key);
       }
       else {
         Logger.LogError(valuePurgeStatus.Error, "Can't deleted expired entry '{Key}'", key);
@@ -73,7 +76,7 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
     }
 
     Logger.LogDebug(
-      "Deleting expired entries completed: total {TotalCount} entries, purged {PurgedCount} entries",
+      "Deleting expired entries completed: total {TotalCount} entries scanned, purged {PurgedCount} entries",
       totalCount,
       purgedCount);
 
