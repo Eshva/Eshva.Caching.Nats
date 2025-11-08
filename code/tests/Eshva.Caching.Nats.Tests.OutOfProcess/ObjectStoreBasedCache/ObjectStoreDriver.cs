@@ -22,13 +22,13 @@ public sealed class ObjectStoreDriver : ICacheStorageDriver {
       SlidingExpiryInterval = entryExpiry.SlidingExpiryInterval
     };
 
-    await _bucket.PutAsync(metadataAccessor.ObjectMetadata, new MemoryStream(value));
+    await _bucket.PutAsync(metadataAccessor.ObjectMetadata, new MemoryStream(value)).ConfigureAwait(continueOnCapturedContext: false);
     _logger.WriteLine($"Put entry '{key}' that expires at {entryExpiry.ExpiresAtUtc}");
   }
 
   public async Task<bool> DoesExist(string key) {
     try {
-      await _bucket.GetInfoAsync(key);
+      await _bucket.GetInfoAsync(key).ConfigureAwait(continueOnCapturedContext: false);
       return true;
     }
     catch (NatsObjNotFoundException) {
@@ -37,7 +37,7 @@ public sealed class ObjectStoreDriver : ICacheStorageDriver {
   }
 
   public async Task<CacheEntryExpiry> GetMetadata(string key) {
-    var objectMetadata = await _bucket.GetInfoAsync(key);
+    var objectMetadata = await _bucket.GetInfoAsync(key).ConfigureAwait(continueOnCapturedContext: false);
     var metadataAccessor = new ObjectMetadataAccessor(objectMetadata);
     return new CacheEntryExpiry(
       metadataAccessor.ExpiresAtUtc,
@@ -46,7 +46,7 @@ public sealed class ObjectStoreDriver : ICacheStorageDriver {
   }
 
   public async Task Remove(string key) =>
-    await _bucket.DeleteAsync(key);
+    await _bucket.DeleteAsync(key).ConfigureAwait(continueOnCapturedContext: false);
 
   private readonly INatsObjStore _bucket;
   private readonly ITestOutputHelper _logger;

@@ -13,7 +13,7 @@ public class GetEntrySteps {
   [When("I get {string} cache entry asynchronously")]
   public async Task WhenIGetCacheEntry(string key) {
     try {
-      _cachesContext.GottenCacheEntryValue = await _cachesContext.Cache.GetAsync(key);
+      _cachesContext.GottenCacheEntryValue = await _cachesContext.Cache.GetAsync(key).ConfigureAwait(continueOnCapturedContext: false);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;

@@ -19,25 +19,27 @@ public sealed class KeyValueStoreDriver : ICacheStorageDriver {
   }
 
   public async Task PutEntry(string key, byte[] value, CacheEntryExpiry entryExpiry) {
-    await _entryValueKeyValueStore.PutAsync(key, value);
-    await _entryMetadataKeyValueStore.PutAsync(key, entryExpiry, _expirySerializer);
+    await _entryValueKeyValueStore.PutAsync(key, value).ConfigureAwait(continueOnCapturedContext: false);
+    await _entryMetadataKeyValueStore.PutAsync(key, entryExpiry, _expirySerializer).ConfigureAwait(continueOnCapturedContext: false);
     _logger.WriteLine($"Put entry '{key}' that expires at {entryExpiry.ExpiresAtUtc}");
   }
 
   public async Task<bool> DoesExist(string key) {
-    var valueStatus = await _entryMetadataKeyValueStore.TryGetEntryAsync(key, serializer: _expirySerializer);
-    var metadataStatus = await _entryValueKeyValueStore.TryGetEntryAsync<byte[]>(key);
+    var valueStatus = await _entryMetadataKeyValueStore.TryGetEntryAsync(key, serializer: _expirySerializer)
+      .ConfigureAwait(continueOnCapturedContext: false);
+    var metadataStatus = await _entryValueKeyValueStore.TryGetEntryAsync<byte[]>(key).ConfigureAwait(continueOnCapturedContext: false);
     return valueStatus.Success && metadataStatus.Success;
   }
 
   public async Task<CacheEntryExpiry> GetMetadata(string key) {
-    var metadataStatus = await _entryMetadataKeyValueStore.TryGetEntryAsync(key, serializer: _expirySerializer);
+    var metadataStatus = await _entryMetadataKeyValueStore.TryGetEntryAsync(key, serializer: _expirySerializer)
+      .ConfigureAwait(continueOnCapturedContext: false);
     return metadataStatus.Value.Value;
   }
 
   public async Task Remove(string key) {
-    await _entryMetadataKeyValueStore.PurgeAsync(key);
-    await _entryValueKeyValueStore.PurgeAsync(key);
+    await _entryMetadataKeyValueStore.PurgeAsync(key).ConfigureAwait(continueOnCapturedContext: false);
+    await _entryValueKeyValueStore.PurgeAsync(key).ConfigureAwait(continueOnCapturedContext: false);
   }
 
   private readonly INatsKVStore _entryValueKeyValueStore;

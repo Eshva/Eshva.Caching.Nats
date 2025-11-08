@@ -21,7 +21,7 @@ public sealed class Hooks {
         NatsServerDeployment
           .Named($"NatsCache out of process tests with suffix '{_suffix}'")
           .FromImageTag("nats:2.11")
-          .WithContainerName($"object-store-cache-tests-{_suffix}")
+          .WithContainerName($"nats-cache-tests-{_suffix}")
           .WithHostNetworkClientPort(_hostNetworkClientPort)
           .WithHostNetworkHttpManagementPort(_hostNetworkHttpManagementPort)
           .EnabledJetStream()

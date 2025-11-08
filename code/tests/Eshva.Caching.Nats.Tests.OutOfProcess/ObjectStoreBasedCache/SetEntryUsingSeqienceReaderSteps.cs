@@ -20,9 +20,10 @@ public class SetEntryUsingSequenceReaderSteps {
     int minutes) {
     try {
       await _cachesContext.Cache.SetAsync(
-        key,
-        new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
-        new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(minutes) });
+          key,
+          new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
+          new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(minutes) })
+        .ConfigureAwait(continueOnCapturedContext: false);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -52,9 +53,10 @@ public class SetEntryUsingSequenceReaderSteps {
     TimeSpan timeOfDay) {
     try {
       await _cachesContext.Cache.SetAsync(
-        key,
-        new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
-        new DistributedCacheEntryOptions { AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay) });
+          key,
+          new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
+          new DistributedCacheEntryOptions { AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay) })
+        .ConfigureAwait(continueOnCapturedContext: false);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -71,11 +73,12 @@ public class SetEntryUsingSequenceReaderSteps {
       int minutes) {
     try {
       await _cachesContext.Cache.SetAsync(
-        key,
-        new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
-        new DistributedCacheEntryOptions {
-          AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay), SlidingExpiration = TimeSpan.FromMinutes(minutes)
-        });
+          key,
+          new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
+          new DistributedCacheEntryOptions {
+            AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay), SlidingExpiration = TimeSpan.FromMinutes(minutes)
+          })
+        .ConfigureAwait(continueOnCapturedContext: false);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -92,11 +95,12 @@ public class SetEntryUsingSequenceReaderSteps {
       int minutes) {
     try {
       await _cachesContext.Cache.SetAsync(
-        key,
-        new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
-        new DistributedCacheEntryOptions {
-          AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay), SlidingExpiration = TimeSpan.FromMinutes(minutes)
-        });
+          key,
+          new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
+          new DistributedCacheEntryOptions {
+            AbsoluteExpiration = _cachesContext.Today.Add(timeOfDay), SlidingExpiration = TimeSpan.FromMinutes(minutes)
+          })
+        .ConfigureAwait(continueOnCapturedContext: false);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
@@ -127,9 +131,10 @@ public class SetEntryUsingSequenceReaderSteps {
       TimeSpan timeOfDay) {
     try {
       await _cachesContext.Cache.SetAsync(
-        key,
-        new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
-        new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOfDay });
+          key,
+          new ReadOnlySequence<byte>(Encoding.UTF8.GetBytes(value)),
+          new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = timeOfDay })
+        .ConfigureAwait(continueOnCapturedContext: false);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;

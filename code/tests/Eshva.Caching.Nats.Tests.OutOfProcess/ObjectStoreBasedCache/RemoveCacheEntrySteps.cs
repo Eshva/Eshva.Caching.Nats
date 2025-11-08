@@ -13,7 +13,7 @@ public class RemoveCacheEntrySteps {
   [When("I remove {string} cache entry asynchronously")]
   public async Task WhenIRemoveCacheEntryAsynchronously(string key) {
     try {
-      await _cachesContext.Cache.RemoveAsync(key);
+      await _cachesContext.Cache.RemoveAsync(key).ConfigureAwait(continueOnCapturedContext: false);
     }
     catch (Exception exception) {
       _errorHandlingContext.LastException = exception;
