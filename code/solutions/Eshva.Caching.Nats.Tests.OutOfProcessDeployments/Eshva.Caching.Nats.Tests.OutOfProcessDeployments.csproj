@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations"/>
+    <PackageReference Include="NATS.Client.KeyValueStore"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
     <PackageReference Include="Testcontainers"/>
   </ItemGroup>

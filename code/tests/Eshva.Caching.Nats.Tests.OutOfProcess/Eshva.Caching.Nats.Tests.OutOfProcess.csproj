@@ -23,4 +23,18 @@
     <ProjectReference Include="..\..\solutions\Eshva.Caching.Nats\Eshva.Caching.Nats.csproj"/>
     <ProjectReference Include="..\Eshva.Caching.Nats.Tests.Tools\Eshva.Caching.Nats.Tests.Tools.csproj"/>
   </ItemGroup>
+  <ItemGroup>
+    <Compile Update="KeyValueBasedCache\Remove_entry_from_key_value_store_based_cache.feature.cs">
+      <DependentUpon>Remove_entry_from_object_store_based_cache.feature</DependentUpon>
+      <AutoGen>true</AutoGen>
+      <DesignTime>true</DesignTime>
+      <Visible>true</Visible>
+    </Compile>
+    <Compile Update="KeyValueBasedCache\Try_get_entry_from_key_value_store_based_cache.feature.cs">
+      <DependentUpon>Try_get_entry_from_object_store_based_cache.feature</DependentUpon>
+      <AutoGen>true</AutoGen>
+      <DesignTime>true</DesignTime>
+      <Visible>true</Visible>
+    </Compile>
+  </ItemGroup>
 </Project>

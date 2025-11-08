@@ -4,6 +4,7 @@ using DotNet.Testcontainers.Containers;
 using JetBrains.Annotations;
 using NATS.Client.Core;
 using NATS.Client.JetStream;
+using NATS.Client.KeyValueStore;
 using NATS.Client.ObjectStore;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
@@ -15,6 +16,8 @@ public partial class NatsServerDeployment(NatsServerDeployment.Configuration con
   public INatsJSContext JetStreamContext { get; private set; } = null!;
 
   public INatsObjContext ObjectStoreContext { get; private set; } = null!;
+
+  public INatsKVContext KeyValueContext { get; private set; } = null!;
 
   public static Configuration Named(string name) => new() { Name = name };
 
@@ -76,6 +79,7 @@ public partial class NatsServerDeployment(NatsServerDeployment.Configuration con
     await Connection.ConnectAsync();
     JetStreamContext = new NatsJSContext(Connection);
     ObjectStoreContext = new NatsObjContext(JetStreamContext);
+    KeyValueContext = new NatsKVContext(JetStreamContext);
   }
 
   private async Task CreateBuckets() {

@@ -45,9 +45,19 @@ public sealed class Hooks {
       throw new InvalidOperationException("Cannot create a cache without environment deployment started.");
     }
 
-    var bucketName = Regex.Replace(scenarioContext.ScenarioInfo.Title, "[^a-zA-Z0-9]", "-");
-    var objectStore = await _deployment.NatsServer.ObjectStoreContext.CreateObjectStoreAsync(bucketName);
-    var cachesContext = new CachesContext(objectStore, logger);
+    var objectStoreBucketName = Regex.Replace(scenarioContext.ScenarioInfo.Title, "[^a-zA-Z0-9]", "-");
+    var objectStore = await _deployment.NatsServer.ObjectStoreContext.CreateObjectStoreAsync(objectStoreBucketName);
+
+    var entryValueKeyValueBucketName = Regex.Replace($"{scenarioContext.ScenarioInfo.Title}-Values", "[^a-zA-Z0-9]", "-");
+    var entryMetadataKeyValueBucketName = Regex.Replace($"{scenarioContext.ScenarioInfo.Title}-Metadata", "[^a-zA-Z0-9]", "-");
+    var entryValueKeyValueStore = await _deployment.NatsServer.KeyValueContext.CreateStoreAsync(entryValueKeyValueBucketName);
+    var entryMetadataKeyValueStore = await _deployment.NatsServer.KeyValueContext.CreateStoreAsync(entryMetadataKeyValueBucketName);
+
+    var cachesContext = new CachesContext(
+      objectStore,
+      entryValueKeyValueStore,
+      entryMetadataKeyValueStore,
+      logger);
     scenarioContext.ScenarioContainer.RegisterInstanceAs(cachesContext);
   }
 

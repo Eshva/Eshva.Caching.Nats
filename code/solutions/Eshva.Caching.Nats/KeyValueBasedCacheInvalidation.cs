@@ -1,5 +1,6 @@
 ﻿using Eshva.Caching.Abstractions;
 using Microsoft.Extensions.Logging;
+using NATS.Client.Core;
 using NATS.Client.KeyValueStore;
 
 namespace Eshva.Caching.Nats;
@@ -16,7 +17,7 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
   /// <param name="entryValuesStore">Values key-value store.</param>
   /// <param name="entryMetadataStore">Metadata key-value store.</param>
   /// <param name="expiredEntriesPurgingInterval">Expired entries purging interval.</param>
-  /// <param name="desynchronizedEntriesPurgingFactor">Desynchronized entries purging factor.</param>
+  /// <param name="expirySerializer">Cache entry expiry serializer.</param>
   /// <param name="expiryCalculator">Cache entry expiry calculator.</param>
   /// <param name="timeProvider">Time provider.</param>
   /// <param name="logger">Logger.</param>
@@ -27,7 +28,7 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
     INatsKVStore entryValuesStore,
     INatsKVStore entryMetadataStore,
     TimeSpan expiredEntriesPurgingInterval,
-    uint desynchronizedEntriesPurgingFactor,
+    INatsSerializer<CacheEntryExpiry> expirySerializer,
     CacheEntryExpiryCalculator expiryCalculator,
     TimeProvider timeProvider,
     ILogger? logger = null)
@@ -38,7 +39,7 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
       logger) {
     _entryValuesStore = entryValuesStore ?? throw new ArgumentNullException(nameof(entryValuesStore));
     _entryMetadataStore = entryMetadataStore ?? throw new ArgumentNullException(nameof(entryMetadataStore));
-    _desynchronizedEntriesPurgingFactor = desynchronizedEntriesPurgingFactor;
+    _expirySerializer = expirySerializer ?? throw new ArgumentNullException(nameof(expirySerializer));
     _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
   }
 
@@ -46,17 +47,13 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
   protected override async Task<CacheInvalidationStatistics> DeleteExpiredCacheEntries(CancellationToken cancellation) {
     Logger.LogDebug("Deleting expired entries started at {CurrentTime}", _timeProvider.GetUtcNow());
 
-    if (IsDesynchronizedEntriesPurgingRequired()) {
-      await PurgeDesynchronizedEntries(cancellation).ConfigureAwait(continueOnCapturedContext: false);
-    }
-
     uint totalCount = 0;
     uint purgedCount = 0;
     await foreach (var key in _entryMetadataStore.GetKeysAsync(cancellationToken: cancellation)
                      .ConfigureAwait(continueOnCapturedContext: false)) {
       totalCount++;
 
-      var entryMetadata = await _entryMetadataStore.GetEntryAsync<CacheEntryExpiry>(key, cancellationToken: cancellation)
+      var entryMetadata = await _entryMetadataStore.GetEntryAsync(key, serializer: _expirySerializer, cancellationToken: cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc}", key, entryMetadata.Value.ExpiresAtUtc);
 
@@ -80,41 +77,11 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
       totalCount,
       purgedCount);
 
-    _invalidationCount++;
-
     return new CacheInvalidationStatistics(totalCount, purgedCount);
-  }
-
-  private bool IsDesynchronizedEntriesPurgingRequired() =>
-    _invalidationCount % _desynchronizedEntriesPurgingFactor == 0;
-
-  private async Task PurgeDesynchronizedEntries(CancellationToken cancellation) {
-    var (desynchronizedValueKeys, desynchronizedMetadataKeys) =
-      await GetDesynchronizedKeys(cancellation).ConfigureAwait(continueOnCapturedContext: false);
-    foreach (var key in desynchronizedValueKeys) {
-      await _entryValuesStore.PurgeAsync(key, cancellationToken: cancellation).ConfigureAwait(continueOnCapturedContext: false);
-    }
-
-    foreach (var key in desynchronizedMetadataKeys) {
-      await _entryMetadataStore.PurgeAsync(key, cancellationToken: cancellation).ConfigureAwait(continueOnCapturedContext: false);
-    }
-  }
-
-  private async Task<(IReadOnlyList<string> desynchronizedValueKeys, IReadOnlyList<string> desynchronizedMetadataKeys)>
-    GetDesynchronizedKeys(CancellationToken cancellation) {
-    var entryValueKeys = await _entryValuesStore.GetKeysAsync(cancellationToken: cancellation)
-      .ToListAsync(cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    var entryMetadataKeys = await _entryMetadataStore.GetKeysAsync(cancellationToken: cancellation)
-      .ToListAsync(cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    return (desynchronizedValueKeys: entryValueKeys.Except(entryMetadataKeys).ToArray(),
-      desynchronizedMetadataKeys: entryMetadataKeys.Except(entryValueKeys).ToArray());
   }
 
   private readonly INatsKVStore _entryValuesStore;
   private readonly TimeProvider _timeProvider;
   private readonly INatsKVStore _entryMetadataStore;
-  private uint _invalidationCount;
-  private readonly uint _desynchronizedEntriesPurgingFactor;
+  private readonly INatsSerializer<CacheEntryExpiry> _expirySerializer;
 }

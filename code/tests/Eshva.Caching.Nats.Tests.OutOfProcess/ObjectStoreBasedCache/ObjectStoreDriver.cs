@@ -23,7 +23,7 @@ public sealed class ObjectStoreDriver : ICacheStorageDriver {
     };
 
     await _bucket.PutAsync(metadataAccessor.ObjectMetadata, new MemoryStream(value));
-    _logger.WriteLine($"Put entry '{key}' that expires at {metadataAccessor.ExpiresAtUtc}");
+    _logger.WriteLine($"Put entry '{key}' that expires at {entryExpiry.ExpiresAtUtc}");
   }
 
   public async Task<bool> DoesExist(string key) {
