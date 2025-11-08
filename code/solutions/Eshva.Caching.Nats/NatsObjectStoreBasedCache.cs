@@ -10,7 +10,7 @@ namespace Eshva.Caching.Nats;
 [PublicAPI]
 public sealed class NatsObjectStoreBasedCache : BufferDistributedCache {
   /// <summary>
-  /// Initializes a new instance of a NATS object-store based distributed cache.
+  /// Initializes a new instance of a NATS object store based distributed cache.
   /// </summary>
   /// <param name="cacheDatastore">Cache datastore.</param>
   /// <param name="cacheInvalidation">Cache invalidation.</param>

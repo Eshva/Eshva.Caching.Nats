@@ -58,13 +58,13 @@ public class CommonCacheSteps {
   public void GivenDoubleMinutesPassed(double minutes) =>
     _cachesContext.TimeProvider.Advance(TimeSpan.FromMinutes(minutes));
 
-  [Then("'(.*)' entry is not present in the object-store bucket")]
+  [Then("'(.*)' entry is not present in the object store bucket")]
   public async Task ThenEntryIsNotPresentInTheObjectStoreBucket(string key) {
     var doesExist = await _cachesContext.Driver.DoesExist(key).ConfigureAwait(continueOnCapturedContext: false);
     doesExist.Should().BeFalse();
   }
 
-  [Then("'(.*)' entry is present in the object-store bucket")]
+  [Then("'(.*)' entry is present in the object store bucket")]
   public async Task ThenEntryIsPresentInTheObjectStoreBucket(string key) {
     var doesExist = await _cachesContext.Driver.DoesExist(key).ConfigureAwait(continueOnCapturedContext: false);
     doesExist.Should().BeTrue();
@@ -78,7 +78,7 @@ public class CommonCacheSteps {
   public void GivenDefaultSlidingExpirationIntervalMinutes(int minutes) =>
     _cachesContext.DefaultSlidingExpirationInterval = TimeSpan.FromMinutes(minutes);
 
-  [Given("object-store based cache")]
+  [Given("object store based cache")]
   public void GivenObjectStoreBasedCache() =>
     _cachesContext.CreateObjectStoreDriver();
 
@@ -96,7 +96,7 @@ public class CommonCacheSteps {
     entryExpiry.ExpiresAtUtc.Should().Be(_cachesContext.Today.Add(timeOfDay));
   }
 
-  [Given("object with key '(.*)' removed from object-store bucket")]
+  [Given("object with key '(.*)' removed from object store bucket")]
   public async Task GivenObjectWithKeyRemovedFromObjectStoreBucket(string key) =>
     await _cachesContext.Driver.Remove(key).ConfigureAwait(continueOnCapturedContext: false);
 

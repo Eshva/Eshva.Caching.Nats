@@ -8,7 +8,7 @@ using NATS.Client.ObjectStore.Models;
 namespace Eshva.Caching.Nats.Tests.Tools;
 
 /// <summary>
-/// Corrupts metadata of an object-store entry to support tests.
+/// Corrupts metadata of an object store entry to support tests.
 /// </summary>
 /// <remarks>
 /// <see cref="INatsObjStore.UpdateMetaAsync"/> doesn't allow to corrupt metadata of an object in store, but it's necessary

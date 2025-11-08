@@ -1,6 +1,6 @@
 ﻿@out-of-process
 Feature: Refresh entry in key-value store based cache
-Those out of process tests work with the same NATS object-store bucket. They will interfere with cache entry names and
+Those out of process tests work with the same NATS object store bucket. They will interfere with cache entry names and
 purging expired entries. This is the reason why they can not be run in parallel.
 
   Background:
@@ -14,15 +14,15 @@ purging expired entries. This is the reason why they can not be run in parallel.
   Scenario: 01. Refresh existing entry that should not be expired yet asynchronously
     Given time passed by 2 minutes
     When I refresh 'will-be-refreshed' cache entry asynchronously
-    Then 'will-be-refreshed' entry is present in the object-store bucket
+    Then 'will-be-refreshed' entry is present in the object store bucket
     And 'will-be-refreshed' entry should be expired today at 00:05
 
   Scenario: 02. Refresh existing entry that should not be expired yet synchronously
     Given time passed by 2 minutes
     When I refresh 'will-be-refreshed' cache entry synchronously
-    Then 'will-be-refreshed' entry is present in the object-store bucket
+    Then 'will-be-refreshed' entry is present in the object store bucket
     And 'will-be-refreshed' entry should be expired today at 00:05
-    And 'will-be-removed' entry is not present in the object-store bucket
+    And 'will-be-removed' entry is not present in the object store bucket
 
   Scenario: 03. Refresh asynchronously missed entry should report an error
     When I refresh 'missing' cache entry asynchronously
@@ -33,11 +33,11 @@ purging expired entries. This is the reason why they can not be run in parallel.
     Then invalid operation exception should be reported
 
   Scenario: 05. Refresh asynchronously already deleted entry should report an error
-    Given object with key 'will-be-removed' removed from object-store bucket
+    Given object with key 'will-be-removed' removed from object store bucket
     When I refresh 'will-be-removed' cache entry asynchronously
     Then invalid operation exception should be reported
 
   Scenario: 06. Refresh synchronously already deleted entry should report an error
-    Given object with key 'will-be-removed' removed from object-store bucket
+    Given object with key 'will-be-removed' removed from object store bucket
     When I refresh 'will-be-removed' cache entry synchronously
     Then invalid operation exception should be reported

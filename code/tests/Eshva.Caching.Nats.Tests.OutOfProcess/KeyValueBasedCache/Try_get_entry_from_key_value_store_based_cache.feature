@@ -1,6 +1,6 @@
 ﻿@out-of-process
 Feature: Try get entry from key-value store based cache
-Those out of process tests work with the same NATS object-store bucket. They will interfere with cache entry names and
+Those out of process tests work with the same NATS object store bucket. They will interfere with cache entry names and
 purging expired entries. This is the reason why they can not be run in parallel.
 
   Background:
@@ -32,22 +32,22 @@ purging expired entries. This is the reason why they can not be run in parallel.
     When I try get 'will-be-gotten' cache entry asynchronously
     Then cache entry successfully read
     And cache invalidation done
-    And 'will-be-gotten' entry is present in the object-store bucket
-    And 'will-be-removed' entry is not present in the object-store bucket
+    And 'will-be-gotten' entry is present in the object store bucket
+    And 'will-be-removed' entry is not present in the object store bucket
 
   Scenario: 05. Get cache entry operation does not trigger purging expired entries if its interval has not passed
     Given time passed by 1,5 minutes
     When I try get 'will-be-gotten' cache entry asynchronously
     Then cache entry successfully read
     And cache invalidation not started
-    And 'will-be-gotten' entry is present in the object-store bucket
-    And 'will-be-removed' entry is present in the object-store bucket
+    And 'will-be-gotten' entry is present in the object store bucket
+    And 'will-be-removed' entry is present in the object store bucket
 
   Scenario: 06. Expiration should be postponed for gotten entry
     Given time passed by 2,5 minutes
     When I try get 'will-be-gotten' cache entry asynchronously
     Then cache entry successfully read
     And cache invalidation done
-    And 'will-be-gotten' entry is present in the object-store bucket
+    And 'will-be-gotten' entry is present in the object store bucket
     And 'will-be-gotten' entry should be expired today at 00:05:30
-    And 'will-be-removed' entry is not present in the object-store bucket
+    And 'will-be-removed' entry is not present in the object store bucket

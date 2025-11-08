@@ -9,9 +9,9 @@ namespace Eshva.Caching.Nats;
 /// </summary>
 public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidation {
   /// <summary>
-  /// Initializes a new instance of expired entries purger for NATS object-store based cache.
+  /// Initializes a new instance of expired entries purger for NATS object store based cache.
   /// </summary>
-  /// <param name="cacheBucket">NATS object-store cache bucket.</param>
+  /// <param name="cacheBucket">NATS object store cache bucket.</param>
   /// <param name="expiredEntriesPurgingInterval">Expired entries purging interval.</param>
   /// <param name="expiryCalculator">Cache entry expiry calculator.</param>
   /// <param name="timeProvider">Time provider.</param>
