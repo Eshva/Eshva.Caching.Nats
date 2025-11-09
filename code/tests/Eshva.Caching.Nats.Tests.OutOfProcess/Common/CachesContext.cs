@@ -76,7 +76,7 @@ public class CachesContext {
 
   public void CreateKeyValueStoreDriver() {
     var expiryCalculator = new CacheEntryExpiryCalculator(DefaultSlidingExpirationInterval, TimeProvider);
-    var expirySerializer = new CacheEntryExpiryJsonSerializer();
+    var expirySerializer = new CacheEntryExpiryBinarySerializer();
     var cacheInvalidation = new KeyValueBasedCacheInvalidation(
       EntryValueKeyValueStore,
       EntryMetadataKeyValueStore,

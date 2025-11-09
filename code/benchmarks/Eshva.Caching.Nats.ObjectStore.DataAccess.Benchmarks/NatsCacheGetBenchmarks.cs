@@ -117,7 +117,7 @@ public class NatsCacheGetBenchmarks {
     metadataStore.PutAsync(
         EntryName,
         new CacheEntryExpiry(DateTimeOffset.Now.AddDays(days: 1), AbsoluteExpiryAtUtc: null, TimeSpan.FromDays(days: 1)),
-        new CacheEntryExpiryJsonSerializer())
+        new CacheEntryExpiryBinarySerializer())
       .AsTask()
       .GetAwaiter()
       .GetResult();
@@ -159,7 +159,7 @@ public class NatsCacheGetBenchmarks {
     var metadataStore = await natsClient.CreateKeyValueStoreContext().CreateStoreAsync(MetadataStoreName);
     var valueStore = await natsClient.CreateKeyValueStoreContext().CreateStoreAsync(ValueStoreName);
     var expiryCalculator = new CacheEntryExpiryCalculator(TimeSpan.FromMinutes(minutes: 1), TimeProvider.System);
-    var entryExpirySerializer = new CacheEntryExpiryJsonSerializer();
+    var entryExpirySerializer = new CacheEntryExpiryBinarySerializer();
     var cacheDatastore = new KeyValueBasedDatastore(
       valueStore,
       metadataStore,

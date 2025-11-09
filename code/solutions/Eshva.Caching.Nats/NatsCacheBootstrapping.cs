@@ -173,7 +173,7 @@ public static class NatsCacheBootstrapping {
     var metadataStore = keyValueStoreContext.CreateStoreAsync(settings.MetadataStore).AsTask().GetAwaiter().GetResult();
     var timeProvider = diContainer.GetRequiredService<TimeProvider>();
     var expiryCalculator = new CacheEntryExpiryCalculator(settings.DefaultSlidingExpirationInterval, timeProvider);
-    var expirySerializer = new CacheEntryExpiryJsonSerializer();
+    var expirySerializer = new CacheEntryExpiryBinarySerializer();
     var datastore = new KeyValueBasedDatastore(
       valueStore,
       metadataStore,

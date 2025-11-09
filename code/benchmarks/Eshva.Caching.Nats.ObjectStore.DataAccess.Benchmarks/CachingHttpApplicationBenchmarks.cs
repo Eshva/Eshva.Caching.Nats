@@ -113,7 +113,7 @@ public class CachingHttpApplicationBenchmarks {
     metadataStore.PutAsync(
         EntryName,
         new CacheEntryExpiry(DateTimeOffset.Now.AddDays(days: 1), AbsoluteExpiryAtUtc: null, TimeSpan.FromDays(days: 1)),
-        new CacheEntryExpiryJsonSerializer())
+        new CacheEntryExpiryBinarySerializer())
       .AsTask()
       .GetAwaiter()
       .GetResult();

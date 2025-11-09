@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using Eshva.Caching.Nats.Tests.InProcess.Common;
+﻿using Eshva.Caching.Nats.Tests.InProcess.Common;
 using FluentAssertions;
 using NATS.Client.ObjectStore.Models;
 using Reqnroll;
@@ -34,16 +33,16 @@ public class ObjectMetadataAccessorSteps {
     CreateAccessor();
 
   [When("I set expires at UTC of accessor to '(.*)'")]
-  public void WhenISetExpiresAtUtcOfAccessorTo(string expiresAtUtc) =>
-    _sut.ExpiresAtUtc = ParseDateTimeOffset(expiresAtUtc);
+  public void WhenISetExpiresAtUtcOfAccessorTo(DateTimeOffset expiresAtUtc) =>
+    _sut.ExpiresAtUtc = expiresAtUtc;
 
   [When("I set absolute expiry at UTC of accessor to '(.*)'")]
-  public void WhenISetAbsoluteExpiryAtUtcOfAccessorTo(string absoluteExpiryAtUtc) =>
-    _sut.AbsoluteExpiryAtUtc = !absoluteExpiryAtUtc.Equals("null") ? ParseDateTimeOffset(absoluteExpiryAtUtc) : null;
+  public void WhenISetAbsoluteExpiryAtUtcOfAccessorTo(DateTimeOffset? absoluteExpiryAtUtc) =>
+    _sut.AbsoluteExpiryAtUtc = absoluteExpiryAtUtc;
 
   [When("I set sliding expiry interval of accessor to '(.*)'")]
-  public void WhenISetSlidingExpiryIntervalOfAccessorTo(string slidingExpiryInterval) =>
-    _sut.SlidingExpiryInterval = !slidingExpiryInterval.Equals("null") ? TimeSpan.Parse(slidingExpiryInterval) : null;
+  public void WhenISetSlidingExpiryIntervalOfAccessorTo(TimeSpan? slidingExpiryInterval) =>
+    _sut.SlidingExpiryInterval = slidingExpiryInterval;
 
   [Then("object metadata of accessor equals one used in constructor")]
   public void ThenObjectMetadataOfAccessorEqualsOneUsedInConstructor() =>
@@ -66,12 +65,12 @@ public class ObjectMetadataAccessorSteps {
     _objectMetadata.Metadata![key] = !value.Equals("null") ? value : null!;
 
   [When("I get expires at UTC of accessor")]
-  public void WhenIGetExpiresAtUtcOfAccessor() => _expiresAtUtc =
-    _sut.ExpiresAtUtc;
+  public void WhenIGetExpiresAtUtcOfAccessor() =>
+    _expiresAtUtc = _sut.ExpiresAtUtc;
 
   [Then("gotten expires at UTC should be set to '(.*)'")]
-  public void ThenGottenExpiresAtUtcShouldBeSetTo(string expiresAtUtc) =>
-    _expiresAtUtc.Should().Be(ParseDateTimeOffset(expiresAtUtc));
+  public void ThenGottenExpiresAtUtcShouldBeSetTo(DateTimeOffset expiresAtUtc) =>
+    _expiresAtUtc.Should().Be(expiresAtUtc);
 
   [Given("metadata dictionary '(.*)' entry missing")]
   public void GivenMetadataDictionaryEntryMissing(string key) =>
@@ -86,27 +85,16 @@ public class ObjectMetadataAccessorSteps {
     _absoluteExpiryAtUtc = _sut.AbsoluteExpiryAtUtc;
 
   [When("I get sliding expiry interval of accessor")]
-  public void WhenIGetSlidingExpiryIntervalOfAccessor() => _slidingExpiryInterval = _sut.SlidingExpiryInterval;
+  public void WhenIGetSlidingExpiryIntervalOfAccessor() =>
+    _slidingExpiryInterval = _sut.SlidingExpiryInterval;
 
   [Then("gotten absolute expiry at UTC should be set to '(.*)'")]
-  public void ThenGottenAbsoluteExpiryAtUtcShouldBeSetTo(string absoluteExpiryAtUtc) {
-    if (absoluteExpiryAtUtc.Equals("null", StringComparison.InvariantCultureIgnoreCase)) {
-      _absoluteExpiryAtUtc.Should().BeNull();
-      return;
-    }
-
-    _absoluteExpiryAtUtc.Should().Be(ParseDateTimeOffset(absoluteExpiryAtUtc));
-  }
+  public void ThenGottenAbsoluteExpiryAtUtcShouldBeSetTo(DateTimeOffset? absoluteExpiryAtUtc) =>
+    _absoluteExpiryAtUtc.Should().Be(absoluteExpiryAtUtc);
 
   [Then("gotten sliding expiry interval should be set to '(.*)'")]
-  public void ThenGottenSlidingExpiryIntervalShouldBeSetTo(string slidingExpiryInterval) {
-    if (slidingExpiryInterval.Equals("null", StringComparison.InvariantCultureIgnoreCase)) {
-      _slidingExpiryInterval.Should().BeNull();
-      return;
-    }
-
-    _slidingExpiryInterval.Should().Be(TimeSpan.Parse(slidingExpiryInterval));
-  }
+  public void ThenGottenSlidingExpiryIntervalShouldBeSetTo(TimeSpan? slidingExpiryInterval) =>
+    _slidingExpiryInterval.Should().Be(slidingExpiryInterval);
 
   private void CreateAccessor() {
     try {
@@ -117,16 +105,6 @@ public class ObjectMetadataAccessorSteps {
     }
   }
 
-  private DateTimeOffset ParseDateTimeOffset(string value) {
-    if (value.Equals("never expires", StringComparison.InvariantCultureIgnoreCase)) return DateTimeOffset.MaxValue;
-
-    return DateTimeOffset.ParseExact(
-      value,
-      DateTimeFormat,
-      formatProvider: null,
-      DateTimeStyles.AssumeUniversal);
-  }
-
   private readonly ErrorHandlingContext _errorHandlingContext;
   private ObjectMetadata _objectMetadata = null!;
   private ObjectMetadataAccessor _sut = null!;
@@ -134,5 +112,4 @@ public class ObjectMetadataAccessorSteps {
   private DateTimeOffset _expiresAtUtc;
   private DateTimeOffset? _absoluteExpiryAtUtc;
   private TimeSpan? _slidingExpiryInterval;
-  private const string DateTimeFormat = "dd.MM.yyyy HH:mm:ss";
 }
