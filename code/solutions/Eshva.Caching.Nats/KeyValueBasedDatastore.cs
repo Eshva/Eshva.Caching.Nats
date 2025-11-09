@@ -10,8 +10,10 @@ namespace Eshva.Caching.Nats;
 /// NATS key-value store based cache datastore.
 /// </summary>
 /// <remarks>
-/// NATS key-value store doesn't allow to add metadata to keys. To keep cache entry expiry metadata an additional key-value store used.
-/// In theory there could be inconsistency between keys in value-store and metadata-store that can produce garbage. As a solution for
+/// NATS key-value store doesn't allow to add metadata to keys. To keep cache entry expiry metadata an additional key-value
+/// store used.
+/// In theory there could be inconsistency between keys in value-store and metadata-store that can produce garbage. As a
+/// solution for
 /// this problem in the future we can add a long TTL to each key, but currently it isn't implemented.
 /// </remarks>
 public sealed class KeyValueBasedDatastore : ICacheDatastore {
