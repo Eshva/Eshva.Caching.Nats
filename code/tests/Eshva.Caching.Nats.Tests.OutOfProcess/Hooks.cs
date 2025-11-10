@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
-using Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 using Eshva.Common.Testing;
+using Eshva.Testing.OutOfProcessDeployments.Nats;
 using Reqnroll;
 using Xunit.Abstractions;
 
@@ -15,18 +15,13 @@ public sealed class Hooks {
 
     _hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
     _hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(_hostNetworkClientPort + 1));
-    _deployment = NatsBasedCachingTestsDeployment
+    _deployment = NatsServerDeployment
       .Named($"NatsCache out of process tests with suffix '{_suffix}'")
-      .WithNatsServerInContainer(
-        NatsServerDeployment
-          .Named($"NatsCache out of process tests with suffix '{_suffix}'")
-          .FromImageTag("nats:2.11")
-          .WithContainerName($"nats-cache-tests-{_suffix}")
-          .WithHostNetworkClientPort(_hostNetworkClientPort)
-          .WithHostNetworkHttpManagementPort(_hostNetworkHttpManagementPort)
-          .EnabledJetStream()
-          .EnableDebugOutput()
-          .EnableTraceOutput());
+      .FromImageTag("nats:2.11")
+      .WithContainerName($"nats-cache-tests-{_suffix}")
+      .WithHostNetworkClientPort(_hostNetworkClientPort)
+      .WithHostNetworkHttpManagementPort(_hostNetworkHttpManagementPort)
+      .EnabledJetStream();
     await _deployment.Build();
     await _deployment.Start();
   }
@@ -46,12 +41,12 @@ public sealed class Hooks {
     }
 
     var objectStoreBucketName = Regex.Replace(scenarioContext.ScenarioInfo.Title, "[^a-zA-Z0-9]", "-");
-    var objectStore = await _deployment.NatsServer.ObjectStoreContext.CreateObjectStoreAsync(objectStoreBucketName);
+    var objectStore = await _deployment.ObjectStoreContext.CreateObjectStoreAsync(objectStoreBucketName);
 
     var entryValueKeyValueBucketName = Regex.Replace($"{scenarioContext.ScenarioInfo.Title}-Values", "[^a-zA-Z0-9]", "-");
     var entryMetadataKeyValueBucketName = Regex.Replace($"{scenarioContext.ScenarioInfo.Title}-Metadata", "[^a-zA-Z0-9]", "-");
-    var entryValueKeyValueStore = await _deployment.NatsServer.KeyValueContext.CreateStoreAsync(entryValueKeyValueBucketName);
-    var entryMetadataKeyValueStore = await _deployment.NatsServer.KeyValueContext.CreateStoreAsync(entryMetadataKeyValueBucketName);
+    var entryValueKeyValueStore = await _deployment.KeyValueContext.CreateStoreAsync(entryValueKeyValueBucketName);
+    var entryMetadataKeyValueStore = await _deployment.KeyValueContext.CreateStoreAsync(entryMetadataKeyValueBucketName);
 
     var cachesContext = new CachesContext(
       objectStore,
@@ -61,7 +56,7 @@ public sealed class Hooks {
     scenarioContext.ScenarioContainer.RegisterInstanceAs(cachesContext);
   }
 
-  private static NatsBasedCachingTestsDeployment? _deployment;
+  private static NatsServerDeployment? _deployment;
   private static ushort _hostNetworkHttpManagementPort;
   private static ushort _hostNetworkClientPort;
   private static string _suffix = string.Empty;

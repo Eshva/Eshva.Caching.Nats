@@ -8,9 +8,9 @@ using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
 using Eshva.Caching.Abstractions;
-using Eshva.Caching.Nats.Tests.OutOfProcessDeployments;
 using Eshva.Caching.Nats.TestWebApp;
 using Eshva.Common.Testing;
+using Eshva.Testing.OutOfProcessDeployments.Nats;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Perfolizer.Horology;
@@ -81,16 +81,13 @@ public class CachingHttpApplicationBenchmarks {
   public async Task SetupDeployment() {
     var hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
     var hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(hostNetworkClientPort + 1));
-    _deployment = NatsBasedCachingTestsDeployment
+    _deployment = NatsServerDeployment
       .Named($"{nameof(CachingHttpApplicationBenchmarks)}-{EntrySize}")
-      .WithNatsServerInContainer(
-        NatsServerDeployment
-          .Named($"{nameof(CachingHttpApplicationBenchmarks)}-{EntrySize}")
-          .FromImageTag("nats:2.11")
-          .WithContainerName($"caching-http-application-benchmarks-{EntrySize}")
-          .WithHostNetworkClientPort(hostNetworkClientPort)
-          .WithHostNetworkHttpManagementPort(hostNetworkHttpManagementPort)
-          .EnabledJetStream());
+      .FromImageTag("nats:2.11")
+      .WithContainerName($"caching-http-application-benchmarks-{EntrySize}")
+      .WithHostNetworkClientPort(hostNetworkClientPort)
+      .WithHostNetworkHttpManagementPort(hostNetworkHttpManagementPort)
+      .EnabledJetStream();
     await _deployment.Build();
     await _deployment.Start();
 
@@ -104,11 +101,11 @@ public class CachingHttpApplicationBenchmarks {
     Random.Shared.NextBytes(image);
     _imageHash = SHA256.HashData(image);
 
-    var bucket = _deployment!.NatsServer.ObjectStoreContext.CreateObjectStoreAsync(BucketName).AsTask().GetAwaiter().GetResult();
+    var bucket = _deployment!.ObjectStoreContext.CreateObjectStoreAsync(BucketName).AsTask().GetAwaiter().GetResult();
     bucket.PutAsync(EntryName, image).AsTask().GetAwaiter().GetResult();
 
-    var valueStore = _deployment!.NatsServer.KeyValueContext.CreateStoreAsync(ValueStoreName).AsTask().GetAwaiter().GetResult();
-    var metadataStore = _deployment!.NatsServer.KeyValueContext.CreateStoreAsync(MetadataStoreName).AsTask().GetAwaiter().GetResult();
+    var valueStore = _deployment!.KeyValueContext.CreateStoreAsync(ValueStoreName).AsTask().GetAwaiter().GetResult();
+    var metadataStore = _deployment!.KeyValueContext.CreateStoreAsync(MetadataStoreName).AsTask().GetAwaiter().GetResult();
     valueStore.PutAsync(EntryName, image).AsTask().GetAwaiter().GetResult();
     metadataStore.PutAsync(
         EntryName,
@@ -138,18 +135,18 @@ public class CachingHttpApplicationBenchmarks {
   }
 
   private async Task CreateCacheBucket() =>
-    await _deployment!.NatsServer.ObjectStoreContext.CreateObjectStoreAsync(BucketName);
+    await _deployment!.ObjectStoreContext.CreateObjectStoreAsync(BucketName);
 
   private void SetupWebAppTestee() {
     Environment.SetEnvironmentVariable(
       "BENCHMARKS_CacheNatsServer__NatsServerConnectionString",
-      _deployment!.NatsServer.Connection.Opts.Url);
+      _deployment!.Connection.Opts.Url);
 
     _webAppFactory = new WebApplicationFactory<AssemblyTag>();
     _webAppClient = _webAppFactory.CreateClient();
   }
 
-  private NatsBasedCachingTestsDeployment? _deployment;
+  private NatsServerDeployment? _deployment;
   private byte[] _imageHash = [];
   private HttpClient? _webAppClient;
   private WebApplicationFactory<AssemblyTag>? _webAppFactory;

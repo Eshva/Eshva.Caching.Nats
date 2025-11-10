@@ -7,11 +7,6 @@
       Type="Classic C#"/>
     <Project Path="benchmarks/Eshva.Caching.Nats.TestWebApp/Eshva.Caching.Nats.TestWebApp.csproj" Type="Classic C#"/>
   </Folder>
-  <Folder Name="/common/">
-    <Project
-      Path="solutions/Eshva.Caching.Nats.Tests.OutOfProcessDeployments/Eshva.Caching.Nats.Tests.OutOfProcessDeployments.csproj"
-      Type="Classic C#"/>
-  </Folder>
   <Folder Name="/shared/">
     <File Path="../.gitignore"/>
     <File Path="../.github/workflows/ci.yaml"/>
@@ -28,7 +23,7 @@
     <File Path="nuget.config"/>
   </Folder>
   <Project Path="solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj"/>
+  <Project Path="tests/Eshva.Caching.Nats.Tests.InProcess/Eshva.Caching.Nats.Tests.InProcess.csproj" Type="Classic C#"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.OutOfProcess/Eshva.Caching.Nats.Tests.OutOfProcess.csproj"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.Tools/Eshva.Caching.Nats.Tests.Tools.csproj"/>
-  <Project Path="tests/Eshva.Caching.Nats.Tests.InProcess/Eshva.Caching.Nats.Tests.InProcess.csproj" Type="Classic C#"/>
 </Solution>
