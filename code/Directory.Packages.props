@@ -8,7 +8,7 @@
     <PackageVersion Include="CommunityToolkit.HighPerformance" Version="8.4.0"/>
     <PackageVersion Include="Eshva.Caching.Abstractions" Version="1.0.1"/>
     <PackageVersion Include="Eshva.Common.Testing" Version="1.2.0"/>
-    <PackageVersion Include="FluentAssertions" Version="8.8.0"/>
+    <PackageVersion Include="FluentAssertions" Version="6.12.2"/>
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2"/>
     <PackageVersion Include="Meziantou.Extensions.Logging.Xunit" Version="1.0.19"/>
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.10"/>
