@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Eshva.Common.Testing"/>
+    <PackageReference Include="Eshva.Testing.Reqnroll"/>
     <PackageReference Include="Meziantou.Extensions.Logging.Xunit"/>
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>

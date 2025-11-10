@@ -17,4 +17,4 @@
   Scenario: 03. Should report an error if object metadata not specified
     Given object metadata not specified
     When I construct object metadata accessor with defined arguments
-    Then argument not specified exception should be reported
+    Then argument not specified error should be reported

@@ -42,9 +42,9 @@ purging expired entries. This is the reason why they can not be run in parallel.
   Scenario: 05. Remove asychronously cache entry with correpted metadata should report an errors
     Given metadata of cache entry with key 'existing 1 minutes' corrupted
     When I remove 'existing 1 minutes' cache entry asynchronously
-    Then invalid operation exception should be reported
+    Then invalid operation error should be reported
 
   Scenario: 06. Remove sychronously cache entry with correpted metadata should report an errors
     Given metadata of cache entry with key 'existing 1 minutes' corrupted
     When I remove 'existing 1 minutes' cache entry synchronously
-    Then invalid operation exception should be reported
+    Then invalid operation error should be reported

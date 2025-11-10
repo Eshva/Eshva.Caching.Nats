@@ -7,5 +7,10 @@
   },
   "trace": {
     "coloredOutput": true
-  }
+  },
+  "bindingAssemblies": [
+    {
+      "assembly": "Eshva.Testing.Reqnroll"
+    }
+  ]
 }

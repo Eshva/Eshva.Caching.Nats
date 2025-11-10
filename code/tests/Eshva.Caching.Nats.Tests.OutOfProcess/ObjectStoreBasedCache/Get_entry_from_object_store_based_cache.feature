@@ -26,12 +26,12 @@ purging expired entries. This is the reason why they can not be run in parallel.
   Scenario: 04. Get cache entry with corrupted metadata asynchronously should get error
     Given metadata of cache entry with key 'will be gotten' corrupted
     When I get 'will be gotten' cache entry asynchronously
-    Then invalid operation exception should be reported
+    Then invalid operation error should be reported
 
   Scenario: 05. Get cache entry with corrupted metadata synchronously should get error
     Given metadata of cache entry with key 'will be gotten' corrupted
     When I get 'will be gotten' cache entry synchronously
-    Then invalid operation exception should be reported
+    Then invalid operation error should be reported
 
   Scenario: 06. Get cache entry operation triggers purging expired entries if its interval has passed
     Given time passed by 2,5 minutes

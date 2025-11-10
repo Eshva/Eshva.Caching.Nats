@@ -18,6 +18,10 @@
     <File Path="../.github/workflows/release.yaml"/>
     <File Path="../readme.md"/>
   </Folder>
+  <Folder Name="/shared/ci/">
+    <File Path="../.github/workflows/ci.yaml"/>
+    <File Path="../.github/workflows/release.yaml"/>
+  </Folder>
   <Folder Name="/shared/dotnet-settings/">
     <File Path="Directory.Build.props"/>
     <File Path="Directory.Packages.props"/>
@@ -26,5 +30,5 @@
   <Project Path="solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.OutOfProcess/Eshva.Caching.Nats.Tests.OutOfProcess.csproj"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.Tools/Eshva.Caching.Nats.Tests.Tools.csproj"/>
-  <Project Path="tests\Eshva.Caching.Nats.Tests.InProcess\Eshva.Caching.Nats.Tests.InProcess.csproj" Type="Classic C#"/>
+  <Project Path="tests/Eshva.Caching.Nats.Tests.InProcess/Eshva.Caching.Nats.Tests.InProcess.csproj" Type="Classic C#"/>
 </Solution>

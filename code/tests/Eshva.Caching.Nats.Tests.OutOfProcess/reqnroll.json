@@ -10,5 +10,10 @@
   },
   "generator": {
     "addNonParallelizableMarkerForTags": ["out-of-process"]
-  }
+  },
+  "bindingAssemblies": [
+    {
+      "assembly": "Eshva.Testing.Reqnroll"
+    }
+  ]
 }

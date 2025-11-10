@@ -1,4 +1,4 @@
-﻿using Eshva.Caching.Nats.Tests.InProcess.Common;
+﻿using Eshva.Testing.Reqnroll.Contexts;
 using FluentAssertions;
 using NATS.Client.ObjectStore.Models;
 using Reqnroll;

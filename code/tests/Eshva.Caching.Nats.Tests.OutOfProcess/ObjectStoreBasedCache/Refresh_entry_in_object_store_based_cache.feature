@@ -26,18 +26,18 @@ purging expired entries. This is the reason why they can not be run in parallel.
 
   Scenario: 03. Refresh asynchronously missed entry should report an error
     When I refresh 'missing' cache entry asynchronously
-    Then invalid operation exception should be reported
+    Then invalid operation error should be reported
 
   Scenario: 04. Refresh asynchronously missed entry should report an error
     When I refresh 'missing' cache entry synchronously
-    Then invalid operation exception should be reported
+    Then invalid operation error should be reported
 
   Scenario: 05. Refresh asynchronously already deleted entry should report an error
     Given object with key 'will be removed' removed from object store bucket
     When I refresh 'will be removed' cache entry asynchronously
-    Then invalid operation exception should be reported
+    Then invalid operation error should be reported
 
   Scenario: 06. Refresh synchronously already deleted entry should report an error
     Given object with key 'will be removed' removed from object store bucket
     When I refresh 'will be removed' cache entry synchronously
-    Then invalid operation exception should be reported
+    Then invalid operation error should be reported
