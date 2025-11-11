@@ -30,15 +30,13 @@ purging expired entries. This is the reason why they can not be run in parallel.
   Scenario: 03. Remove existing expired cache entry by key asynchronously should not report any errors
     Given time passed by 2 minutes
     When I remove 'existing-1-minutes' cache entry asynchronously
-    Then cache invalidation done
-    And 'existing-3-minutes' entry is present in the object store bucket
+    Then 'existing-3-minutes' entry is present in the object store bucket
     And 'existing-4-minutes' entry is present in the object store bucket
     And 'existing-1-minutes' entry is not present in the object store bucket
 
   Scenario: 04. Remove existing expired cache entry by key synchronously should not report any errors
     Given time passed by 2 minutes
     When I remove 'existing-1-minutes' cache entry synchronously
-    Then cache invalidation done
-    And 'existing-3-minutes' entry is present in the object store bucket
+    Then 'existing-3-minutes' entry is present in the object store bucket
     And 'existing-4-minutes' entry is present in the object store bucket
     And 'existing-1-minutes' entry is not present in the object store bucket

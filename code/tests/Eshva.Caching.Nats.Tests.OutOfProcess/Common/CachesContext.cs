@@ -13,12 +13,10 @@ namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 public class CachesContext {
   public CachesContext(
     INatsObjStore objectStore,
-    INatsKVStore entryValueKeyValueStore,
-    INatsKVStore entryMetadataKeyValueStore,
+    INatsKVStore entriesStore,
     ITestOutputHelper xUnitLogger) {
     Bucket = objectStore;
-    EntryValueKeyValueStore = entryValueKeyValueStore;
-    EntryMetadataKeyValueStore = entryMetadataKeyValueStore;
+    EntriesStore = entriesStore;
     var now = DateTimeOffset.UtcNow;
     Today = new DateTimeOffset(
       now.Year,
@@ -50,9 +48,7 @@ public class CachesContext {
 
   public ICacheStorageDriver Driver { get; private set; } = null!;
 
-  public INatsKVStore EntryValueKeyValueStore { get; }
-
-  public INatsKVStore EntryMetadataKeyValueStore { get; }
+  public INatsKVStore EntriesStore { get; }
 
   public void CreateObjectStoreDriver() {
     var expiryCalculator = new CacheEntryExpiryCalculator(DefaultSlidingExpirationInterval, TimeProvider);
@@ -65,7 +61,7 @@ public class CachesContext {
       XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
 
     var cacheDatastore = new ObjectStoreBasedDatastore(Bucket, expiryCalculator);
-    cacheInvalidation.CacheInvalidationCompleted += (_, _) => PurgingSignal.Set();
+    cacheInvalidation.CacheInvalidationCompleted += (_, _) => { PurgingSignal.Set(); };
 
     Cache = new NatsObjectStoreBasedCache(
       cacheDatastore,
@@ -78,8 +74,7 @@ public class CachesContext {
     var expiryCalculator = new CacheEntryExpiryCalculator(DefaultSlidingExpirationInterval, TimeProvider);
     var expirySerializer = new CacheEntryExpiryBinarySerializer();
     var cacheInvalidation = new KeyValueBasedCacheInvalidation(
-      EntryValueKeyValueStore,
-      EntryMetadataKeyValueStore,
+      EntriesStore,
       ExpiredEntriesPurgingInterval,
       expirySerializer,
       expiryCalculator,
@@ -87,19 +82,17 @@ public class CachesContext {
       XUnitLogger.CreateLogger<KeyValueBasedCacheInvalidation>(_xUnitLogger));
 
     var cacheDatastore = new KeyValueBasedDatastore(
-      EntryValueKeyValueStore,
-      EntryMetadataKeyValueStore,
+      EntriesStore,
       expirySerializer,
       expiryCalculator);
-    cacheInvalidation.CacheInvalidationCompleted += (_, _) => PurgingSignal.Set();
+    cacheInvalidation.CacheInvalidationCompleted += (_, _) => { PurgingSignal.Set(); };
 
     Cache = new NatsKeyValueStoreBasedCache(
       cacheDatastore,
       cacheInvalidation,
       XUnitLogger.CreateLogger<NatsKeyValueStoreBasedCache>(_xUnitLogger));
     Driver = new KeyValueStoreDriver(
-      EntryValueKeyValueStore,
-      EntryMetadataKeyValueStore,
+      EntriesStore,
       expirySerializer,
       _xUnitLogger);
   }

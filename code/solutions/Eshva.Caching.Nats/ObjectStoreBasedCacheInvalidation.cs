@@ -36,29 +36,26 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
 
   /// <inheritdoc/>
   protected override async Task<CacheInvalidationStatistics> DeleteExpiredCacheEntries(CancellationToken cancellation) {
-    Logger.LogDebug("Deleting expired entries started at {CurrentTime}", _timeProvider.GetUtcNow());
+    Logger.LogDebug("Purging expired entries started at {CurrentTime}", _timeProvider.GetUtcNow());
 
-    uint totalCount = 0;
-    uint purgedCount = 0;
-    await foreach (var entry in _cacheBucket.ListAsync(cancellationToken: cancellation).ConfigureAwait(continueOnCapturedContext: false)) {
-      totalCount++;
-      var expiresAtUtc = new ObjectMetadataAccessor(entry).ExpiresAtUtc;
-      if (!ExpiryCalculator.IsCacheEntryExpired(expiresAtUtc)) {
-        Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc} - keep it", entry.Name, expiresAtUtc);
-        continue;
-      }
+    var expiredEntries = await _cacheBucket.ListAsync(cancellationToken: cancellation)
+      .Where(entry => ExpiryCalculator.IsCacheEntryExpired(new ObjectMetadataAccessor(entry).ExpiresAtUtc))
+      .ToArrayAsync(cancellation)
+      .ConfigureAwait(continueOnCapturedContext: false);
 
-      purgedCount++;
-      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc} - purge it", entry.Name, expiresAtUtc);
-      await _cacheBucket.DeleteAsync(entry.Name, cancellation).ConfigureAwait(continueOnCapturedContext: false);
+    foreach (var expiredEntry in expiredEntries) {
+      var expiresAtUtc = new ObjectMetadataAccessor(expiredEntry).ExpiresAtUtc;
+      Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc} - purge it", expiredEntry.Name, expiresAtUtc);
+      await _cacheBucket.DeleteAsync(expiredEntry.Name, cancellation).ConfigureAwait(continueOnCapturedContext: false);
     }
 
+    var expiredCount = expiredEntries.Length;
     Logger.LogDebug(
-      "Deleting expired entries completed: total {TotalCount} entries scanned, purged {PurgedCount} entries",
-      totalCount,
-      purgedCount);
+      "Purging expired entries completed at {CurrentTime}. Purged {PurgedCount} entries",
+      _timeProvider.GetUtcNow(),
+      expiredCount);
 
-    return new CacheInvalidationStatistics(totalCount, purgedCount);
+    return new CacheInvalidationStatistics(TotalEntriesCount: 0, (uint)expiredCount);
   }
 
   private readonly INatsObjStore _cacheBucket;

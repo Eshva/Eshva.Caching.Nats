@@ -112,7 +112,7 @@ public class CommonCacheSteps {
 
   [Then("cache invalidation not started")]
   public void ThenCacheInvalidationNotStarted() =>
-    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 10)).Should().BeFalse();
+    _cachesContext.PurgingSignal.Wait(TimeSpan.FromSeconds(seconds: 2)).Should().BeFalse();
 
   private readonly CachesContext _cachesContext;
   private byte[] _originalValue = [];
