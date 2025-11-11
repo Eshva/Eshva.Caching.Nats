@@ -75,7 +75,7 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
       _timeProvider.GetUtcNow(),
       expiredCount);
 
-    return new CacheInvalidationStatistics(TotalEntriesCount: 0, (uint)expiredCount);
+    return new CacheInvalidationStatistics((uint)expiredCount);
   }
 
   private async Task<CacheEntryExpiry> GetEntryExpiry(CancellationToken cancellation, string key) =>

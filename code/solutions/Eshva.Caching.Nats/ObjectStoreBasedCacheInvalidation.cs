@@ -55,7 +55,7 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
       _timeProvider.GetUtcNow(),
       expiredCount);
 
-    return new CacheInvalidationStatistics(TotalEntriesCount: 0, (uint)expiredCount);
+    return new CacheInvalidationStatistics((uint)expiredCount);
   }
 
   private readonly INatsObjStore _cacheBucket;
