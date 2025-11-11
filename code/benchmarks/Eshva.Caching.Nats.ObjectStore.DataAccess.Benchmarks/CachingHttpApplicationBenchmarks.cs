@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
@@ -33,9 +34,10 @@ public class CachingHttpApplicationBenchmarks {
   public async Task<bool> ObjectStoreTryGetAsyncWithByteStream() {
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/object-store/try-get-async/{EntryName}");
-    if (ShouldCompareOriginalAndGottenData) {
+    if (ShouldSimulateDataReading) {
       var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
-      if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+      if (!response.IsSuccessStatusCode) throw new Exception($"response.StatusCode: {response.StatusCode}.");
+      if (!contentHash.SequenceEqual(_imageHash)) throw new Exception("Read data differed from original.");
     }
 
     return response.IsSuccessStatusCode;
@@ -45,9 +47,10 @@ public class CachingHttpApplicationBenchmarks {
   public async Task<bool> ObjectStoreGetAsyncWithByteStream() {
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/object-store/get-async/{EntryName}");
-    if (ShouldCompareOriginalAndGottenData) {
+    if (ShouldSimulateDataReading) {
       var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
-      if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+      if (!response.IsSuccessStatusCode) throw new Exception($"response.StatusCode: {response.StatusCode}.");
+      if (!contentHash.SequenceEqual(_imageHash)) throw new Exception("Read data differed from original.");
     }
 
     return response.IsSuccessStatusCode;
@@ -57,9 +60,10 @@ public class CachingHttpApplicationBenchmarks {
   public async Task<bool> TryGetAsyncWithByteStream1() {
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/key-value/try-get-async/{EntryName}");
-    if (ShouldCompareOriginalAndGottenData) {
+    if (ShouldSimulateDataReading) {
       var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
-      if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+      if (!response.IsSuccessStatusCode) throw new Exception($"response.StatusCode: {response.StatusCode}.");
+      if (!contentHash.SequenceEqual(_imageHash)) throw new Exception("Read data differed from original.");
     }
 
     return response.IsSuccessStatusCode;
@@ -69,9 +73,10 @@ public class CachingHttpApplicationBenchmarks {
   public async Task<bool> GetAsyncWithByteStream1() {
     Debug.Assert(_webAppClient != null, nameof(_webAppClient) + " != null");
     var response = await _webAppClient.GetAsync($"/key-value/get-async/{EntryName}");
-    if (ShouldCompareOriginalAndGottenData) {
+    if (ShouldSimulateDataReading) {
       var contentHash = await SHA256.HashDataAsync(await response.Content.ReadAsStreamAsync());
-      if (!response.IsSuccessStatusCode || !contentHash.SequenceEqual(_imageHash)) throw new Exception();
+      if (!response.IsSuccessStatusCode) throw new Exception($"response.StatusCode: {response.StatusCode}.");
+      if (!contentHash.SequenceEqual(_imageHash)) throw new Exception("Read data differed from original.");
     }
 
     return response.IsSuccessStatusCode;
@@ -91,7 +96,7 @@ public class CachingHttpApplicationBenchmarks {
     await _deployment.Build();
     await _deployment.Start();
 
-    await CreateCacheBucket();
+    // await CreateCacheBucket();
     SetupWebAppTestee();
   }
 
@@ -101,14 +106,13 @@ public class CachingHttpApplicationBenchmarks {
     Random.Shared.NextBytes(image);
     _imageHash = SHA256.HashData(image);
 
-    var bucket = _deployment!.ObjectStoreContext.CreateObjectStoreAsync(BucketName).AsTask().GetAwaiter().GetResult();
+    var bucket = _deployment!.ObjectStoreContext.CreateObjectStoreAsync(ObjectStoreBucketName).AsTask().GetAwaiter().GetResult();
     bucket.PutAsync(EntryName, image).AsTask().GetAwaiter().GetResult();
 
-    var valueStore = _deployment!.KeyValueContext.CreateStoreAsync(ValueStoreName).AsTask().GetAwaiter().GetResult();
-    var metadataStore = _deployment!.KeyValueContext.CreateStoreAsync(MetadataStoreName).AsTask().GetAwaiter().GetResult();
-    valueStore.PutAsync(EntryName, image).AsTask().GetAwaiter().GetResult();
-    metadataStore.PutAsync(
-        EntryName,
+    var entriesStore = _deployment!.KeyValueContext.CreateStoreAsync(KeyValueStoreBucketName).AsTask().GetAwaiter().GetResult();
+    entriesStore.PutAsync(EntryName, image).AsTask().GetAwaiter().GetResult();
+    entriesStore.PutAsync(
+        MakeMetadataKey(EntryName),
         new CacheEntryExpiry(DateTimeOffset.Now.AddDays(days: 1), AbsoluteExpiryAtUtc: null, TimeSpan.FromDays(days: 1)),
         new CacheEntryExpiryBinarySerializer())
       .AsTask()
@@ -134,8 +138,8 @@ public class CachingHttpApplicationBenchmarks {
     }
   }
 
-  private async Task CreateCacheBucket() =>
-    await _deployment!.ObjectStoreContext.CreateObjectStoreAsync(BucketName);
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private static string MakeMetadataKey(string key) => $"{key}{MetadataSuffix}";
 
   private void SetupWebAppTestee() {
     Environment.SetEnvironmentVariable(
@@ -150,12 +154,11 @@ public class CachingHttpApplicationBenchmarks {
   private byte[] _imageHash = [];
   private HttpClient? _webAppClient;
   private WebApplicationFactory<AssemblyTag>? _webAppFactory;
-
-  private const bool ShouldCompareOriginalAndGottenData = true;
-  private const string MetadataStoreName = "image-metadata";
-  private const string ValueStoreName = "image-values";
+  private const string MetadataSuffix = "-metadata";
+  private const bool ShouldSimulateDataReading = true;
+  private const string KeyValueStoreBucketName = "images-key-value";
   private const string EntryName = "benchmark-entry";
-  private const string BucketName = "images";
+  private const string ObjectStoreBucketName = "images-object";
 }
 
 public sealed class CachingHttpApplicationBenchmarksConfig : ManualConfig {

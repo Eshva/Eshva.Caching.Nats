@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Eshva.Caching.Abstractions;
 using NATS.Client.Core;
@@ -10,37 +11,33 @@ namespace Eshva.Caching.Nats;
 /// NATS key-value store based cache datastore.
 /// </summary>
 /// <remarks>
-/// NATS key-value store doesn't allow to add metadata to keys. To keep cache entry expiry metadata an additional key-value
-/// store used.
-/// In theory there could be inconsistency between keys in value-store and metadata-store that can produce garbage. As a
-/// solution for
-/// this problem in the future we can add a long TTL to each key, but currently it isn't implemented.
+/// NATS key-value store doesn't allow to add metadata to keys. To keep cache entry expiry metadata additional key is
+/// created. In theory there could be inconsistency between value and metadata keys that can produce garbage. As a
+/// solution for this problem in the future we can add a long TTL to each key, but currently it isn't implemented.
 /// </remarks>
 public sealed class KeyValueBasedDatastore : ICacheDatastore {
   /// <summary>
   /// Initializes a new instance of NATS key-value store based cache datastore.
   /// </summary>
-  /// <param name="entryValuesStore">Values key-value store.</param>
-  /// <param name="entryMetadataStore">Metadata key-value store.</param>
+  /// <param name="entriesStore">Entries key-value store.</param>
   /// <param name="expirySerializer">Cache entry expiry serializer.</param>
   /// <param name="expiryCalculator">Cache entry expiry calculator.</param>
   /// <exception cref="ArgumentNullException">
   /// Value of a required parameter not specified.
   /// </exception>
   public KeyValueBasedDatastore(
-    INatsKVStore entryValuesStore,
-    INatsKVStore entryMetadataStore,
+    INatsKVStore entriesStore,
     INatsSerializer<CacheEntryExpiry> expirySerializer,
     CacheEntryExpiryCalculator expiryCalculator) {
-    _entryValuesStore = entryValuesStore ?? throw new ArgumentNullException(nameof(entryValuesStore));
-    _entryMetadataStore = entryMetadataStore ?? throw new ArgumentNullException(nameof(entryMetadataStore));
+    _entriesStore = entriesStore ?? throw new ArgumentNullException(nameof(entriesStore));
     _expirySerializer = expirySerializer ?? throw new ArgumentNullException(nameof(expirySerializer));
     _expiryCalculator = expiryCalculator ?? throw new ArgumentNullException(nameof(expiryCalculator));
   }
 
   /// <inheritdoc/>
   public async Task<CacheEntryExpiry> GetEntryExpiry(string key, CancellationToken cancellation) {
-    var metadataStatus = await _entryMetadataStore.TryGetEntryAsync(key, serializer: _expirySerializer, cancellationToken: cancellation)
+    var metadataStatus = await _entriesStore
+      .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
       .ConfigureAwait(continueOnCapturedContext: false);
     return metadataStatus.Success
       ? metadataStatus.Value.Value
@@ -49,7 +46,8 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
 
   /// <inheritdoc/>
   public async Task RefreshEntry(string key, CacheEntryExpiry cacheEntryExpiry, CancellationToken cancellation) {
-    var metadataStatus = await _entryMetadataStore.TryGetEntryAsync(key, serializer: _expirySerializer, cancellationToken: cancellation)
+    var metadataStatus = await _entriesStore
+      .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
       .ConfigureAwait(continueOnCapturedContext: false);
     if (!metadataStatus.Success) {
       throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
@@ -61,8 +59,8 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
         metadataStatus.Value.Value.SlidingExpiryInterval)
     };
 
-    var valueStatus = await _entryMetadataStore.TryUpdateAsync(
-        key,
+    var valueStatus = await _entriesStore.TryUpdateAsync(
+        MakeMetadataKey(key),
         metadata,
         metadataStatus.Value.Revision,
         _expirySerializer,
@@ -75,9 +73,9 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
 
   /// <inheritdoc/>
   public async Task RemoveEntry(string key, CancellationToken cancellation) {
-    var metadataStatus = await _entryMetadataStore.TryPurgeAsync(key, cancellationToken: cancellation)
+    var metadataStatus = await _entriesStore.TryPurgeAsync(MakeMetadataKey(key), cancellationToken: cancellation)
       .ConfigureAwait(continueOnCapturedContext: false);
-    var valueStatus = await _entryValuesStore.TryPurgeAsync(key, cancellationToken: cancellation)
+    var valueStatus = await _entriesStore.TryPurgeAsync(key, cancellationToken: cancellation)
       .ConfigureAwait(continueOnCapturedContext: false);
     if (!valueStatus.Success || !metadataStatus.Success) {
       throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
@@ -89,9 +87,10 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
     string key,
     IBufferWriter<byte> destination,
     CancellationToken cancellation) {
-    var metadataStatus = await _entryMetadataStore.TryGetEntryAsync(key, serializer: _expirySerializer, cancellationToken: cancellation)
+    var metadataStatus = await _entriesStore
+      .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
       .ConfigureAwait(continueOnCapturedContext: false);
-    var valueStatus = await _entryValuesStore.TryGetEntryAsync<byte[]>(key, cancellationToken: cancellation)
+    var valueStatus = await _entriesStore.TryGetEntryAsync<byte[]>(key, cancellationToken: cancellation)
       .ConfigureAwait(continueOnCapturedContext: false);
     destination.Write(valueStatus.Value.Value);
     return metadataStatus.Success && valueStatus.Success
@@ -105,10 +104,10 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
     ReadOnlySequence<byte> value,
     CacheEntryExpiry cacheEntryExpiry,
     CancellationToken cancellation) {
-    var valueStatus = await _entryValuesStore.TryPutAsync(key, value, cancellationToken: cancellation)
+    var valueStatus = await _entriesStore.TryPutAsync(key, value, cancellationToken: cancellation)
       .ConfigureAwait(continueOnCapturedContext: false);
-    var metadataStatus = await _entryMetadataStore.TryPutAsync(
-        key,
+    var metadataStatus = await _entriesStore.TryPutAsync(
+        MakeMetadataKey(key),
         cacheEntryExpiry,
         _expirySerializer,
         cancellation)
@@ -125,8 +124,10 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
     if (!ValidKeyRegex.IsMatch(key)) throw new ArgumentException("Key contains invalid characters", nameof(key));
   }
 
-  private readonly INatsKVStore _entryValuesStore;
-  private readonly INatsKVStore _entryMetadataStore;
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private static string MakeMetadataKey(string key) => $"{key}-metadata";
+
+  private readonly INatsKVStore _entriesStore;
   private readonly INatsSerializer<CacheEntryExpiry> _expirySerializer;
   private readonly CacheEntryExpiryCalculator _expiryCalculator;
   private static readonly Regex ValidKeyRegex = new(@"\A[-/_=\.a-zA-Z0-9]+\z", RegexOptions.Compiled);

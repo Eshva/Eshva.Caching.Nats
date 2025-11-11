@@ -8,6 +8,7 @@ public static class ApplicationBootstrapping {
   public static void AddConfiguration(this WebApplicationBuilder builder) =>
     builder.Configuration
       .AddJsonFile(@"appsettings.json")
+      .AddJsonFile($@"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
       .AddEnvironmentVariables("BENCHMARKS_");
 
   public static void AddServices(this WebApplicationBuilder builder) {

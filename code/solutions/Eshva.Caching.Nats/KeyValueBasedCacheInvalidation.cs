@@ -1,4 +1,5 @@
-﻿using Eshva.Caching.Abstractions;
+﻿using System.Runtime.CompilerServices;
+using Eshva.Caching.Abstractions;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
 using NATS.Client.KeyValueStore;
@@ -14,8 +15,7 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
   /// <summary>
   /// Initializes a new instance of expired entries purger for NATS key-value store based cache.
   /// </summary>
-  /// <param name="entryValuesStore">Values key-value store.</param>
-  /// <param name="entryMetadataStore">Metadata key-value store.</param>
+  /// <param name="entriesStore">Entries key-value store.</param>
   /// <param name="expiredEntriesPurgingInterval">Expired entries purging interval.</param>
   /// <param name="expirySerializer">Cache entry expiry serializer.</param>
   /// <param name="expiryCalculator">Cache entry expiry calculator.</param>
@@ -25,8 +25,7 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
   /// Value of a required parameter not specified.
   /// </exception>
   public KeyValueBasedCacheInvalidation(
-    INatsKVStore entryValuesStore,
-    INatsKVStore entryMetadataStore,
+    INatsKVStore entriesStore,
     TimeSpan expiredEntriesPurgingInterval,
     INatsSerializer<CacheEntryExpiry> expirySerializer,
     CacheEntryExpiryCalculator expiryCalculator,
@@ -37,8 +36,7 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
       expiryCalculator,
       timeProvider,
       logger) {
-    _entryValuesStore = entryValuesStore ?? throw new ArgumentNullException(nameof(entryValuesStore));
-    _entryMetadataStore = entryMetadataStore ?? throw new ArgumentNullException(nameof(entryMetadataStore));
+    _entriesStore = entriesStore ?? throw new ArgumentNullException(nameof(entriesStore));
     _expirySerializer = expirySerializer ?? throw new ArgumentNullException(nameof(expirySerializer));
     _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
   }
@@ -49,11 +47,15 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
 
     uint totalCount = 0;
     uint purgedCount = 0;
-    await foreach (var key in _entryMetadataStore.GetKeysAsync(cancellationToken: cancellation)
+    await foreach (var key in _entriesStore.GetKeysAsync(cancellationToken: cancellation)
                      .ConfigureAwait(continueOnCapturedContext: false)) {
+      if (IsMetadataKey(key)) continue;
+
       totalCount++;
 
-      var entryMetadata = await _entryMetadataStore.GetEntryAsync(key, serializer: _expirySerializer, cancellationToken: cancellation)
+      var metadataKey = MakeMetadataKey(key);
+      var entryMetadata = await _entriesStore
+        .GetEntryAsync(metadataKey, serializer: _expirySerializer, cancellationToken: cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       var expiresAtUtc = entryMetadata.Value.ExpiresAtUtc;
 
@@ -63,9 +65,9 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
       }
 
       Logger.LogDebug("Entry '{Key}' expires at {ExpiresAtUtc} - purge it", key, expiresAtUtc);
-      var valuePurgeStatus = await _entryValuesStore.TryPurgeAsync(key, cancellationToken: cancellation)
+      var valuePurgeStatus = await _entriesStore.TryPurgeAsync(key, cancellationToken: cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
-      var metadataPurgeStatus = await _entryMetadataStore.TryPurgeAsync(key, cancellationToken: cancellation)
+      var metadataPurgeStatus = await _entriesStore.TryPurgeAsync(metadataKey, cancellationToken: cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       if (valuePurgeStatus.Success && metadataPurgeStatus.Success) {
         purgedCount++;
@@ -83,8 +85,14 @@ public sealed class KeyValueBasedCacheInvalidation : TimeBasedCacheInvalidation 
     return new CacheInvalidationStatistics(totalCount, purgedCount);
   }
 
-  private readonly INatsKVStore _entryValuesStore;
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private static bool IsMetadataKey(string key) => key.EndsWith(MetadataSuffix);
+
+  [MethodImpl(MethodImplOptions.AggressiveInlining)]
+  private static string MakeMetadataKey(string key) => $"{key}{MetadataSuffix}";
+
+  private readonly INatsKVStore _entriesStore;
   private readonly TimeProvider _timeProvider;
-  private readonly INatsKVStore _entryMetadataStore;
   private readonly INatsSerializer<CacheEntryExpiry> _expirySerializer;
+  private const string MetadataSuffix = "-metadata";
 }

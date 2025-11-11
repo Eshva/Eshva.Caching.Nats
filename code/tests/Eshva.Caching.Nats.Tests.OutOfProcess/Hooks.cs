@@ -43,16 +43,10 @@ public sealed class Hooks {
     var objectStoreBucketName = Regex.Replace(scenarioContext.ScenarioInfo.Title, "[^a-zA-Z0-9]", "-");
     var objectStore = await _deployment.ObjectStoreContext.CreateObjectStoreAsync(objectStoreBucketName);
 
-    var entryValueKeyValueBucketName = Regex.Replace($"{scenarioContext.ScenarioInfo.Title}-Values", "[^a-zA-Z0-9]", "-");
-    var entryMetadataKeyValueBucketName = Regex.Replace($"{scenarioContext.ScenarioInfo.Title}-Metadata", "[^a-zA-Z0-9]", "-");
-    var entryValueKeyValueStore = await _deployment.KeyValueContext.CreateStoreAsync(entryValueKeyValueBucketName);
-    var entryMetadataKeyValueStore = await _deployment.KeyValueContext.CreateStoreAsync(entryMetadataKeyValueBucketName);
+    var keyValueBucketName = Regex.Replace(scenarioContext.ScenarioInfo.Title, "[^a-zA-Z0-9]", "-");
+    var entriesStore = await _deployment.KeyValueContext.CreateStoreAsync(keyValueBucketName);
 
-    var cachesContext = new CachesContext(
-      objectStore,
-      entryValueKeyValueStore,
-      entryMetadataKeyValueStore,
-      logger);
+    var cachesContext = new CachesContext(objectStore, entriesStore, logger);
     scenarioContext.ScenarioContainer.RegisterInstanceAs(cachesContext);
   }
 

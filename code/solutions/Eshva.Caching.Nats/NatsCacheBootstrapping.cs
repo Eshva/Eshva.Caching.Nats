@@ -169,19 +169,16 @@ public static class NatsCacheBootstrapping {
     KeyValueBasedCacheSettings settings,
     IServiceProvider diContainer) {
     var keyValueStoreContext = natsClient.CreateJetStreamContext().CreateKeyValueStoreContext();
-    var valueStore = keyValueStoreContext.CreateStoreAsync(settings.ValueStore).AsTask().GetAwaiter().GetResult();
-    var metadataStore = keyValueStoreContext.CreateStoreAsync(settings.MetadataStore).AsTask().GetAwaiter().GetResult();
+    var entriesStore = keyValueStoreContext.CreateStoreAsync(settings.BucketName).AsTask().GetAwaiter().GetResult();
     var timeProvider = diContainer.GetRequiredService<TimeProvider>();
     var expiryCalculator = new CacheEntryExpiryCalculator(settings.DefaultSlidingExpirationInterval, timeProvider);
     var expirySerializer = new CacheEntryExpiryBinarySerializer();
     var datastore = new KeyValueBasedDatastore(
-      valueStore,
-      metadataStore,
+      entriesStore,
       expirySerializer,
       expiryCalculator);
     var invalidation = new KeyValueBasedCacheInvalidation(
-      valueStore,
-      metadataStore,
+      entriesStore,
       settings.ExpiredEntriesPurgingInterval,
       expirySerializer,
       expiryCalculator,

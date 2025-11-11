@@ -12,13 +12,7 @@ public class KeyValueBasedCacheSettings {
   /// Values bucket name.
   /// </summary>
   [Required]
-  public string ValueStore { get; set; } = string.Empty;
-
-  /// <summary>
-  /// Metadata bucket name.
-  /// </summary>
-  [Required]
-  public string MetadataStore { get; set; } = string.Empty;
+  public string BucketName { get; set; } = string.Empty;
 
   /// <summary>
   /// Default entry sliding expiration interval.
