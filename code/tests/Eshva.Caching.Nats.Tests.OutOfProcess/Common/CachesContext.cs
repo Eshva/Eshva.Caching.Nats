@@ -34,6 +34,8 @@ public class CachesContext {
 
   public TimeSpan ExpiredEntriesPurgingInterval { get; set; }
 
+  public TimeSpan MaximalCacheInvalidationDuration => ExpiredEntriesPurgingInterval.Subtract(TimeSpan.FromMilliseconds(milliseconds: 100));
+
   public TimeSpan DefaultSlidingExpirationInterval { get; set; }
 
   public FakeTimeProvider TimeProvider { get; }
@@ -56,6 +58,7 @@ public class CachesContext {
     var cacheInvalidation = new ObjectStoreBasedCacheInvalidation(
       Bucket,
       ExpiredEntriesPurgingInterval,
+      MaximalCacheInvalidationDuration,
       expiryCalculator,
       TimeProvider,
       XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
@@ -76,6 +79,7 @@ public class CachesContext {
     var cacheInvalidation = new KeyValueBasedCacheInvalidation(
       EntriesStore,
       ExpiredEntriesPurgingInterval,
+      MaximalCacheInvalidationDuration,
       expirySerializer,
       expiryCalculator,
       TimeProvider,

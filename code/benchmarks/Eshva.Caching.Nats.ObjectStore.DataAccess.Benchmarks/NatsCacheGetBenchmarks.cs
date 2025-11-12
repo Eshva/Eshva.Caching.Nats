@@ -85,16 +85,15 @@ public class NatsCacheGetBenchmarks {
     var hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
     var hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(hostNetworkClientPort + 1));
     _deployment = NatsServerDeployment
-      .Named($"{nameof(CachingHttpApplicationBenchmarks)}-{EntrySize}")
+      .Named($"{nameof(NatsCacheGetBenchmarks)}-{EntrySize}")
       .FromImageTag("nats:2.11")
-      .WithContainerName($"caching-http-application-benchmarks-{EntrySize}")
+      .WithContainerName($"nats-cache-get-benchmarks-{Random.Shared.Next()}")
       .WithHostNetworkClientPort(hostNetworkClientPort)
       .WithHostNetworkHttpManagementPort(hostNetworkHttpManagementPort)
       .EnabledJetStream();
     await _deployment.Build();
     await _deployment.Start();
 
-    await CreateCacheBucket();
     var natsClient = CreateNatsClient();
     _objectStoreBasedTestee = await CreateObjectStoreBasedTestee(natsClient);
     _keyValueBasedTestee = await CreateKeyValueBasedTestee(natsClient);
@@ -144,12 +143,13 @@ public class NatsCacheGetBenchmarks {
   private NatsConnection CreateNatsClient() => new(new NatsOpts { Url = _deployment!.Connection.Opts.Url });
 
   private async Task<NatsObjectStoreBasedCache> CreateObjectStoreBasedTestee(NatsConnection natsClient) {
-    var cacheBucket = await natsClient.CreateObjectStoreContext().GetObjectStoreAsync(ObjectStoreBucketName);
+    var cacheBucket = await natsClient.CreateObjectStoreContext().CreateObjectStoreAsync(ObjectStoreBucketName);
     var expiryCalculator = new CacheEntryExpiryCalculator(TimeSpan.FromMinutes(minutes: 1), TimeProvider.System);
     var cacheDatastore = new ObjectStoreBasedDatastore(cacheBucket, expiryCalculator);
     var cacheInvalidation = new ObjectStoreBasedCacheInvalidation(
       cacheBucket,
       TimeSpan.FromMinutes(minutes: 5),
+      TimeSpan.FromMinutes(minutes: 4),
       expiryCalculator,
       TimeProvider.System);
     return new NatsObjectStoreBasedCache(cacheDatastore, cacheInvalidation);
@@ -166,14 +166,12 @@ public class NatsCacheGetBenchmarks {
     var cacheInvalidation = new KeyValueBasedCacheInvalidation(
       entriesStore,
       TimeSpan.FromMinutes(minutes: 5),
+      TimeSpan.FromMinutes(minutes: 4),
       entryExpirySerializer,
       expiryCalculator,
       TimeProvider.System);
     return new NatsKeyValueStoreBasedCache(cacheDatastore, cacheInvalidation);
   }
-
-  private async Task CreateCacheBucket() =>
-    await _deployment!.ObjectStoreContext.CreateObjectStoreAsync("images");
 
   private NatsServerDeployment? _deployment;
   private byte[] _imageHash = [];

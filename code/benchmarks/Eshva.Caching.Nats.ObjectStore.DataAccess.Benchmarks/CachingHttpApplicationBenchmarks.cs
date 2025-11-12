@@ -89,14 +89,13 @@ public class CachingHttpApplicationBenchmarks {
     _deployment = NatsServerDeployment
       .Named($"{nameof(CachingHttpApplicationBenchmarks)}-{EntrySize}")
       .FromImageTag("nats:2.11")
-      .WithContainerName($"caching-http-application-benchmarks-{EntrySize}")
+      .WithContainerName($"caching-http-application-benchmarks-{Random.Shared.Next()}")
       .WithHostNetworkClientPort(hostNetworkClientPort)
       .WithHostNetworkHttpManagementPort(hostNetworkHttpManagementPort)
       .EnabledJetStream();
     await _deployment.Build();
     await _deployment.Start();
 
-    // await CreateCacheBucket();
     SetupWebAppTestee();
   }
 

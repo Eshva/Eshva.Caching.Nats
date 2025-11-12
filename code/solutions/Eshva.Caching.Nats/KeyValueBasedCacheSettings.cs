@@ -25,4 +25,10 @@ public class KeyValueBasedCacheSettings {
   /// </summary>
   [Required]
   public TimeSpan ExpiredEntriesPurgingInterval { get; set; }
+
+  /// <summary>
+  /// Maximal cache invalidation duration.
+  /// </summary>
+  [Required]
+  public TimeSpan MaximalCacheInvalidationDuration { get; set; }
 }

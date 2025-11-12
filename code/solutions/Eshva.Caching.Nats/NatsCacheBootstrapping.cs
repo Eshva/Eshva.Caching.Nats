@@ -155,6 +155,7 @@ public static class NatsCacheBootstrapping {
     var invalidation = new ObjectStoreBasedCacheInvalidation(
       bucket,
       settings.ExpiredEntriesPurgingInterval,
+      settings.MaximalCacheInvalidationDuration,
       expiryCalculator,
       timeProvider,
       diContainer.GetRequiredService<ILogger<ObjectStoreBasedCacheInvalidation>>());
@@ -180,6 +181,7 @@ public static class NatsCacheBootstrapping {
     var invalidation = new KeyValueBasedCacheInvalidation(
       entriesStore,
       settings.ExpiredEntriesPurgingInterval,
+      settings.MaximalCacheInvalidationDuration,
       expirySerializer,
       expiryCalculator,
       timeProvider,
