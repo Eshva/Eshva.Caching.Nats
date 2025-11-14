@@ -1,9 +1,8 @@
 ﻿using System.Text.RegularExpressions;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
-using Eshva.Common.Testing;
 using Eshva.Testing.OutOfProcessDeployments.Nats;
 using Reqnroll;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess;
 
@@ -11,7 +10,7 @@ namespace Eshva.Caching.Nats.Tests.OutOfProcess;
 public sealed class Hooks {
   [BeforeTestRun]
   public static async Task StartTestDeployment() {
-    _suffix = Randomize.String(length: 5);
+    _suffix = Random.Shared.Next().ToString();
 
     _hostNetworkClientPort = NetworkTools.GetFreeTcpPort();
     _hostNetworkHttpManagementPort = NetworkTools.GetFreeTcpPort((ushort)(_hostNetworkClientPort + 1));

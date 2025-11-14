@@ -3,7 +3,7 @@ using Eshva.Caching.Abstractions;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using NATS.Client.Core;
 using NATS.Client.KeyValueStore;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.KeyValueBasedCache;
 

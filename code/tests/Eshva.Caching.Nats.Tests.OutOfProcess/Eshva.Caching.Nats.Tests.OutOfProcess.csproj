@@ -1,23 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Eshva.Common.Testing"/>
     <PackageReference Include="Eshva.Testing.OutOfProcessDeployments.Nats"/>
     <PackageReference Include="Eshva.Testing.Reqnroll"/>
-    <PackageReference Include="Meziantou.Extensions.Logging.Xunit"/>
+    <PackageReference Include="Meziantou.Extensions.Logging.Xunit.v3"/>
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     <PackageReference Include="NATS.Client.Core"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
-    <PackageReference Include="Reqnroll.xUnit"/>
-    <PackageReference Include="xunit"/>
+    <PackageReference Include="Reqnroll.xunit.v3"/>
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="FluentAssertions"/>
+    <PackageReference Include="xunit.v3"/>
     <PackageReference Include="XunitXml.TestLogger"/>
   </ItemGroup>
   <ItemGroup>

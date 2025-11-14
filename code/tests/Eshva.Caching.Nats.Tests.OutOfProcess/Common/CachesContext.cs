@@ -1,12 +1,12 @@
 ﻿using Eshva.Caching.Abstractions;
 using Eshva.Caching.Nats.Tests.OutOfProcess.KeyValueBasedCache;
 using Eshva.Caching.Nats.Tests.OutOfProcess.ObjectStoreBasedCache;
-using Meziantou.Extensions.Logging.Xunit;
+using Meziantou.Extensions.Logging.Xunit.v3;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Time.Testing;
 using NATS.Client.KeyValueStore;
 using NATS.Client.ObjectStore;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 
@@ -95,10 +95,7 @@ public class CachesContext {
       cacheDatastore,
       cacheInvalidation,
       XUnitLogger.CreateLogger<NatsKeyValueStoreBasedCache>(_xUnitLogger));
-    Driver = new KeyValueStoreDriver(
-      EntriesStore,
-      expirySerializer,
-      _xUnitLogger);
+    Driver = new KeyValueStoreDriver(EntriesStore, expirySerializer, _xUnitLogger);
   }
 
   private readonly ITestOutputHelper _xUnitLogger;

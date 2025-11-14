@@ -2,7 +2,7 @@
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using NATS.Client.ObjectStore;
 using NATS.Client.ObjectStore.Models;
-using Xunit.Abstractions;
+using Xunit;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.ObjectStoreBasedCache;
 

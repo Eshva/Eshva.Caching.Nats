@@ -1,18 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Eshva.Testing.Reqnroll"/>
+    <PackageReference Include="Meziantou.Extensions.Logging.Xunit.v3"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
-    <PackageReference Include="Reqnroll.xUnit"/>
-    <PackageReference Include="xunit"/>
+    <PackageReference Include="Reqnroll.xunit.v3"/>
     <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="FluentAssertions"/>
     <PackageReference Include="NATS.Client.ObjectStore"/>
+    <PackageReference Include="xunit.v3"/>
     <PackageReference Include="XunitXml.TestLogger"/>
   </ItemGroup>
   <ItemGroup>

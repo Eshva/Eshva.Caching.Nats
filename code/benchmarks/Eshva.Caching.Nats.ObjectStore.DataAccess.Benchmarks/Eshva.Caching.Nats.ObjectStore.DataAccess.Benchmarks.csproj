@@ -5,7 +5,6 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance"/>
-    <PackageReference Include="Eshva.Common.Testing"/>
     <PackageReference Include="Eshva.Testing.OutOfProcessDeployments.Nats"/>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing"/>
     <PackageReference Include="BenchmarkDotNet"/>

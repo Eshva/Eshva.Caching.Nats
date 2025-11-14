@@ -32,7 +32,6 @@
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.HighPerformance"/>
     <PackageReference Include="Eshva.Caching.Abstractions"/>
-    <PackageReference Include="Eshva.Common.Testing"/>
     <PackageReference Include="JetBrains.Annotations"/>
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions"/>
     <PackageReference Include="NATS.Client.KeyValueStore"/>
