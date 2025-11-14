@@ -25,7 +25,8 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Verify quality
-        run: dotnet test --solution code/Eshva.Caching.Nats.slnx --retry-failed-tests 5 --output detailed --report-xunit --report-xunit-filename test_result.xml --results-directory .
+        run: dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5 --output detailed --report-xunit --report-xunit-filename test_result.xml --results-directory .
+        working-directory: ./code
       - name: Publish test results
         if: (!cancelled())
         uses: EnricoMi/publish-unit-test-result-action@v2
