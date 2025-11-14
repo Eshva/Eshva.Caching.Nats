@@ -44,10 +44,18 @@ jobs:
       contents: read
       issues: read
     steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Setup .NET 10 SDK
+        id: setup-dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
       - name: Setup dotnet-coverage tool
         run: dotnet tool install --global dotnet-coverage
       - name: Calculate code coverage and metrics
-        run: ls -laH #&& dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
+        run: dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
+        working-directory: code
       - name: Restore coverage history
         if: (!cancelled())
         uses: dawidd6/action-download-artifact@v11
