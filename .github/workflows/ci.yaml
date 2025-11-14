@@ -31,8 +31,8 @@ jobs:
         if: (!cancelled())
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
-          files: "./**/test_result.xml"
-          check_name: "Test results"
+          files: './**/test_result.xml'
+          check_name: 'Test results'
           action_fail: true
   code-coverage:
     name: Calculate code coverage and metrics
@@ -85,3 +85,11 @@ jobs:
         with:
           name: coverage-history-ci
           path: coverage-history-ci
+      - name: Write to Job Summary
+        run: cat coverage-ci/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+      - name: Add Coverage PR Comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request'
+        with:
+          recreate: true
+          path: coverage-ci/SummaryGithub.md
