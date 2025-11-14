@@ -34,3 +34,44 @@ jobs:
           files: "./**/test_result.xml"
           check_name: "Test results"
           action_fail: true
+  code-coverage:
+    name: Calculate code coverage and metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+      issues: read
+    steps:
+      - name: Install dotnet-coverage tool
+        run: dotnet tool install --global dotnet-coverage
+      - name: Calculate code coverage and metrics
+        run: dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
+      - name: Restore coverage history
+        if: (!cancelled())
+        uses: dawidd6/action-download-artifact@v11
+        with:
+          name: coverage-history-ci
+          path: coverage-history-ci
+        continue-on-error: true
+      - name: Generate code coverage and metrics report
+        if: (!cancelled())
+        uses: danielpalme/ReportGenerator-GitHub-Action@5
+        with:
+          reports: cobertura.xml
+          targetdir: coverage-ci
+          historydir: coverage-history-ci
+          reporttypes: MarkdownDeltaSummary;Badges;MarkdownSummaryGithub
+      - name: Upload coverage report
+        if: (!cancelled())
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-ci
+          path: coverage-ci
+      - name: Upload coverage history
+        if: (!cancelled())
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-history-ci
+          path: coverage-history-ci
