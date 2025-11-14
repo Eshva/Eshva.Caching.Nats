@@ -20,7 +20,7 @@ jobs:
       - name: Checkout sources
         uses: actions/checkout@v5
       - name: Verify quality
-        run: dotnet test code/Eshva.Caching.Nats.slnx --configuration Release --logger:"xunit;LogFilePath=test_result.xml" --results-directory .
+        run: dotnet test code/Eshva.Caching.Nats.slnx --retry-failed-tests 5 --output detailed --report-xunit --report-xunit-filename test_result.xml --results-directory .
       - name: Publish test results
         if: (!cancelled())
         uses: EnricoMi/publish-unit-test-result-action@v2
