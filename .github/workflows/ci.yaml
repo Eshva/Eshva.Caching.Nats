@@ -19,6 +19,11 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v5
+      - name: Setup .NET 10 SDK
+        id: setup-dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
       - name: Verify quality
         run: dotnet test --solution code/Eshva.Caching.Nats.slnx --retry-failed-tests 5 --output detailed --report-xunit --report-xunit-filename test_result.xml --results-directory .
       - name: Publish test results
