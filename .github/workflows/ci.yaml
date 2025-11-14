@@ -26,7 +26,7 @@ jobs:
           dotnet-version: 10.0.x
       - name: Verify quality
         run: dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5 --report-xunit --report-xunit-filename test_result.xml --results-directory .
-        working-directory: ./code
+        working-directory: code
       - name: Publish test results
         if: (!cancelled())
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -48,7 +48,7 @@ jobs:
         run: dotnet tool install --global dotnet-coverage
       - name: Calculate code coverage and metrics
         run: dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
-        working-directory: ./code
+        working-directory: code
       - name: Restore coverage history
         if: (!cancelled())
         uses: dawidd6/action-download-artifact@v11
