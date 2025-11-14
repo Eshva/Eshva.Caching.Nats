@@ -47,7 +47,7 @@ jobs:
       - name: Setup dotnet-coverage tool
         run: dotnet tool install --global dotnet-coverage
       - name: Calculate code coverage and metrics
-        run: pwd && ll -laH && dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
+        run: ls -laH #&& dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
       - name: Restore coverage history
         if: (!cancelled())
         uses: dawidd6/action-download-artifact@v11
