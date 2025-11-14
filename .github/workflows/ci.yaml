@@ -44,10 +44,10 @@ jobs:
       contents: read
       issues: read
     steps:
-      - name: Install dotnet-coverage tool
+      - name: Setup dotnet-coverage tool
         run: dotnet tool install --global dotnet-coverage
       - name: Calculate code coverage and metrics
-        run: dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
+        run: pwd && ll -laH && dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
         working-directory: code
       - name: Restore coverage history
         if: (!cancelled())
