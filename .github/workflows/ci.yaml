@@ -85,11 +85,21 @@ jobs:
         with:
           name: coverage-history-ci
           path: coverage-history-ci
-      - name: Write to Job Summary
+      - name: Write code coverage summary to Job Summary
+        if: (!cancelled())
         run: cat coverage-ci/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
-      - name: Add Coverage PR Comment
+      - name: Write code coverage delta to Job Summary
+        if: (!cancelled())
+        run: cat coverage-ci/DeltaSummary.md >> $GITHUB_STEP_SUMMARY
+      - name: Add code coverage summary to PR comment
         uses: marocchino/sticky-pull-request-comment@v2
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && (!cancelled())
         with:
           recreate: true
           path: coverage-ci/SummaryGithub.md
+      - name: Add code coverage delta to PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request' && (!cancelled())
+        with:
+          recreate: true
+          path: coverage-ci/DeltaSummary.md
