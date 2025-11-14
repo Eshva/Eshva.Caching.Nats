@@ -23,6 +23,9 @@
     <File Path="nuget.config"/>
     <File Path="global.json"/>
   </Folder>
+  <Folder Name="/shared/tools/">
+    <File Path="../assets/tools/code-coverage.ps1"/>
+  </Folder>
   <Project Path="solutions/Eshva.Caching.Nats/Eshva.Caching.Nats.csproj"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.InProcess/Eshva.Caching.Nats.Tests.InProcess.csproj" Type="Classic C#"/>
   <Project Path="tests/Eshva.Caching.Nats.Tests.OutOfProcess/Eshva.Caching.Nats.Tests.OutOfProcess.csproj"/>
