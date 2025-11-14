@@ -58,3 +58,72 @@ jobs:
           user: ${{ secrets.NUGET_USER }}
       - name: Publish the NuGet-package to nuget.org
         run: dotnet nuget push Eshva.Caching.Nats.${VERSION}.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+  code-coverage:
+    name: Calculate code coverage and metrics
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+      issues: read
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v5
+      - name: Setup .NET 10 SDK
+        id: setup-dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      - name: Setup dotnet-coverage tool
+        run: dotnet tool install --global dotnet-coverage
+      - name: Calculate code coverage and metrics
+        run: dotnet-coverage collect "dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5" --output-format cobertura --output cobertura.xml
+        working-directory: code
+      - name: Restore coverage history
+        if: (!cancelled())
+        uses: dawidd6/action-download-artifact@v11
+        with:
+          name: coverage-history-release
+          path: coverage-history-release
+        continue-on-error: true
+      - name: Generate code coverage and metrics report
+        if: (!cancelled())
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.5.0
+        with:
+          reports: code/cobertura.xml
+          targetdir: coverage-release
+          reporttypes: MarkdownSummaryGithub;MarkdownDeltaSummary;Badges
+          historydir: coverage-history-release
+          assemblyfilters: +Eshva.Caching.Nats
+          classfilters: -*Settings
+      - name: Upload coverage report
+        if: (!cancelled())
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-release
+          path: coverage-release
+      - name: Upload coverage history
+        if: (!cancelled())
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-history-release
+          path: coverage-history-release
+      - name: Write code coverage summary to Job Summary
+        if: (!cancelled())
+        run: cat coverage-release/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+      - name: Write code coverage delta to Job Summary
+        if: (!cancelled())
+        run: cat coverage-release/DeltaSummary.md >> $GITHUB_STEP_SUMMARY
+      - name: Add code coverage summary to PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request' && (!cancelled())
+        with:
+          recreate: true
+          path: coverage-release/SummaryGithub.md
+      - name: Add code coverage delta to PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        if: github.event_name == 'pull_request' && (!cancelled())
+        with:
+          recreate: true
+          path: coverage-release/DeltaSummary.md
