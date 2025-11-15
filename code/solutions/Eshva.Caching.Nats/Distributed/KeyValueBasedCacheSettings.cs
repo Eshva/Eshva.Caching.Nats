@@ -1,15 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using JetBrains.Annotations;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// NATS object store based cache settings.
 /// </summary>
 [PublicAPI]
-public class ObjectStoreBasedCacheSettings {
+public class KeyValueBasedCacheSettings {
   /// <summary>
-  /// Cache bucket name.
+  /// Values bucket name.
   /// </summary>
   [Required]
   public string BucketName { get; set; } = string.Empty;

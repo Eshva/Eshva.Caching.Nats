@@ -8,7 +8,7 @@ using NATS.Net;
 
 #pragma warning disable VSTHRD002
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// NATS-based caches bootstrapping extensions.

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using Eshva.Caching.Nats.Distributed;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
 
 namespace Eshva.Caching.Nats.TestWebApp.ObjectStoreBasedCache;

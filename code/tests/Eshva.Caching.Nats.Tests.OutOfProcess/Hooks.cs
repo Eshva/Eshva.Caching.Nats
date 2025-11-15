@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
-using Eshva.Caching.Nats.Benchmarks.Tools;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
+using Eshva.Caching.Nats.Tests.Tools;
 using Eshva.Testing.OutOfProcessDeployments.Nats;
 using Reqnroll;
 using Xunit;

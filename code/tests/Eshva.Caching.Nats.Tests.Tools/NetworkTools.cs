@@ -1,6 +1,6 @@
 using System.Net.NetworkInformation;
 
-namespace Eshva.Caching.Nats.Benchmarks.Tools;
+namespace Eshva.Caching.Nats.Tests.Tools;
 
 /// <summary>
 /// Network tools for integration tests.

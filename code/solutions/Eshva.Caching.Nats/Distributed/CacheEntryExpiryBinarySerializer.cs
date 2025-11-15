@@ -3,7 +3,7 @@ using CommunityToolkit.HighPerformance;
 using Eshva.Caching.Abstractions.Distributed;
 using NATS.Client.Core;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// Cache entry expiry binary serializer.

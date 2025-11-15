@@ -4,7 +4,7 @@ using Eshva.Caching.Abstractions.Distributed;
 using NATS.Client.ObjectStore;
 using NATS.Client.ObjectStore.Models;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// NATS object store based cache datastore.

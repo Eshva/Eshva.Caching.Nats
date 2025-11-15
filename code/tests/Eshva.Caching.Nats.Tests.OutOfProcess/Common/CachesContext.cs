@@ -1,4 +1,5 @@
 ﻿using Eshva.Caching.Abstractions.Distributed;
+using Eshva.Caching.Nats.Distributed;
 using Eshva.Caching.Nats.Tests.OutOfProcess.KeyValueBasedCache;
 using Eshva.Caching.Nats.Tests.OutOfProcess.ObjectStoreBasedCache;
 using Meziantou.Extensions.Logging.Xunit.v3;

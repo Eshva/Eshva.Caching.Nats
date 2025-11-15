@@ -1,5 +1,6 @@
 ﻿using System.Buffers;
 using Eshva.Caching.Abstractions.Distributed;
+using Eshva.Caching.Nats.Distributed;
 using FluentAssertions;
 using Reqnroll;
 

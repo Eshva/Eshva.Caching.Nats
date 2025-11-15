@@ -2,7 +2,7 @@
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// NATS object store based distributed cache.

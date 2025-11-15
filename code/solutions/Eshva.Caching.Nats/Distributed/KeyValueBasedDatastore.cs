@@ -5,7 +5,7 @@ using Eshva.Caching.Abstractions.Distributed;
 using NATS.Client.Core;
 using NATS.Client.KeyValueStore;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// NATS key-value store based cache datastore.

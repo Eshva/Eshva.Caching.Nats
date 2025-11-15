@@ -1,7 +1,7 @@
 ﻿using System.Globalization;
 using NATS.Client.ObjectStore.Models;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// A NATS cache entry metadata accessor.

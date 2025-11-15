@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using NATS.Client.ObjectStore;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// Expired entries purger for NATS object store based cache.

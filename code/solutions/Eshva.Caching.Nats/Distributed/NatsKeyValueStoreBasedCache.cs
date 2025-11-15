@@ -1,7 +1,7 @@
 ﻿using Eshva.Caching.Abstractions.Distributed;
 using Microsoft.Extensions.Logging;
 
-namespace Eshva.Caching.Nats;
+namespace Eshva.Caching.Nats.Distributed;
 
 /// <summary>
 /// NATS key-value store based distributed cache.
