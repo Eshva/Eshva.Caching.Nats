@@ -11,7 +11,7 @@
     <PackageReference Include="NATS.Client.ObjectStore"/>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Eshva.Caching.Nats.Benchmarks.Tools\Eshva.Caching.Nats.Benchmarks.Tools.csproj"/>
+    <ProjectReference Include="..\..\tests\Eshva.Caching.Nats.Tests.Tools\Eshva.Caching.Nats.Tests.Tools.csproj"/>
     <ProjectReference Include="..\Eshva.Caching.Nats.TestWebApp\Eshva.Caching.Nats.TestWebApp.csproj"/>
   </ItemGroup>
 </Project>

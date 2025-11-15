@@ -1,7 +1,5 @@
 <Solution>
   <Folder Name="/benchmarks/">
-    <Project Path="benchmarks/Eshva.Caching.Nats.Benchmarks.Tools/Eshva.Caching.Nats.Benchmarks.Tools.csproj"
-             Type="Classic C#"/>
     <Project
       Path="benchmarks/Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks/Eshva.Caching.Nats.ObjectStore.DataAccess.Benchmarks.csproj"
       Type="Classic C#"/>
