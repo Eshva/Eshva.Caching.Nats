@@ -115,6 +115,7 @@ jobs:
       - name: Write code coverage delta to Job Summary
         if: (!cancelled())
         run: cat coverage-release/DeltaSummary.md >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
       - name: Add code coverage summary to PR comment
         uses: marocchino/sticky-pull-request-comment@v2
         if: github.event_name == 'pull_request' && (!cancelled())
@@ -127,3 +128,4 @@ jobs:
         with:
           recreate: true
           path: coverage-release/DeltaSummary.md
+        continue-on-error: true

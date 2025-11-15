@@ -25,7 +25,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: Verify quality
-        run: dotnet test --solution Eshva.Caching.Nats.slnx --retry-failed-tests 5 --report-xunit --report-xunit-filename test_result.xml --results-directory .
+        run: dotnet test --solution Eshva.Caching.Nats.slnx --configuration Release --retry-failed-tests 5 --report-xunit --report-xunit-filename test_result.xml --results-directory .
         working-directory: code
       - name: Publish test results
         if: (!cancelled())
@@ -91,6 +91,7 @@ jobs:
       - name: Write code coverage delta to Job Summary
         if: (!cancelled())
         run: cat coverage-ci/DeltaSummary.md >> $GITHUB_STEP_SUMMARY
+        continue-on-error: true
       - name: Add code coverage summary to PR comment
         uses: marocchino/sticky-pull-request-comment@v2
         if: github.event_name == 'pull_request' && (!cancelled())
@@ -103,3 +104,4 @@ jobs:
         with:
           recreate: true
           path: coverage-ci/DeltaSummary.md
+        continue-on-error: true
