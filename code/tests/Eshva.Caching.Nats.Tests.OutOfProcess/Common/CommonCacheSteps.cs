@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using Eshva.Caching.Abstractions;
+using Eshva.Caching.Abstractions.Distributed;
 using Eshva.Caching.Nats.Tests.Tools;
 using FluentAssertions;
 using Reqnroll;

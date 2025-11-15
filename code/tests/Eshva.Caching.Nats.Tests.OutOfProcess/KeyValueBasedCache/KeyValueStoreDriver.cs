@@ -1,5 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
-using Eshva.Caching.Abstractions;
+using Eshva.Caching.Abstractions.Distributed;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using NATS.Client.Core;
 using NATS.Client.KeyValueStore;

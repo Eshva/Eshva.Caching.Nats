@@ -1,4 +1,4 @@
-﻿using Eshva.Caching.Abstractions;
+﻿using Eshva.Caching.Abstractions.Distributed;
 using JetBrains.Annotations;
 using Microsoft.Extensions.Logging;
 

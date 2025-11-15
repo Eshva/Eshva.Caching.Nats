@@ -1,7 +1,7 @@
 ﻿using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
-using Eshva.Caching.Abstractions;
+using Eshva.Caching.Abstractions.Distributed;
 using NATS.Client.Core;
 using NATS.Client.KeyValueStore;
 

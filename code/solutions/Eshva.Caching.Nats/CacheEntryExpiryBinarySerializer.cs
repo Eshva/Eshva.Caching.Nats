@@ -1,6 +1,6 @@
 ﻿using System.Buffers;
 using CommunityToolkit.HighPerformance;
-using Eshva.Caching.Abstractions;
+using Eshva.Caching.Abstractions.Distributed;
 using NATS.Client.Core;
 
 namespace Eshva.Caching.Nats;

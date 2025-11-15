@@ -1,4 +1,4 @@
-﻿using Eshva.Caching.Abstractions;
+﻿using Eshva.Caching.Abstractions.Distributed;
 using Microsoft.Extensions.Logging;
 using NATS.Client.ObjectStore;
 

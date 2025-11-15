@@ -1,4 +1,4 @@
-using Eshva.Caching.Abstractions;
+using Eshva.Caching.Abstractions.Distributed;
 
 namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 

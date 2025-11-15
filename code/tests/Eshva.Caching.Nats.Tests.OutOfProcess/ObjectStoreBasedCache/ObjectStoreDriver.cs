@@ -1,4 +1,4 @@
-﻿using Eshva.Caching.Abstractions;
+﻿using Eshva.Caching.Abstractions.Distributed;
 using Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 using NATS.Client.ObjectStore;
 using NATS.Client.ObjectStore.Models;

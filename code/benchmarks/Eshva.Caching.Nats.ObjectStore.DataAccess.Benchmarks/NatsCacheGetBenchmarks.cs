@@ -7,7 +7,7 @@ using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Reports;
-using Eshva.Caching.Abstractions;
+using Eshva.Caching.Abstractions.Distributed;
 using Eshva.Caching.Nats.Benchmarks.Tools;
 using Eshva.Caching.Nats.TestWebApp;
 using Eshva.Testing.OutOfProcessDeployments.Nats;
