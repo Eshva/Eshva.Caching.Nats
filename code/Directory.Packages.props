@@ -6,7 +6,7 @@
   <ItemGroup>
     <PackageVersion Include="BenchmarkDotNet" Version="0.15.6"/>
     <PackageVersion Include="CommunityToolkit.HighPerformance" Version="8.4.0"/>
-    <PackageVersion Include="Eshva.Caching.Abstractions" Version="1.0.6"/>
+    <PackageVersion Include="Eshva.Caching.Abstractions" Version="1.1.0"/>
     <PackageVersion Include="Eshva.Testing.OutOfProcessDeployments.Nats" Version="0.1.0"/>
     <PackageVersion Include="Eshva.Testing.Reqnroll" Version="1.1.2"/>
     <PackageVersion Include="FluentAssertions" Version="6.12.2"/>

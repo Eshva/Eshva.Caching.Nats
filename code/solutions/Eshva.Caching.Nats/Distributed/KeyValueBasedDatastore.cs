@@ -35,13 +35,13 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
   }
 
   /// <inheritdoc/>
-  public async Task<CacheEntryExpiry> GetEntryExpiry(string key, CancellationToken cancellation) {
+  public async Task<(bool doesExist, CacheEntryExpiry entryExpiry)> GetEntryExpiry(string key, CancellationToken cancellation) {
     var metadataStatus = await _entriesStore
       .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
       .ConfigureAwait(continueOnCapturedContext: false);
     return metadataStatus.Success
-      ? metadataStatus.Value.Value
-      : throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
+      ? (true, metadataStatus.Value.Value)
+      : (false, new CacheEntryExpiry(DateTimeOffset.MaxValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
   }
 
   /// <inheritdoc/>
@@ -83,7 +83,7 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
   }
 
   /// <inheritdoc/>
-  public async Task<(bool isEntryGotten, CacheEntryExpiry cacheEntryExpiry)> TryGetEntry(
+  public async Task<(bool doesExist, CacheEntryExpiry entryExpiry)> TryGetEntry(
     string key,
     IBufferWriter<byte> destination,
     CancellationToken cancellation) {

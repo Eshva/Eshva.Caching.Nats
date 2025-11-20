@@ -55,7 +55,7 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
   }
 
   /// <inheritdoc/>
-  protected override async Task<CacheInvalidationStatistics> DeleteExpiredCacheEntries(CancellationToken cancellation) {
+  protected override async Task<uint> DeleteExpiredCacheEntries(CancellationToken cancellation) {
     Logger.LogDebug("Purging expired entries started at {CurrentTime}", _timeProvider.GetUtcNow());
 
     var expiredEntries = await _cacheBucket.ListAsync(cancellationToken: cancellation)
@@ -69,13 +69,13 @@ public sealed class ObjectStoreBasedCacheInvalidation : TimeBasedCacheInvalidati
       await _cacheBucket.DeleteAsync(expiredEntry.Name, cancellation).ConfigureAwait(continueOnCapturedContext: false);
     }
 
-    var expiredCount = expiredEntries.Length;
+    var purgedCount = expiredEntries.Length;
     Logger.LogDebug(
       "Purging expired entries completed at {CurrentTime}. Purged {PurgedCount} entries",
       _timeProvider.GetUtcNow(),
-      expiredCount);
+      purgedCount);
 
-    return new CacheInvalidationStatistics((uint)expiredCount);
+    return (uint)purgedCount;
   }
 
   private readonly INatsObjStore _cacheBucket;

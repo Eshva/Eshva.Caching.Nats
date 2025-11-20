@@ -26,18 +26,18 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
   }
 
   /// <inheritdoc/>
-  public async Task<CacheEntryExpiry> GetEntryExpiry(string key, CancellationToken cancellation) {
+  public async Task<(bool doesExist, CacheEntryExpiry entryExpiry)> GetEntryExpiry(string key, CancellationToken cancellation) {
     try {
       var objectMetadata = await _cacheBucket.GetInfoAsync(key, showDeleted: false, cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       var cacheEntryMetadata = new ObjectMetadataAccessor(objectMetadata);
-      return new CacheEntryExpiry(
+      return (true, new CacheEntryExpiry(
         cacheEntryMetadata.ExpiresAtUtc,
         cacheEntryMetadata.AbsoluteExpiryAtUtc,
-        cacheEntryMetadata.SlidingExpiryInterval);
+        cacheEntryMetadata.SlidingExpiryInterval));
     }
-    catch (NatsObjException exception) {
-      throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.", exception);
+    catch (NatsObjException) {
+      return (false, new CacheEntryExpiry(DateTimeOffset.MaxValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
     }
   }
 
@@ -67,7 +67,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
   }
 
   /// <inheritdoc/>
-  public async Task<(bool isEntryGotten, CacheEntryExpiry cacheEntryExpiry)> TryGetEntry(
+  public async Task<(bool doesExist, CacheEntryExpiry entryExpiry)> TryGetEntry(
     string key,
     IBufferWriter<byte> destination,
     CancellationToken cancellation) {
@@ -79,8 +79,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
           cancellation)
         .ConfigureAwait(continueOnCapturedContext: false);
       var metadata = new ObjectMetadataAccessor(objectMetadata);
-      var cacheEntryExpiry = new CacheEntryExpiry(metadata.ExpiresAtUtc, metadata.AbsoluteExpiryAtUtc, metadata.SlidingExpiryInterval);
-      return (true, cacheEntryExpiry);
+      return (true, new CacheEntryExpiry(metadata.ExpiresAtUtc, metadata.AbsoluteExpiryAtUtc, metadata.SlidingExpiryInterval));
     }
     catch (NatsObjNotFoundException) {
       return (false, new CacheEntryExpiry(DateTimeOffset.MinValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
