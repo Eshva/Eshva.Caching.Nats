@@ -1,7 +1,5 @@
 # Eshva.Caching.Nats
 
-[Русская версия](documentation/ru/readme.md)
-
 NATS is a wonderful platform for inter-application communication. In the beginning it was just a message bus, but the authors are constantly expanding its functionality. At the moment NATS already includes key/value and object stores built on the same messaging infrastructure. These stores can be used to build a distributed cache.
 
 This package provides two implementations of the [IDistributedCache](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.caching.distributed.idistributedcache?view=net-9.0-pp) contract (and its development [IBufferDistributedCache](https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.caching.distributed.ibufferdistributedcache?view=net-9.0-pp)):
