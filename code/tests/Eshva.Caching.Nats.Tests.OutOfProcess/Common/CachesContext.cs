@@ -5,6 +5,7 @@ using Eshva.Caching.Nats.Tests.OutOfProcess.ObjectStoreBasedCache;
 using Meziantou.Extensions.Logging.Xunit.v3;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Time.Testing;
+using NATS.Client.Core;
 using NATS.Client.KeyValueStore;
 using NATS.Client.ObjectStore;
 using Xunit;
@@ -13,9 +14,11 @@ namespace Eshva.Caching.Nats.Tests.OutOfProcess.Common;
 
 public class CachesContext {
   public CachesContext(
+    INatsConnection connection,
     INatsObjStore objectStore,
     INatsKVStore entriesStore,
     ITestOutputHelper xUnitLogger) {
+    Connection = connection;
     Bucket = objectStore;
     EntriesStore = entriesStore;
     var now = DateTimeOffset.UtcNow;
@@ -28,7 +31,7 @@ public class CachesContext {
       second: 0,
       TimeSpan.Zero);
     TimeProvider = new FakeTimeProvider(Today);
-    _xUnitLogger = xUnitLogger;
+    Logger = xUnitLogger;
   }
 
   public DateTimeOffset Today { get; }
@@ -40,6 +43,8 @@ public class CachesContext {
   public TimeSpan DefaultSlidingExpirationInterval { get; set; }
 
   public FakeTimeProvider TimeProvider { get; }
+
+  public INatsConnection Connection { get; }
 
   public INatsObjStore Bucket { get; }
 
@@ -53,6 +58,8 @@ public class CachesContext {
 
   public INatsKVStore EntriesStore { get; }
 
+  public ITestOutputHelper Logger { get; }
+
   public void CreateObjectStoreDriver() {
     var expiryCalculator = new CacheEntryExpiryCalculator(DefaultSlidingExpirationInterval, TimeProvider);
 
@@ -62,7 +69,7 @@ public class CachesContext {
       MaximalCacheInvalidationDuration,
       expiryCalculator,
       TimeProvider,
-      XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(_xUnitLogger));
+      XUnitLogger.CreateLogger<ObjectStoreBasedCacheInvalidation>(Logger));
 
     var cacheDatastore = new ObjectStoreBasedDatastore(Bucket, expiryCalculator);
     cacheInvalidation.CacheInvalidationCompleted += (_, _) => { PurgingSignal.Set(); };
@@ -70,8 +77,8 @@ public class CachesContext {
     Cache = new NatsObjectStoreBasedCache(
       cacheDatastore,
       cacheInvalidation,
-      XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(_xUnitLogger));
-    Driver = new ObjectStoreDriver(Bucket, _xUnitLogger);
+      XUnitLogger.CreateLogger<NatsObjectStoreBasedCache>(Logger));
+    Driver = new ObjectStoreDriver(Bucket, Logger);
   }
 
   public void CreateKeyValueStoreDriver() {
@@ -84,7 +91,7 @@ public class CachesContext {
       expirySerializer,
       expiryCalculator,
       TimeProvider,
-      XUnitLogger.CreateLogger<KeyValueBasedCacheInvalidation>(_xUnitLogger));
+      XUnitLogger.CreateLogger<KeyValueBasedCacheInvalidation>(Logger));
 
     var cacheDatastore = new KeyValueBasedDatastore(
       EntriesStore,
@@ -95,9 +102,7 @@ public class CachesContext {
     Cache = new NatsKeyValueStoreBasedCache(
       cacheDatastore,
       cacheInvalidation,
-      XUnitLogger.CreateLogger<NatsKeyValueStoreBasedCache>(_xUnitLogger));
-    Driver = new KeyValueStoreDriver(EntriesStore, expirySerializer, _xUnitLogger);
+      XUnitLogger.CreateLogger<NatsKeyValueStoreBasedCache>(Logger));
+    Driver = new KeyValueStoreDriver(EntriesStore, expirySerializer, Logger);
   }
-
-  private readonly ITestOutputHelper _xUnitLogger;
 }

@@ -7,6 +7,7 @@
     <PackageReference Include="Eshva.Testing.OutOfProcessDeployments.Nats"/>
     <PackageReference Include="Eshva.Testing.Reqnroll"/>
     <PackageReference Include="Meziantou.Extensions.Logging.Xunit.v3"/>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection"/>
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing"/>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     <PackageReference Include="NATS.Client.Core"/>
