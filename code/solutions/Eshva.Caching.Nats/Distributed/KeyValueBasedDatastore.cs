@@ -36,49 +36,64 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
 
   /// <inheritdoc/>
   public async Task<(bool doesExist, CacheEntryExpiry entryExpiry)> GetEntryExpiry(string key, CancellationToken cancellation) {
-    var metadataStatus = await _entriesStore
-      .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    return metadataStatus.Success
-      ? (true, metadataStatus.Value.Value)
-      : (false, new CacheEntryExpiry(DateTimeOffset.MaxValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
+    try {
+      var metadataStatus = await _entriesStore
+        .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      return metadataStatus.Success
+        ? (true, metadataStatus.Value.Value)
+        : (false, new CacheEntryExpiry(DateTimeOffset.MaxValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
+    }
+    catch (Exception exception) {
+      throw new InvalidOperationException($"Failed to read cache entry with key '{key}' expiry information.", exception);
+    }
   }
 
   /// <inheritdoc/>
   public async Task RefreshEntry(string key, CacheEntryExpiry cacheEntryExpiry, CancellationToken cancellation) {
-    var metadataStatus = await _entriesStore
-      .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    if (!metadataStatus.Success) {
-      throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
+    try {
+      var metadataStatus = await _entriesStore
+        .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      if (!metadataStatus.Success) {
+        throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
+      }
+
+      var metadata = metadataStatus.Value.Value with {
+        ExpiresAtUtc = _expiryCalculator.CalculateExpiration(
+          metadataStatus.Value.Value.AbsoluteExpiryAtUtc,
+          metadataStatus.Value.Value.SlidingExpiryInterval)
+      };
+
+      var valueStatus = await _entriesStore.TryUpdateAsync(
+          MakeMetadataKey(key),
+          metadata,
+          metadataStatus.Value.Revision,
+          _expirySerializer,
+          cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      if (!valueStatus.Success) {
+        throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
+      }
     }
-
-    var metadata = metadataStatus.Value.Value with {
-      ExpiresAtUtc = _expiryCalculator.CalculateExpiration(
-        metadataStatus.Value.Value.AbsoluteExpiryAtUtc,
-        metadataStatus.Value.Value.SlidingExpiryInterval)
-    };
-
-    var valueStatus = await _entriesStore.TryUpdateAsync(
-        MakeMetadataKey(key),
-        metadata,
-        metadataStatus.Value.Revision,
-        _expirySerializer,
-        cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    if (!valueStatus.Success) {
-      throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
+    catch (Exception exception) {
+      throw new InvalidOperationException($"Failed to refresh cache entry with key '{key}'.", exception);
     }
   }
 
   /// <inheritdoc/>
   public async Task RemoveEntry(string key, CancellationToken cancellation) {
-    var metadataStatus = await _entriesStore.TryPurgeAsync(MakeMetadataKey(key), cancellationToken: cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    var valueStatus = await _entriesStore.TryPurgeAsync(key, cancellationToken: cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    if (!valueStatus.Success || !metadataStatus.Success) {
-      throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
+    try {
+      var metadataStatus = await _entriesStore.TryPurgeAsync(MakeMetadataKey(key), cancellationToken: cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      var valueStatus = await _entriesStore.TryPurgeAsync(key, cancellationToken: cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      if (!valueStatus.Success || !metadataStatus.Success) {
+        throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.");
+      }
+    }
+    catch (Exception exception) {
+      throw new InvalidOperationException($"Failed to remove cache entry with key '{key}'.", exception);
     }
   }
 
@@ -87,15 +102,20 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
     string key,
     IBufferWriter<byte> destination,
     CancellationToken cancellation) {
-    var metadataStatus = await _entriesStore
-      .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    var valueStatus = await _entriesStore.TryGetEntryAsync<byte[]>(key, cancellationToken: cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    destination.Write(valueStatus.Value.Value);
-    return metadataStatus.Success && valueStatus.Success
-      ? (true, metadataStatus.Value.Value)
-      : (false, new CacheEntryExpiry(DateTimeOffset.MinValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
+    try {
+      var metadataStatus = await _entriesStore
+        .TryGetEntryAsync(MakeMetadataKey(key), serializer: _expirySerializer, cancellationToken: cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      var valueStatus = await _entriesStore.TryGetEntryAsync<byte[]>(key, cancellationToken: cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      destination.Write(valueStatus.Value.Value);
+      return metadataStatus.Success && valueStatus.Success
+        ? (true, metadataStatus.Value.Value)
+        : (false, new CacheEntryExpiry(DateTimeOffset.MinValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
+    }
+    catch (Exception exception) {
+      throw new InvalidOperationException($"Failed to read value of cache entry with key '{key}'.", exception);
+    }
   }
 
   /// <inheritdoc/>
@@ -104,16 +124,21 @@ public sealed class KeyValueBasedDatastore : ICacheDatastore {
     ReadOnlySequence<byte> value,
     CacheEntryExpiry cacheEntryExpiry,
     CancellationToken cancellation) {
-    var valueStatus = await _entriesStore.TryPutAsync(key, value, cancellationToken: cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    var metadataStatus = await _entriesStore.TryPutAsync(
-        MakeMetadataKey(key),
-        cacheEntryExpiry,
-        _expirySerializer,
-        cancellation)
-      .ConfigureAwait(continueOnCapturedContext: false);
-    if (!valueStatus.Success || !metadataStatus.Success) {
-      throw new InvalidOperationException($"Failed to put cache entry with key '{key}'.");
+    try {
+      var valueStatus = await _entriesStore.TryPutAsync(key, value, cancellationToken: cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      var metadataStatus = await _entriesStore.TryPutAsync(
+          MakeMetadataKey(key),
+          cacheEntryExpiry,
+          _expirySerializer,
+          cancellation)
+        .ConfigureAwait(continueOnCapturedContext: false);
+      if (!valueStatus.Success || !metadataStatus.Success) {
+        throw new InvalidOperationException($"Failed to set cache entry with key '{key}'.");
+      }
+    }
+    catch (Exception exception) when (exception is not InvalidOperationException) {
+      throw new InvalidOperationException($"Failed to set cache entry with key '{key}'.", exception);
     }
   }
 

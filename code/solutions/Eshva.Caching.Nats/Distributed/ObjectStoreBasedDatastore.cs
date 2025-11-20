@@ -39,6 +39,9 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     catch (NatsObjException) {
       return (false, new CacheEntryExpiry(DateTimeOffset.MaxValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
     }
+    catch (Exception exception) {
+      throw new InvalidOperationException($"Failed to read cache entry with key '{key}' expiry information.", exception);
+    }
   }
 
   /// <inheritdoc/>
@@ -54,6 +57,9 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     catch (NatsObjException exception) {
       throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.", exception);
     }
+    catch (Exception exception) {
+      throw new InvalidOperationException($"Failed to refresh cache entry with key '{key}'.", exception);
+    }
   }
 
   /// <inheritdoc/>
@@ -63,6 +69,9 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     }
     catch (NatsObjException exception) {
       throw new InvalidOperationException($"An entry with key '{key}' could not be found in the cache.", exception);
+    }
+    catch (Exception exception) {
+      throw new InvalidOperationException($"Failed to remove cache entry with key '{key}'.", exception);
     }
   }
 
@@ -84,8 +93,8 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
     catch (NatsObjNotFoundException) {
       return (false, new CacheEntryExpiry(DateTimeOffset.MinValue, AbsoluteExpiryAtUtc: null, SlidingExpiryInterval: null));
     }
-    catch (NatsObjException exception) {
-      throw new InvalidOperationException($"Failed to read cache key '{key}' value.", exception);
+    catch (Exception exception) {
+      throw new InvalidOperationException($"Failed to read value of cache entry with key '{key}'.", exception);
     }
   }
 
@@ -105,7 +114,7 @@ public sealed class ObjectStoreBasedDatastore : ICacheDatastore {
         .ConfigureAwait(continueOnCapturedContext: false);
     }
     catch (NatsObjException exception) {
-      throw new InvalidOperationException($"Failed to put cache entry with key '{key}'.", exception);
+      throw new InvalidOperationException($"Failed to set cache entry with key '{key}'.", exception);
     }
   }
 
