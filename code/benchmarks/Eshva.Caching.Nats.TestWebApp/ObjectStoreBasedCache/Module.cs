@@ -23,8 +23,8 @@ internal static class Module {
   }
 
   public static void AddServices(IServiceCollection services, string natsServerKey) {
-    services.AddNatsObjectStoreBasedCache(ObjectStoreCacheKey, natsServerKey);
-    services.AddNatsKeyValueBasedCache(KeyValueCacheKey, natsServerKey);
+    services.AddKeyedNatsObjectStoreBasedCache(ObjectStoreCacheKey, natsServerKey);
+    services.AddKeyedNatsKeyValueBasedCache(KeyValueCacheKey, natsServerKey);
 
     services.AddKeyedTransient<GetImageWithObjectStoreTryGetAsyncHttpRequestHandler>(
       ObjectStoreCacheKey,

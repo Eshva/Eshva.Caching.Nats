@@ -27,7 +27,7 @@ public static class NatsCacheBootstrapping {
   /// <param name="serviceKey">Cache services key.</param>
   /// <param name="natsServerKey">NATS server connection service key.</param>
   /// <returns>Service collection.</returns>
-  public static IServiceCollection AddNatsObjectStoreBasedCache(
+  public static IServiceCollection AddKeyedNatsObjectStoreBasedCache(
     this IServiceCollection services,
     string serviceKey,
     string natsServerKey) {
@@ -35,6 +35,31 @@ public static class NatsCacheBootstrapping {
         serviceKey,
         (diContainer, key) => CreateNatsObjectStoreBasedCache(
           diContainer.GetRequiredKeyedService<INatsConnection>(natsServerKey),
+          diContainer.GetRequiredKeyedService<ObjectStoreBasedCacheSettings>(key),
+          diContainer))
+      .AddKeyedSingleton<IDistributedCache>(
+        serviceKey,
+        (diContainer, key) => diContainer.GetRequiredKeyedService<IBufferDistributedCache>(key));
+    return services;
+  }
+
+  /// <summary>
+  /// Add NATS object store based cache as a keyed service into DI-container.
+  /// </summary>
+  /// <remarks>
+  /// Cache can be placed on a separate NATS cluster. A few caches for different content could be used in an application. To
+  /// separate those caches <paramref name="serviceKey"/> is used.
+  /// </remarks>
+  /// <param name="services">DI-container.</param>
+  /// <param name="serviceKey">Cache services key.</param>
+  /// <returns>Service collection.</returns>
+  public static IServiceCollection AddKeyedNatsObjectStoreBasedCache(
+    this IServiceCollection services,
+    string serviceKey) {
+    services.AddKeyedSingleton<IBufferDistributedCache, NatsObjectStoreBasedCache>(
+        serviceKey,
+        (diContainer, key) => CreateNatsObjectStoreBasedCache(
+          diContainer.GetRequiredService<INatsConnection>(),
           diContainer.GetRequiredKeyedService<ObjectStoreBasedCacheSettings>(key),
           diContainer))
       .AddKeyedSingleton<IDistributedCache>(
@@ -90,7 +115,7 @@ public static class NatsCacheBootstrapping {
   /// <param name="serviceKey">Cache services key.</param>
   /// <param name="natsServerKey">NATS server connection service key.</param>
   /// <returns>Service collection.</returns>
-  public static IServiceCollection AddNatsKeyValueBasedCache(
+  public static IServiceCollection AddKeyedNatsKeyValueBasedCache(
     this IServiceCollection services,
     string serviceKey,
     string natsServerKey) {
@@ -99,6 +124,32 @@ public static class NatsCacheBootstrapping {
         (diContainer, key) =>
           CreateNatsKeyValueStoreBasedCache(
             diContainer.GetRequiredKeyedService<INatsConnection>(natsServerKey),
+            diContainer.GetRequiredKeyedService<KeyValueBasedCacheSettings>(key),
+            diContainer))
+      .AddKeyedSingleton<IDistributedCache>(
+        serviceKey,
+        (diContainer, key) => diContainer.GetRequiredKeyedService<IBufferDistributedCache>(key));
+    return services;
+  }
+
+  /// <summary>
+  /// Add NATS key-value store based cache as a keyed service into DI-container.
+  /// </summary>
+  /// <remarks>
+  /// Cache can be placed on a separate NATS cluster. A few caches for different content could be used in an application. To
+  /// separate those caches <paramref name="serviceKey"/> is used.
+  /// </remarks>
+  /// <param name="services">DI-container.</param>
+  /// <param name="serviceKey">Cache services key.</param>
+  /// <returns>Service collection.</returns>
+  public static IServiceCollection AddKeyedNatsKeyValueBasedCache(
+    this IServiceCollection services,
+    string serviceKey) {
+    services.AddKeyedSingleton<IBufferDistributedCache, NatsKeyValueStoreBasedCache>(
+        serviceKey,
+        (diContainer, key) =>
+          CreateNatsKeyValueStoreBasedCache(
+            diContainer.GetRequiredService<INatsConnection>(),
             diContainer.GetRequiredKeyedService<KeyValueBasedCacheSettings>(key),
             diContainer))
       .AddKeyedSingleton<IDistributedCache>(
