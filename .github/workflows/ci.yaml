@@ -75,13 +75,13 @@ jobs:
           classfilters: -*Settings
       - name: Upload coverage report
         if: (!cancelled())
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-ci
           path: coverage-ci
       - name: Upload coverage history
         if: (!cancelled())
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: coverage-history-ci
           path: coverage-history-ci
