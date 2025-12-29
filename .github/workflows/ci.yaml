@@ -58,7 +58,7 @@ jobs:
         working-directory: code
       - name: Restore coverage history
         if: (!cancelled())
-        uses: dawidd6/action-download-artifact@v11
+        uses: dawidd6/action-download-artifact@v12
         with:
           name: coverage-history-ci
           path: coverage-history-ci
